@@ -8,7 +8,6 @@ Il permet de [décrire ton projet ici].
 - HTML
 - CSS
 - JavaScript
-- (ajoute ce que tu utilises : React, Node.js, etc.)
 
 ## 👥 Membres du groupe
 - Oussema Zayane
