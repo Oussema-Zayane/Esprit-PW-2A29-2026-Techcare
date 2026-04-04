@@ -1,0 +1,26 @@
+<!-- 🔵 LOGIN -->
+<h2>Se connecter</h2>
+<form action="../../Controller/UserController.php?action=login" method="POST">
+
+  <input type="email" name="email" placeholder="Email" required>
+  <input type="password" name="password" placeholder="Mot de passe" required>
+
+  <button type="submit">Se connecter</button>
+
+</form>
+
+<hr>
+
+<!-- 🟢 REGISTER -->
+<h2>S'inscrire</h2>
+<form action="../../Controller/UserController.php?action=register" method="POST">
+
+  <input type="text" name="nom" placeholder="Nom" required>
+  <input type="text" name="prenom" placeholder="Prénom" required>
+  <input type="email" name="email" placeholder="Email" required>
+  <input type="text" name="telephone" placeholder="Téléphone" required>
+  <input type="password" name="password" placeholder="Mot de passe" required>
+
+  <button type="submit">S'inscrire</button>
+
+</form>
