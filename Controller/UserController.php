@@ -14,7 +14,8 @@ if ($action == "login") {
     $user = User::findByEmail($email);
 
     if (!$user) {
-        echo "Compte introuvable ❌";
+        header("Location: ../View/front/auth.html?error=login");
+        exit();
     } else {
         if (password_verify($password, $user['password'])) {
             $_SESSION['user_id'] = $user['id'];
@@ -26,7 +27,8 @@ if ($action == "login") {
             header("Location: ../View/front/profile.php");
             exit();
         } else {
-            echo "Mot de passe incorrect ❌";
+            header("Location: ../View/front/auth.html?error=login");
+            exit();
         }
     }
 }
@@ -40,18 +42,24 @@ if ($action == "register") {
     $password = $_POST['password'];
 
     if (strlen($password) < 8) {
-        die("Mot de passe min 8 caractères ❌");
+        header("Location: ../View/front/auth.html?error=password");
+        exit();
     }
 
     $user = User::findByEmail($email);
 
     if ($user) {
-        echo "Email déjà utilisé ❌";
+        header("Location: ../View/front/auth.html?error=email_exists");
+        exit();
     } else {
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-        User::register($nom, $prenom, $email, $telephone, $hashedPassword, 'user');
-        echo "Compte créé avec succès ✅";
-        header("refresh:2; url=../View/front/auth.html");
+        $result = User::register($nom, $prenom, $email, $telephone, $hashedPassword, 'user');
+        
+        if ($result) {
+            header("Location: ../View/front/auth.html?success=register");
+        } else {
+            header("Location: ../View/front/auth.html?error=register");
+        }
         exit();
     }
 }
