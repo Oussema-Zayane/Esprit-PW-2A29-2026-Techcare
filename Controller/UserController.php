@@ -24,6 +24,7 @@ if ($action == "login") {
             $_SESSION['prenom'] = $user['prenom'];
             $_SESSION['role'] = $user['role'];
 
+            // Rediriger vers profile.php dans le dossier front
             header("Location: ../View/front/profile.php");
             exit();
         } else {

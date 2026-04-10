@@ -20,7 +20,6 @@ class User {
 
     public static function getAllUsers() {
         $conn = Config::getConnexion();
-        // Changement ici : on prend tous les utilisateurs, pas seulement ceux qui ne sont pas admin
         $sql = "SELECT * FROM personne ORDER BY id DESC";
         $stmt = $conn->prepare($sql);
         $stmt->execute();
@@ -34,7 +33,8 @@ class User {
 
     public static function deleteUser($id) {
         $conn = Config::getConnexion();
-        $sql = "DELETE FROM personne WHERE id = ? AND role != 'admin'";
+        // Supprimer la restriction "AND role != 'admin'" pour permettre la suppression de n'importe quel utilisateur
+        $sql = "DELETE FROM personne WHERE id = ?";
         $stmt = $conn->prepare($sql);
         return $stmt->execute([$id]);
     }

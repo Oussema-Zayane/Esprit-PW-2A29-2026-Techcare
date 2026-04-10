@@ -152,7 +152,7 @@ if (isset($_GET['error'])) {
         }
 
         table input, table select {
-            padding: 5px;
+            padding: 8px;
             border: 1px solid #ddd;
             border-radius: 3px;
             width: 100%;
@@ -194,6 +194,10 @@ if (isset($_GET['error'])) {
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+        
+        .update-form {
+            display: contents;
+        }
     </style>
 </head>
 <body>
@@ -201,7 +205,6 @@ if (isset($_GET['error'])) {
         <h1>Dashboard Admin 👑</h1>
         <p>Bienvenue, <?= htmlspecialchars($_SESSION['prenom'] . ' ' . $_SESSION['nom']) ?> !</p>
         
-        <!-- Affichage des messages -->
         <?php if ($success_message): ?>
             <div class="message success"><?= $success_message ?></div>
         <?php endif; ?>
@@ -221,7 +224,7 @@ if (isset($_GET['error'])) {
 
         <hr>
 
-        <!-- 🟢 AJOUT USER -->
+        <!-- AJOUT USER -->
         <h2>➕ Ajouter un utilisateur</h2>
         <div class="form-add">
             <form action="../../Controller/UserController.php?action=add" method="POST" onsubmit="return confirm('Ajouter cet utilisateur ?')">
@@ -240,7 +243,7 @@ if (isset($_GET['error'])) {
 
         <hr>
 
-        <!-- 🔵 TABLE USERS -->
+        <!-- TABLE USERS -->
         <h2>📋 Liste des utilisateurs</h2>
         
         <?php if (!$users || count($users) == 0): ?>
@@ -261,7 +264,7 @@ if (isset($_GET['error'])) {
                 <tbody>
                     <?php foreach($users as $user): ?>
                     <tr>
-                        <form action="../../Controller/UserController.php?action=update" method="POST" onsubmit="return confirm('Modifier cet utilisateur ?')">
+                        <form method="POST" action="../../Controller/UserController.php?action=update" class="update-form" onsubmit="return confirm('Modifier cet utilisateur ?')">
                             <td><?= htmlspecialchars($user['id']) ?>
                                 <input type="hidden" name="id" value="<?= $user['id'] ?>">
                             </td>
@@ -277,14 +280,16 @@ if (isset($_GET['error'])) {
                             </td>
                             <td class="action-buttons">
                                 <button type="submit" class="btn btn-warning" style="padding: 5px 10px;">✏ Modifier</button>
-                                <a href="../../Controller/UserController.php?action=delete&id=<?= $user['id'] ?>" 
-                                   class="btn btn-danger" 
-                                   style="padding: 5px 10px; text-decoration: none;"
-                                   onclick="return confirm('Supprimer cet utilisateur ?')">
-                                    🗑 Supprimer
-                                </a>
                             </td>
                         </form>
+                        <td class="action-buttons">
+                            <a href="../../Controller/UserController.php?action=delete&id=<?= $user['id'] ?>" 
+                               class="btn btn-danger" 
+                               style="padding: 5px 10px; text-decoration: none; display: inline-block;"
+                               onclick="return confirm('Supprimer cet utilisateur ?')">
+                                🗑 Supprimer
+                            </a>
+                        </td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
