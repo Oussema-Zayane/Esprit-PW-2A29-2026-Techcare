@@ -24,7 +24,6 @@ if ($action == "login") {
             $_SESSION['prenom'] = $user['prenom'];
             $_SESSION['role'] = $user['role'];
 
-            // Rediriger vers profile.php dans le dossier front
             header("Location: ../View/front/profile.php");
             exit();
         } else {
@@ -36,33 +35,58 @@ if ($action == "login") {
 
 /* ================= REGISTER ================= */
 if ($action == "register") {
-    $nom = $_POST['nom'];
-    $prenom = $_POST['prenom'];
-    $email = $_POST['email'];
-    $telephone = $_POST['telephone'];
+    $nom = trim($_POST['nom']);
+    $prenom = trim($_POST['prenom']);
+    $email = trim($_POST['email']);
+    $telephone = trim($_POST['telephone']);
     $password = $_POST['password'];
 
+    // === VALIDATIONS CÔTÉ SERVEUR ===
+    $errors = [];
+    
+    // Validation nom et prénom
+    if (empty($nom) || empty($prenom)) {
+        $errors[] = "nom_prenom_requis";
+    }
+    
+    // Validation email
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "email_invalide";
+    }
+    
+    // Validation téléphone (8 chiffres exactement)
+    $telephoneClean = preg_replace('/\D/', '', $telephone);
+    if (strlen($telephoneClean) != 8) {
+        $errors[] = "telephone_invalide";
+    }
+    
+    // Validation mot de passe (minimum 8 caractères)
     if (strlen($password) < 8) {
-        header("Location: ../View/front/auth.html?error=password");
+        $errors[] = "password_court";
+    }
+    
+    // Vérifier si l'email existe déjà
+    $existingUser = User::findByEmail($email);
+    if ($existingUser) {
+        $errors[] = "email_exists";
+    }
+    
+    // Si des erreurs, rediriger avec l'erreur
+    if (!empty($errors)) {
+        $errorCode = $errors[0];
+        header("Location: ../View/front/auth.html?error=" . $errorCode);
         exit();
     }
 
-    $user = User::findByEmail($email);
-
-    if ($user) {
-        header("Location: ../View/front/auth.html?error=email_exists");
-        exit();
+    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+    $result = User::register($nom, $prenom, $email, $telephoneClean, $hashedPassword, 'user');
+    
+    if ($result) {
+        header("Location: ../View/front/auth.html?success=register");
     } else {
-        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-        $result = User::register($nom, $prenom, $email, $telephone, $hashedPassword, 'user');
-        
-        if ($result) {
-            header("Location: ../View/front/auth.html?success=register");
-        } else {
-            header("Location: ../View/front/auth.html?error=register");
-        }
-        exit();
+        header("Location: ../View/front/auth.html?error=register");
     }
+    exit();
 }
 
 /* ================= ADD USER (ADMIN) ================= */
@@ -72,19 +96,57 @@ if ($action == "add") {
         exit();
     }
 
-    $nom = $_POST['nom'];
-    $prenom = $_POST['prenom'];
-    $email = $_POST['email'];
-    $telephone = $_POST['telephone'];
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+    $nom = trim($_POST['nom']);
+    $prenom = trim($_POST['prenom']);
+    $email = trim($_POST['email']);
+    $telephone = trim($_POST['telephone']);
+    $password = $_POST['password'];
     $role = $_POST['role'] ?? 'user';
 
-    $result = User::register($nom, $prenom, $email, $telephone, $password, $role);
+    // === VALIDATIONS CÔTÉ SERVEUR ===
+    $errors = [];
+    
+    // Validation nom et prénom
+    if (empty($nom) || empty($prenom)) {
+        $errors[] = "nom_prenom_requis";
+    }
+    
+    // Validation email
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "email_invalide";
+    }
+    
+    // Validation téléphone (8 chiffres exactement)
+    $telephoneClean = preg_replace('/\D/', '', $telephone);
+    if (strlen($telephoneClean) != 8) {
+        $errors[] = "telephone_invalide";
+    }
+    
+    // Validation mot de passe (minimum 8 caractères)
+    if (strlen($password) < 8) {
+        $errors[] = "password_court";
+    }
+    
+    // Vérifier si l'email existe déjà
+    $existingUser = User::findByEmail($email);
+    if ($existingUser) {
+        $errors[] = "email_exists";
+    }
+    
+    // S'il y a des erreurs, rediriger avec message d'erreur
+    if (!empty($errors)) {
+        $errorMsg = implode(',', $errors);
+        header("Location: ../View/back/dashboard.php?error=" . $errorMsg);
+        exit();
+    }
+
+    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+    $result = User::register($nom, $prenom, $email, $telephoneClean, $hashedPassword, $role);
     
     if ($result) {
         header("Location: ../View/back/dashboard.php?success=add");
     } else {
-        header("Location: ../View/back/dashboard.php?error=add");
+        header("Location: ../View/back/dashboard.php?error=add_failed");
     }
     exit();
 }
@@ -97,18 +159,42 @@ if ($action == "update") {
     }
 
     $id = $_POST['id'];
-    $nom = $_POST['nom'];
-    $prenom = $_POST['prenom'];
-    $email = $_POST['email'];
-    $telephone = $_POST['telephone'];
+    $nom = trim($_POST['nom']);
+    $prenom = trim($_POST['prenom']);
+    $email = trim($_POST['email']);
+    $telephone = trim($_POST['telephone']);
     $role = $_POST['role'] ?? 'user';
 
-    // Debug: Afficher les données reçues
-    error_log("Update User ID: $id, Nom: $nom, Email: $email, Role: $role");
+    // === VALIDATIONS CÔTÉ SERVEUR ===
+    $errors = [];
     
-    $result = User::updateUser($id, $nom, $prenom, $email, $telephone, $role);
+    // Validation nom et prénom
+    if (empty($nom) || empty($prenom)) {
+        $errors[] = "nom_prenom_requis";
+    }
     
-    // Debug: Vérifier le résultat
+    // Validation email
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "email_invalide";
+    }
+    
+    // Validation téléphone (8 chiffres exactement)
+    $telephoneClean = preg_replace('/\D/', '', $telephone);
+    if (strlen($telephoneClean) != 8) {
+        $errors[] = "telephone_invalide";
+    }
+    
+    // S'il y a des erreurs, rediriger avec message d'erreur
+    if (!empty($errors)) {
+        $errorMsg = implode(',', $errors);
+        header("Location: ../View/back/dashboard.php?error=" . $errorMsg);
+        exit();
+    }
+
+    error_log("Update User ID: $id, Nom: $nom, Email: $email, Role: $role, Telephone: $telephoneClean");
+    
+    $result = User::updateUser($id, $nom, $prenom, $email, $telephoneClean, $role);
+    
     error_log("Update result: " . ($result ? "true" : "false"));
     
     if ($result) {

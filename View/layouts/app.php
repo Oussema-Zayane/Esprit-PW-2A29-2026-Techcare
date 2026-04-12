@@ -12,8 +12,8 @@ if (session_status() === PHP_SESSION_NONE) {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        /* Styles additionnels pour le dashboard admin dans le layout principal */
         .admin-section {
             margin-top: 2rem;
             background: var(--surface);
@@ -61,6 +61,7 @@ if (session_status() === PHP_SESSION_NONE) {
             border-bottom: 1px solid var(--border);
             padding-bottom: 0.5rem;
             margin-bottom: 1.5rem;
+            flex-wrap: wrap;
         }
         .admin-tab-btn {
             background: none;
@@ -102,11 +103,64 @@ if (session_status() === PHP_SESSION_NONE) {
         .close-admin-btn:hover {
             color: var(--danger);
         }
+        .dashboard-stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .chart-container {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .chart-container h4 {
+            margin-bottom: 1rem;
+            color: var(--txt);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .chart-wrapper {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .toast-container {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
+        }
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            padding: 0.8rem 1.2rem;
+            border-radius: var(--r-md);
+            font: 500 0.87rem var(--font);
+            color: #fff;
+            box-shadow: var(--sh-lg);
+            animation: toastIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
+            pointer-events: all;
+            min-width: 240px;
+            max-width: 340px;
+            backdrop-filter: blur(10px);
+        }
+        .toast-success { background: rgba(0,168,107,0.93); border: 1px solid rgba(0,207,133,0.3); }
+        .toast-error   { background: rgba(231,76,60,0.93);  border: 1px solid rgba(231,76,60,0.3); }
+        @keyframes toastIn { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
+        @keyframes toastOut { from { opacity:1; transform:translateX(0); } to { opacity:0; transform:translateX(30px); } }
+        .toast-hide { animation: toastOut 0.3s ease forwards; }
     </style>
 </head>
 <body class="front-body">
     
-    <!-- NAVBAR UNIQUE POUR TOUS -->
     <nav class="navbar">
         <a href="profile.php" class="navbar-brand">
             <i class="fas fa-bolt brand-icon"></i>
@@ -127,7 +181,6 @@ if (session_status() === PHP_SESSION_NONE) {
             </a>
         </div>
         <div class="navbar-right">
-            <!-- BOUTON ADMIN UNIQUEMENT POUR LES ADMINS -->
             <?php if (isset($_SESSION['role']) && $_SESSION['role'] == 'admin'): ?>
                 <button onclick="toggleAdminPanel()" class="btn-admin" id="adminToggleBtn">
                     <i class="fas fa-chart-line"></i> Admin
@@ -141,7 +194,6 @@ if (session_status() === PHP_SESSION_NONE) {
     </nav>
     
     <div class="main-content">
-        <!-- ZONE ADMIN PANEL (cachée par défaut) -->
         <?php if (isset($_SESSION['role']) && $_SESSION['role'] == 'admin'): ?>
         <div id="adminPanel" style="display: none;">
             <div class="products-section">
@@ -169,31 +221,28 @@ if (session_status() === PHP_SESSION_NONE) {
                         </div>
                         
                         <div id="adminTabDashboard" class="admin-tab-pane active">
-                            <!-- CONTENU DASHBOARD CHARGE DYNAMIQUEMENT -->
                             <div id="dashboardContent">
-                                <div class="stats-grid" id="statsGrid">
-                                    <!-- Stats chargées via AJAX -->
+                                <div class="dashboard-stats-row" id="statsGrid"></div>
+                                <div class="chart-container" id="chartContainer" style="display: none;">
+                                    <h4><i class="fas fa-chart-pie" style="color: var(--green);"></i> Répartition des utilisateurs par rôle</h4>
+                                    <div class="chart-wrapper">
+                                        <canvas id="roleChart"></canvas>
+                                    </div>
+                                    <div class="chart-legend" id="chartLegend"></div>
                                 </div>
                             </div>
                         </div>
                         
                         <div id="adminTabUsers" class="admin-tab-pane">
-                            <!-- CONTENU UTILISATEURS -->
-                            <div id="usersContent">
-                                <!-- Liste des utilisateurs chargée via AJAX -->
-                            </div>
+                            <div id="usersContent"></div>
                         </div>
                         
                         <div id="adminTabProducts" class="admin-tab-pane">
-                            <div id="productsContent">
-                                <!-- Gestion des produits -->
-                            </div>
+                            <div id="productsContent"></div>
                         </div>
                         
                         <div id="adminTabOrders" class="admin-tab-pane">
-                            <div id="ordersContent">
-                                <!-- Gestion des commandes -->
-                            </div>
+                            <div id="ordersContent"></div>
                         </div>
                     </div>
                 </div>
@@ -201,7 +250,6 @@ if (session_status() === PHP_SESSION_NONE) {
         </div>
         <?php endif; ?>
         
-        <!-- CONTENU PRINCIPAL (Profile, Products, Cart) -->
         <?= $content ?? '<div class="products-section"><p>Sélectionnez une option dans le menu.</p></div>' ?>
     </div>
     
@@ -210,7 +258,7 @@ if (session_status() === PHP_SESSION_NONE) {
             <div class="footer-brand">
                 <i class="fas fa-bolt"></i> TechCare
             </div>
-            <p>&copy; 2024 TechCare - Tous droits réservés</p>
+            <p>&copy; 2026 TechCare - Tous droits réservés</p>
             <div class="footer-links">
                 <a href="#"><i class="fab fa-twitter"></i></a>
                 <a href="#"><i class="fab fa-linkedin-in"></i></a>
@@ -219,18 +267,21 @@ if (session_status() === PHP_SESSION_NONE) {
         </div>
     </footer>
     
+    <div class="toast-container"></div>
+
     <script>
+    let roleChart = null;
+    
     function toggleMobileMenu() {
-        const menu = document.getElementById('mobileMenu');
-        menu.classList.toggle('open');
+        document.getElementById('mobileMenu')?.classList.toggle('open');
     }
     
     function toggleAdminPanel() {
         const panel = document.getElementById('adminPanel');
-        const btn = document.getElementById('adminToggleBtn');
         if (panel.style.display === 'none') {
             panel.style.display = 'block';
             loadDashboardStats();
+            loadChartData();
             loadUsersList();
         } else {
             panel.style.display = 'none';
@@ -238,17 +289,13 @@ if (session_status() === PHP_SESSION_NONE) {
     }
     
     function showAdminTab(tabName) {
-        document.querySelectorAll('.admin-tab-pane').forEach(pane => {
-            pane.classList.remove('active');
-        });
+        document.querySelectorAll('.admin-tab-pane').forEach(pane => pane.classList.remove('active'));
         document.getElementById('adminTab' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add('active');
         
-        document.querySelectorAll('.admin-tab-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        event.target.classList.add('active');
+        document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active'));
+        if (event && event.target) event.target.classList.add('active');
         
-        if (tabName === 'dashboard') loadDashboardStats();
+        if (tabName === 'dashboard') { loadDashboardStats(); loadChartData(); }
         if (tabName === 'users') loadUsersList();
         if (tabName === 'products') loadProductsList();
         if (tabName === 'orders') loadOrdersList();
@@ -258,32 +305,28 @@ if (session_status() === PHP_SESSION_NONE) {
         fetch('../../Controller/AdminAjax.php?action=dashboard_stats')
             .then(response => response.json())
             .then(data => {
-                const statsGrid = document.getElementById('statsGrid');
-                if (statsGrid) {
-                    statsGrid.innerHTML = `
-                        <div class="stat-card c-green">
-                            <div class="stat-icon"><i class="fas fa-users"></i></div>
-                            <div>
-                                <span class="stat-value">${data.totalUsers}</span>
-                                <span class="stat-label">Utilisateurs</span>
-                            </div>
-                        </div>
-                        <div class="stat-card c-purple">
-                            <div class="stat-icon"><i class="fas fa-box"></i></div>
-                            <div>
-                                <span class="stat-value">${data.totalProducts}</span>
-                                <span class="stat-label">Produits</span>
-                            </div>
-                        </div>
-                        <div class="stat-card c-orange">
-                            <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
-                            <div>
-                                <span class="stat-value">${data.totalOrders}</span>
-                                <span class="stat-label">Commandes</span>
-                            </div>
-                        </div>
-                    `;
-                }
+                document.getElementById('statsGrid').innerHTML = `
+                    <div class="stat-card c-green"><div class="stat-icon"><i class="fas fa-users"></i></div><div><span class="stat-value">${data.totalUsers}</span><span class="stat-label">Utilisateurs</span></div></div>
+                    <div class="stat-card c-purple"><div class="stat-icon"><i class="fas fa-box"></i></div><div><span class="stat-value">${data.totalProducts}</span><span class="stat-label">Produits</span></div></div>
+                    <div class="stat-card c-orange"><div class="stat-icon"><i class="fas fa-shopping-cart"></i></div><div><span class="stat-value">${data.totalOrders}</span><span class="stat-label">Commandes</span></div></div>
+                `;
+            })
+            .catch(error => console.error('Erreur:', error));
+    }
+    
+    function loadChartData() {
+        fetch('../../Controller/AdminAjax.php?action=role_stats')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('chartContainer').style.display = 'block';
+                const ctx = document.getElementById('roleChart').getContext('2d');
+                if (roleChart) roleChart.destroy();
+                roleChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: { labels: ['Administrateurs', 'Utilisateurs'], datasets: [{ data: [data.adminCount, data.userCount], backgroundColor: ['rgba(124, 58, 237, 0.8)', 'rgba(0, 168, 107, 0.8)'], borderWidth: 2 }] },
+                    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#f0f4ff' } }, tooltip: { callbacks: { label: function(ctx) { const total = ctx.dataset.data.reduce((a,b)=>a+b,0); return `${ctx.label}: ${ctx.raw} (${total>0?((ctx.raw/total)*100).toFixed(1):0}%)`; } } } } }
+                });
+                document.getElementById('chartLegend').innerHTML = `Total: ${data.adminCount + data.userCount} | Admins: ${data.adminCount} | Utilisateurs: ${data.userCount}`;
             })
             .catch(error => console.error('Erreur:', error));
     }
@@ -291,184 +334,97 @@ if (session_status() === PHP_SESSION_NONE) {
     function loadUsersList() {
         fetch('../../Controller/AdminAjax.php?action=get_users')
             .then(response => response.text())
-            .then(html => {
-                const usersContent = document.getElementById('usersContent');
-                if (usersContent) usersContent.innerHTML = html;
-            })
+            .then(html => { document.getElementById('usersContent').innerHTML = html; loadChartData(); loadDashboardStats(); })
             .catch(error => console.error('Erreur:', error));
     }
     
-    // Fonction pour AJOUTER un utilisateur
     function submitAddUser() {
         const form = document.getElementById('addUserForm');
         if (!form) return;
-        
         const formData = new FormData(form);
-        
-        fetch('../../Controller/UserController.php?action=add', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
-            if (response.redirected) {
-                const url = response.url;
-                if (url.includes('success=add')) {
+        fetch('../../Controller/UserController.php?action=add', { method: 'POST', body: formData })
+            .then(response => {
+                if (response.redirected && response.url.includes('success=add')) {
                     showToast('✅ Utilisateur ajouté avec succès !', 'success');
-                    form.reset(); // Vider le formulaire
-                    loadUsersList(); // Recharger la liste
-                    loadDashboardStats(); // Recharger les stats
-                } else {
-                    showToast('❌ Erreur lors de l\'ajout !', 'error');
-                }
-            } else {
-                // Vérifier la réponse en texte
-                return response.text().then(text => {
-                    if (text.includes('success')) {
-                        showToast('✅ Utilisateur ajouté avec succès !', 'success');
-                        form.reset();
-                        loadUsersList();
-                        loadDashboardStats();
-                    } else {
-                        showToast('❌ Erreur lors de l\'ajout !', 'error');
-                    }
-                });
-            }
-        })
-        .catch(error => {
-            console.error('Erreur:', error);
-            showToast('❌ Erreur lors de l\'ajout !', 'error');
-        });
+                    form.reset();
+                    loadUsersList();
+                    loadDashboardStats();
+                    loadChartData();
+                } else { showToast('❌ Erreur lors de l\'ajout !', 'error'); }
+            })
+            .catch(error => { console.error('Erreur:', error); showToast('❌ Erreur lors de l\'ajout !', 'error'); });
     }
     
-        // Fonction pour MODIFIER un utilisateur
     function updateUser(userId) {
-        // Récupérer les valeurs des champs
         const nom = document.getElementById('nom_' + userId).value;
         const prenom = document.getElementById('prenom_' + userId).value;
         const email = document.getElementById('email_' + userId).value;
         const telephone = document.getElementById('telephone_' + userId).value;
         const role = document.getElementById('role_' + userId).value;
         
-        // Créer les données à envoyer
-        const formData = new URLSearchParams();
-        formData.append('id', userId);
-        formData.append('nom', nom);
-        formData.append('prenom', prenom);
-        formData.append('email', email);
-        formData.append('telephone', telephone);
-        formData.append('role', role);
-        
-        // Confirmation
-        if (!confirm('Modifier cet utilisateur ?')) {
+        const phoneNumbers = telephone.replace(/\D/g, '');
+        if (phoneNumbers.length !== 8) {
+            showToast('❌ Le téléphone doit contenir exactement 8 chiffres', 'error');
+            return;
+        }
+        if (!email.includes('@') || !email.includes('.')) {
+            showToast('❌ Email invalide', 'error');
+            return;
+        }
+        if (!nom.trim() || !prenom.trim()) {
+            showToast('❌ Nom et prénom sont requis', 'error');
             return;
         }
         
-        // Envoyer la requête
-        fetch('../../Controller/UserController.php?action=update', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: formData.toString()
-        })
-        .then(response => {
-            if (response.redirected) {
-                const url = response.url;
-                if (url.includes('success=update')) {
+        const formData = new URLSearchParams();
+        formData.append('id', userId); formData.append('nom', nom); formData.append('prenom', prenom);
+        formData.append('email', email); formData.append('telephone', telephone); formData.append('role', role);
+        
+        if (!confirm('Modifier cet utilisateur ?')) return;
+        
+        fetch('../../Controller/UserController.php?action=update', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: formData.toString() })
+            .then(response => {
+                if (response.redirected && response.url.includes('success=update')) {
                     showToast('✅ Utilisateur modifié avec succès !', 'success');
-                    loadUsersList(); // Recharger la liste
-                    loadDashboardStats(); // Recharger les stats
-                } else {
-                    showToast('❌ Erreur lors de la modification !', 'error');
-                }
-            } else {
-                showToast('❌ Erreur lors de la modification !', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Erreur:', error);
-            showToast('❌ Erreur lors de la modification !', 'error');
-        });
+                    loadUsersList(); loadDashboardStats(); loadChartData();
+                } else { showToast('❌ Erreur lors de la modification !', 'error'); }
+            })
+            .catch(error => { console.error('Erreur:', error); showToast('❌ Erreur lors de la modification !', 'error'); });
     }
     
-    // Fonction pour SUPPRIMER un utilisateur
     function deleteUser(userId) {
-        if (!confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
-            return;
-        }
-        
+        if (!confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) return;
         fetch('../../Controller/UserController.php?action=delete&id=' + userId)
             .then(response => {
-                if (response.redirected) {
-                    const url = response.url;
-                    if (url.includes('success=delete')) {
-                        showToast('✅ Utilisateur supprimé avec succès !', 'success');
-                        loadUsersList(); // Recharger la liste
-                        loadDashboardStats(); // Recharger les stats
-                    } else {
-                        showToast('❌ Erreur lors de la suppression !', 'error');
-                    }
-                } else {
-                    return response.text().then(text => {
-                        if (text.includes('success')) {
-                            showToast('✅ Utilisateur supprimé avec succès !', 'success');
-                            loadUsersList();
-                            loadDashboardStats();
-                        } else {
-                            showToast('❌ Erreur lors de la suppression !', 'error');
-                        }
-                    });
-                }
+                if (response.redirected && response.url.includes('success=delete')) {
+                    showToast('✅ Utilisateur supprimé avec succès !', 'success');
+                    loadUsersList(); loadDashboardStats(); loadChartData();
+                } else { showToast('❌ Erreur lors de la suppression !', 'error'); }
             })
-            .catch(error => {
-                console.error('Erreur:', error);
-                showToast('❌ Erreur lors de la suppression !', 'error');
-            });
+            .catch(error => { console.error('Erreur:', error); showToast('❌ Erreur lors de la suppression !', 'error'); });
     }
     
-    // Fonction pour afficher des notifications toast
     function showToast(message, type = 'info') {
         let container = document.querySelector('.toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.className = 'toast-container';
-            document.body.appendChild(container);
-        }
-        
+        if (!container) { container = document.createElement('div'); container.className = 'toast-container'; document.body.appendChild(container); }
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
-        toast.innerHTML = `
-            <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
-            <span>${message}</span>
-        `;
-        
+        toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i><span>${message}</span>`;
         container.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.classList.add('toast-hide');
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
+        setTimeout(() => { toast.classList.add('toast-hide'); setTimeout(() => toast.remove(), 300); }, 3000);
     }
     
     function loadProductsList() {
-        const productsContent = document.getElementById('productsContent');
-        if (productsContent) {
-            productsContent.innerHTML = '<div class="table-scroll"><p class="table-empty"><i class="fas fa-box"></i> Gestion des produits à implémenter</p></div>';
-        }
+        document.getElementById('productsContent').innerHTML = '<div class="table-scroll"><p class="table-empty"><i class="fas fa-box"></i> Gestion des produits à implémenter</p></div>';
     }
     
     function loadOrdersList() {
-        const ordersContent = document.getElementById('ordersContent');
-        if (ordersContent) {
-            ordersContent.innerHTML = '<div class="table-scroll"><p class="table-empty"><i class="fas fa-shopping-cart"></i> Gestion des commandes à implémenter</p></div>';
-        }
+        document.getElementById('ordersContent').innerHTML = '<div class="table-scroll"><p class="table-empty"><i class="fas fa-shopping-cart"></i> Gestion des commandes à implémenter</p></div>';
     }
     
     document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', () => {
-            document.getElementById('mobileMenu')?.classList.remove('open');
-        });
+        link.addEventListener('click', () => { document.getElementById('mobileMenu')?.classList.remove('open'); });
     });
-</script>
+    </script>
 </body>
 </html>
