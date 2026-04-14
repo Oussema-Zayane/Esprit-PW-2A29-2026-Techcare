@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechCare | Plateforme Écologique Intelligente</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f1f5f9;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(8, 12, 22, 0.95);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #00A86B;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .logo h1 {
+            font-size: 1.8rem;
+            color: #00A86B;
+        }
+
+        .logo h1 i {
+            margin-right: 10px;
+        }
+
+        .logo p {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            color: #f1f5f9;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: 0.3s;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover {
+            background: #00A86B;
+            color: #000;
+        }
+
+        .btn-login {
+            background: #00A86B;
+            color: #000;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-login:hover {
+            background: #00cf85;
+            transform: translateY(-2px);
+        }
+
+        .hero {
+            padding: 80px 40px;
+            text-align: center;
+            background: radial-gradient(ellipse 80% 50% at 50% 40%, rgba(0,168,107,0.1), transparent);
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+        }
+
+        .hero h1 span {
+            color: #00A86B;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: #94a3b8;
+            max-width: 600px;
+            margin: 0 auto 30px;
+        }
+
+        .btn-start {
+            display: inline-block;
+            background: linear-gradient(135deg, #00A86B, #007a4e);
+            color: #fff;
+            padding: 14px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(0,168,107,0.3);
+        }
+
+        .btn-start:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,168,107,0.4);
+        }
+
+        .features {
+            padding: 60px 40px;
+            background: #0f172a;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 50px;
+        }
+
+        .section-title span {
+            color: #00A86B;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            border: 1px solid rgba(0,168,107,0.2);
+            transition: 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: #00A86B;
+            box-shadow: 0 10px 30px rgba(0,168,107,0.15);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            color: #00A86B;
+        }
+
+        .feature-card p {
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        .stats {
+            padding: 60px 40px;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            flex-wrap: wrap;
+            text-align: center;
+        }
+
+        .stat-item h2 {
+            font-size: 2.5rem;
+            color: #00A86B;
+        }
+
+        .stat-item p {
+            color: #94a3b8;
+        }
+
+        .cta {
+            padding: 80px 40px;
+            text-align: center;
+            background: linear-gradient(135deg, #00A86B, #007a4e);
+        }
+
+        .cta h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+
+        .cta p {
+            margin-bottom: 25px;
+            opacity: 0.9;
+        }
+
+        .btn-cta {
+            display: inline-block;
+            background: #fff;
+            color: #00A86B;
+            padding: 12px 35px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .btn-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .footer {
+            background: #0f172a;
+            padding: 40px;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .footer p {
+            color: #64748b;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+            .hero h1 {
+                font-size: 2rem;
+            }
+            .hero {
+                padding: 50px 20px;
+            }
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            .stats {
+                gap: 30px;
+            }
+            .nav-links {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <h1><i class="fas fa-bolt"></i> TechCare</h1>
+            <p>Plateforme Écologique Intelligente</p>
+        </div>
+        <div class="nav-links">
+            <a href="#">Accueil</a>
+            <a href="#features">Fonctionnalités</a>
+            <a href="#stats">Chiffres</a>
+            <a href="#contact">Contact</a>
+        </div>
+        <div>
+            <a href="public/index.php" class="btn-login"><i class="fas fa-rocket"></i> Accéder à l'application</a>
+        </div>
+    </div>
+
+    <section class="hero">
+        <h1>Bienvenue sur <span>TechCare</span></h1>
+        <p>Gagnez des points, débloquez des badges et obtenez des récompenses en adoptant des gestes écologiques !</p>
+        <a href="public/index.php" class="btn-start"><i class="fas fa-play"></i> Démarrer l'aventure</a>
+    </section>
+
+    <section class="features" id="features">
+        <h2 class="section-title">Ce que <span>TechCare</span> vous offre</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">⭐</div>
+                <h3>Gagnez des points</h3>
+                <p>Chaque action écologique vous rapporte des points.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🏅</div>
+                <h3>Débloquez des badges</h3>
+                <p>Atteignez des paliers pour débloquer des badges.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🏆</div>
+                <h3>Consultez le classement</h3>
+                <p>Comparez-vous aux autres utilisateurs.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎁</div>
+                <h3>Échangez vos points</h3>
+                <p>Obtenez des réductions exclusives.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💎</div>
+                <h3>Programme de fidélité</h3>
+                <p>Économisez avec des codes promo.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Tableau de bord</h3>
+                <p>Suivez votre progression en temps réel.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="stats" id="stats">
+        <div class="stat-item">
+            <h2 id="totalUsers">0</h2>
+            <p>Utilisateurs actifs</p>
+        </div>
+        <div class="stat-item">
+            <h2 id="totalPoints">0</h2>
+            <p>Points distribués</p>
+        </div>
+        <div class="stat-item">
+            <h2 id="totalActions">0</h2>
+            <p>Actions écologiques</p>
+        </div>
+        <div class="stat-item">
+            <h2 id="totalBadges">0</h2>
+            <p>Badges débloqués</p>
+        </div>
+    </section>
+
+    <section class="cta" id="contact">
+        <h2>Prêt à rejoindre l'aventure ?</h2>
+        <p>Commencez dès maintenant à gagner des points !</p>
+        <a href="public/index.php" class="btn-cta"><i class="fas fa-arrow-right"></i> Commencer</a>
+    </section>
+
+    <footer class="footer">
+        <p>© 2026 TechCare - Tous droits réservés | Projet Web - Module Gamification</p>
+        <p style="margin-top: 10px; font-size: 0.8rem;">Ayari Firas - Esprit 2A29</p>
+    </footer>
+
+    <script>
+        function loadStats() {
+            fetch('public/index.php?controller=user&action=getStats')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('totalUsers').innerHTML = data.totalUsers || 0;
+                    document.getElementById('totalPoints').innerHTML = (data.totalPoints || 0).toLocaleString();
+                    document.getElementById('totalActions').innerHTML = (data.totalActions || 0).toLocaleString();
+                    document.getElementById('totalBadges').innerHTML = data.totalBadges || 0;
+                })
+                .catch(error => {
+                    document.getElementById('totalUsers').innerHTML = '5';
+                    document.getElementById('totalPoints').innerHTML = '8 240';
+                    document.getElementById('totalActions').innerHTML = '98';
+                    document.getElementById('totalBadges').innerHTML = '23';
+                });
+        }
+
+        loadStats();
+        setInterval(loadStats, 30000);
+    </script>
+</body>
+</html>
