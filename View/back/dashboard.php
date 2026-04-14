@@ -198,6 +198,58 @@ if (isset($_GET['error'])) {
         .update-form {
             display: contents;
         }
+        
+        .form-add .wrapper-add {
+            display: inline-block;
+            width: calc(20% - 10px);
+            margin: 5px;
+            vertical-align: top;
+        }
+        .form-add .wrapper-add input, .form-add .wrapper-add select {
+            width: 100% !important;
+            margin: 0 !important;
+        }
+        .form-add .wrapper-add .field-error {
+            font-size: 11px;
+            color: #e74c3c;
+            margin-top: 3px;
+            display: none;
+        }
+        .form-add .wrapper-add .field-error.show { display: block; }
+        .form-add .wrapper-add input.error { border-color: #e74c3c; box-shadow: 0 0 0 1px rgba(231,76,60,0.2); }
+        .form-add .wrapper-add input.valid { border-color: #00A86B; }
+
+        .password-strength {
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .strength-bars {
+            display: flex;
+            gap: 3px;
+            flex: 1;
+        }
+        .strength-bar {
+            height: 4px;
+            flex: 1;
+            background: #ddd;
+            border-radius: 2px;
+            transition: all 0.2s ease;
+        }
+        .strength-bar.weak { background: #e74c3c; }
+        .strength-bar.medium { background: #f39c12; }
+        .strength-bar.strong { background: #00A86B; }
+        .strength-text {
+            font-size: 11px;
+            font-weight: 600;
+            min-width: 45px;
+            text-align: right;
+        }
+        .strength-text.weak { color: #e74c3c; }
+        .strength-text.medium { color: #f39c12; }
+        .strength-text.strong { color: #00A86B; }
     </style>
 </head>
 <body>
@@ -224,21 +276,9 @@ if (isset($_GET['error'])) {
 
         <hr>
 
-        <!-- AJOUT USER -->
-        <h2>➕ Ajouter un utilisateur</h2>
-        <div class="form-add">
-            <form action="../../Controller/UserController.php?action=add" method="POST" onsubmit="return confirm('Ajouter cet utilisateur ?')">
-                <input type="text" name="nom" placeholder="Nom" required>
-                <input type="text" name="prenom" placeholder="Prénom" required>
-                <input type="email" name="email" placeholder="Email" required>
-                <input type="text" name="telephone" placeholder="Téléphone" required>
-                <input type="password" name="password" placeholder="Mot de passe" required>
-                <select name="role">
-                    <option value="user">Utilisateur</option>
-                    <option value="admin">Admin</option>
-                </select>
-                <button type="submit" class="btn btn-success">Ajouter</button>
-            </form>
+        <!-- BOUTON AJOUTER UTILISATEUR -->
+        <div style="margin: 20px 0;">
+            <a href="addUser.php" class="btn btn-success" style="font-size: 16px; font-weight: bold; width: 100%; text-align: center;">➕ Ajouter utilisateur</a>
         </div>
 
         <hr>
@@ -296,5 +336,7 @@ if (isset($_GET['error'])) {
             </table>
         <?php endif; ?>
     </div>
+
+
 </body>
 </html>

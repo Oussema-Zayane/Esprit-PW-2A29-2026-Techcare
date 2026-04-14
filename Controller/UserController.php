@@ -136,7 +136,7 @@ if ($action == "add") {
     // S'il y a des erreurs, rediriger avec message d'erreur
     if (!empty($errors)) {
         $errorMsg = implode(',', $errors);
-        header("Location: ../View/back/dashboard.php?error=" . $errorMsg);
+        header("Location: ../View/front/profile.php?admin_action=1&error=" . $errorMsg);
         exit();
     }
 
@@ -144,9 +144,9 @@ if ($action == "add") {
     $result = User::register($nom, $prenom, $email, $telephoneClean, $hashedPassword, $role);
     
     if ($result) {
-        header("Location: ../View/back/dashboard.php?success=add");
+        header("Location: ../View/front/profile.php?admin_action=1&success=add");
     } else {
-        header("Location: ../View/back/dashboard.php?error=add_failed");
+        header("Location: ../View/front/profile.php?admin_action=1&error=add_failed");
     }
     exit();
 }

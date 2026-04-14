@@ -425,6 +425,26 @@ if (session_status() === PHP_SESSION_NONE) {
     document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', () => { document.getElementById('mobileMenu')?.classList.remove('open'); });
     });
+    
+    <?php if (isset($_GET['admin_action'])): ?>
+    setTimeout(() => {
+        const panel = document.getElementById('adminPanel');
+        if (panel) {
+            panel.style.display = 'block';
+            showAdminTab('users');
+            
+            <?php if (isset($_GET['success']) && $_GET['success'] == 'add'): ?>
+                showToast('✅ Utilisateur ajouté avec succès !', 'success');
+            <?php elseif (isset($_GET['error'])): ?>
+                let errMsg = "<?= htmlspecialchars($_GET['error']) ?>";
+                if (errMsg === 'email_exists') errMsg = "Cet email est déjà utilisé !";
+                if (errMsg === 'password_court') errMsg = "Le mot de passe doit contenir au moins 8 caractères.";
+                if (errMsg.includes('requis')) errMsg = "Veuillez remplir tous les champs.";
+                showToast('❌ Erreur : ' + errMsg, 'error');
+            <?php endif; ?>
+        }
+    }, 100);
+    <?php endif; ?>
     </script>
 </body>
 </html>
