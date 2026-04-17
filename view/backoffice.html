@@ -86,6 +86,9 @@
         <button class="sidebar-item" id="nav-catalogue" onclick="appController.showTab('catalogue')">
           <i class="fas fa-list-ul"></i> Catalogue
         </button>
+        <button class="sidebar-item" id="nav-categorie" onclick="window.location.href='categorie.html'">
+          <i class="fas fa-folder"></i> Catégories
+        </button>
         <hr style="border:0;border-top:1px solid rgba(255,255,255,.1);margin:.5rem 0;" />
         <button class="sidebar-item" onclick="openPage('user')">
           <i class="fas fa-user"></i> Users
@@ -151,7 +154,7 @@
 
               <div class="form-group">
                 <label for="p-nom">Nom du produit *</label>
-                <input type="text" id="p-nom" placeholder="Ex: iPhone 16 Pro" required autocomplete="off" />
+                <input type="text" id="p-nom" placeholder="Ex: iPhone 16 Pro" autocomplete="off" />
               </div>
 
               <div class="form-group">
@@ -161,12 +164,12 @@
 
               <div class="form-group">
                 <label for="p-prix">Prix (DT) *</label>
-                <input type="number" id="p-prix" step="0.01" min="0.01" placeholder="0.00" required />
+                <input type="text" id="p-prix" placeholder="0.00" />
               </div>
 
               <div class="form-group">
                 <label for="p-stock">Stock</label>
-                <input type="number" id="p-stock" min="0" value="0" placeholder="0" />
+                <input type="text" id="p-stock" value="0" placeholder="0" />
               </div>
 
               <div class="form-group">
@@ -180,7 +183,7 @@
               <div class="form-group" style="grid-column:span 2;">
                 <label for="p-image">Image du produit *</label>
                 <div style="display: flex; gap: 1rem; align-items: flex-start;">
-                  <input type="file" id="p-image" accept="image/*" required style="flex: 1;" />
+                  <input type="file" id="p-image" style="flex: 1;" />
                   <button type="button" class="btn-outline" onclick="clearImagePreview('p')" style="padding: 0.5rem 1rem; white-space: nowrap;">
                     <i class="fas fa-trash"></i> Effacer
                   </button>
@@ -203,6 +206,9 @@
                 <button type="button" class="btn-outline" onclick="document.getElementById('add-product-form').reset(); document.getElementById('p-image-preview').style.display='none';">
                   <i class="fas fa-rotate-left"></i> Réinitialiser
                 </button>
+                <button type="button" class="btn-outline" onclick="window.location.href='categorie.html'" style="background:rgba(59, 130, 246, 0.2);border-color:#3b82f6;color:#3b82f6;">
+                  <i class="fas fa-folder"></i> Gérer catégories
+                </button>
               </div>
             </form>
           </div>
@@ -221,7 +227,7 @@
               <input type="hidden" id="e-id" />
               <div class="form-group">
                 <label for="e-nom">Nom du produit *</label>
-                <input type="text" id="e-nom" required autocomplete="off" />
+                <input type="text" id="e-nom" autocomplete="off" />
               </div>
               <div class="form-group">
                 <label for="e-marque">Marque</label>
@@ -229,11 +235,11 @@
               </div>
               <div class="form-group">
                 <label for="e-prix">Prix (DT) *</label>
-                <input type="number" id="e-prix" step="0.01" min="0.01" required />
+                <input type="text" id="e-prix" />
               </div>
               <div class="form-group">
                 <label for="e-stock">Stock</label>
-                <input type="number" id="e-stock" min="0" />
+                <input type="text" id="e-stock" />
               </div>
               <div class="form-group">
                 <label for="e-etat">État</label>
@@ -245,7 +251,7 @@
               <div class="form-group" style="grid-column:span 2;">
                 <label for="e-image">Image du produit *</label>
                 <div style="display: flex; gap: 1rem; align-items: flex-start;">
-                  <input type="file" id="e-image" accept="image/*" style="flex: 1;" />
+                  <input type="file" id="e-image" style="flex: 1;" />
                   <button type="button" class="btn-outline" onclick="clearImagePreview('e')" style="padding: 0.5rem 1rem; white-space: nowrap;">
                     <i class="fas fa-trash"></i> Effacer
                   </button>
@@ -452,6 +458,112 @@
       }
     };
 
+    // ── Validation JavaScript ────────────────────────
+    const validator = {
+      validateNom(nom) {
+        if (!nom || nom.trim() === '') {
+          return { valid: false, message: 'Le nom du produit est obligatoire' };
+        }
+        if (nom.length > 255) {
+          return { valid: false, message: 'Le nom ne doit pas dépasser 255 caractères' };
+        }
+        return { valid: true };
+      },
+
+      validatePrix(prix) {
+        if (!prix || prix.trim() === '') {
+          return { valid: false, message: 'Le prix est obligatoire' };
+        }
+        const prixNum = parseFloat(prix);
+        if (isNaN(prixNum)) {
+          return { valid: false, message: 'Le prix doit être un nombre valide' };
+        }
+        if (prixNum < 0.01) {
+          return { valid: false, message: 'Le prix doit être supérieur à 0.00' };
+        }
+        return { valid: true };
+      },
+
+      validateStock(stock) {
+        if (!stock || stock.trim() === '') {
+          return { valid: true, value: 0 };
+        }
+        const stockNum = parseInt(stock);
+        if (isNaN(stockNum)) {
+          return { valid: false, message: 'Le stock doit être un nombre entier' };
+        }
+        if (stockNum < 0) {
+          return { valid: false, message: 'Le stock ne peut pas être négatif' };
+        }
+        return { valid: true, value: stockNum };
+      },
+
+      validateImage(fileInput, showError = true) {
+        if (!fileInput.files || fileInput.files.length === 0) {
+          if (showError) {
+            return { valid: false, message: 'Veuillez sélectionner une image' };
+          }
+          return { valid: true };
+        }
+
+        const file = fileInput.files[0];
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        
+        if (!allowedTypes.includes(file.type)) {
+          return { valid: false, message: 'Seules les images (JPEG, PNG, GIF, WebP) sont autorisées' };
+        }
+        
+        const maxSize = 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+          return { valid: false, message: 'L\'image ne doit pas dépasser 5MB' };
+        }
+        
+        return { valid: true };
+      },
+
+      validateFormAjout() {
+        const nom = document.getElementById('p-nom').value;
+        const prix = document.getElementById('p-prix').value;
+        const stock = document.getElementById('p-stock').value;
+        const imageInput = document.getElementById('p-image');
+
+        const nomCheck = this.validateNom(nom);
+        if (!nomCheck.valid) return nomCheck;
+
+        const prixCheck = this.validatePrix(prix);
+        if (!prixCheck.valid) return prixCheck;
+
+        const stockCheck = this.validateStock(stock);
+        if (!stockCheck.valid) return stockCheck;
+
+        const imageCheck = this.validateImage(imageInput, true);
+        if (!imageCheck.valid) return imageCheck;
+
+        return { valid: true };
+      },
+
+      validateFormEdition() {
+        const nom = document.getElementById('e-nom').value;
+        const prix = document.getElementById('e-prix').value;
+        const stock = document.getElementById('e-stock').value;
+        const imageInput = document.getElementById('e-image');
+
+        const nomCheck = this.validateNom(nom);
+        if (!nomCheck.valid) return nomCheck;
+
+        const prixCheck = this.validatePrix(prix);
+        if (!prixCheck.valid) return prixCheck;
+
+        const stockCheck = this.validateStock(stock);
+        if (!stockCheck.valid) return stockCheck;
+
+        const imageCheck = this.validateImage(imageInput, false);
+        if (!imageCheck.valid) return imageCheck;
+
+        return { valid: true };
+      }
+    };
+
     const appController = {
       async init() {
         try {
@@ -506,16 +618,24 @@
 
       async handleUpdate(e) {
         e.preventDefault();
+        console.log('handleUpdate appelé');
+        
+        const validation = validator.validateFormEdition();
+        console.log('Validation:', validation);
+        if (!validation.valid) {
+          view.showToast(validation.message, 'error');
+          return;
+        }
+
         const id = document.getElementById('e-id').value;
         const nom = document.getElementById('e-nom').value.trim();
         const prix = document.getElementById('e-prix').value.trim();
+        const stock = document.getElementById('e-stock').value.trim() || '0';
+        const marque = document.getElementById('e-marque').value.trim();
+        const description = document.getElementById('e-description').value.trim();
+        const etat = document.getElementById('e-etat').value;
         const imageInput = document.getElementById('e-image');
         const ePreviewImg = document.getElementById('e-image-preview-img');
-        
-        if (!nom || !prix) {
-          view.showToast('Veuillez remplir les champs obligatoires (nom, prix)', 'warn');
-          return;
-        }
 
         try {
           let imagePath = ePreviewImg.src;
@@ -526,19 +646,14 @@
           }
 
           const data = {
-            nom:         nom,
-            marque:      document.getElementById('e-marque').value,
-            prix:        prix,
-            stock:       document.getElementById('e-stock').value,
-            etat:        document.getElementById('e-etat').value,
-            image:       imagePath,
-            description: document.getElementById('e-description').value
+            nom: nom,
+            marque: marque,
+            prix: prix,
+            stock: stock,
+            etat: etat,
+            image: imagePath,
+            description: description
           };
-
-          if (!data.image) {
-            view.showToast('Veuillez sélectionner ou conserver une image', 'warn');
-            return;
-          }
 
           const result = await api.update(id, data);
           if (result.success) {
@@ -556,27 +671,36 @@
 
       async handleAdd(e) {
         e.preventDefault();
+        console.log('handleAdd appelé');
         
-        const nom = document.getElementById('p-nom').value.trim();
-        const prix = document.getElementById('p-prix').value.trim();
-        const imageInput = document.getElementById('p-image');
-        
-        if (!nom || !prix) {
-          view.showToast('Veuillez remplir les champs obligatoires (nom, prix)', 'warn');
+        const validation = validator.validateFormAjout();
+        console.log('Validation:', validation);
+        if (!validation.valid) {
+          view.showToast(validation.message, 'error');
           return;
         }
 
-        if (!imageInput.files || !imageInput.files[0]) {
-          view.showToast('Veuillez sélectionner une image', 'warn');
-          return;
-        }
+        const nom = document.getElementById('p-nom').value.trim();
+        const prix = document.getElementById('p-prix').value.trim();
+        const stock = document.getElementById('p-stock').value.trim() || '0';
+        const marque = document.getElementById('p-marque').value.trim();
+        const description = document.getElementById('p-description').value.trim();
+        const etat = document.getElementById('p-etat').value;
+        const imageInput = document.getElementById('p-image');
 
         try {
           view.showToast('Téléchargement de l\'image...', 'warn');
           const imagePath = await uploadImage(imageInput);
           
-          const data = view.getFormData();
-          data.image = imagePath;
+          const data = {
+            nom: nom,
+            marque: marque,
+            prix: prix,
+            stock: stock,
+            etat: etat,
+            image: imagePath,
+            description: description
+          };
           
           const result = await api.add(data);
           if (result.success) {

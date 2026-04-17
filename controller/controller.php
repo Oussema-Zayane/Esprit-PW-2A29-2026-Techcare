@@ -42,8 +42,8 @@ try {
 
         case 'PUT':
             if (!$id) sendJSON(400, false, 'ID requis.');
-            if (empty($body['nom']) || empty($body['prix']) || empty($body['image'])) {
-                sendJSON(400, false, 'Champs obligatoires manquants.');
+            if (empty($body['nom']) || empty($body['prix'])) {
+                sendJSON(400, false, 'Champs obligatoires manquants (nom, prix).');
             }
             $updated = $model->updateProduct($id, $body);
             $updated ? sendJSON(200, true, 'Produit modifié.', $updated) : sendJSON(404, false, 'Produit introuvable.');
