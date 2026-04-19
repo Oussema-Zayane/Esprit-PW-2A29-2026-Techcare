@@ -69,17 +69,17 @@
                                 </td>
                                 <td class="table-actions">
                                     <!-- 👁️ VOIR -->
-                                    <a href="index.php?page=detail-abo&id=<?= $abo['id'] ?>" 
+                                    <a href="index.php?page=detail-abonnement&id=<?= $abo['id'] ?>" 
                                        class="btn-sm-green" title="Voir détail">
                                         <i class="fa-solid fa-eye"></i> Voir
                                     </a>
                                     <!-- ✏️ MODIFIER -->
-                                    <a href="index.php?page=modifier-abo&id=<?= $abo['id'] ?>" 
+                                    <a href="index.php?page=modifier-abonnement&id=<?= $abo['id'] ?>" 
                                        class="btn-sm-outline" title="Modifier">
                                         <i class="fa-solid fa-pen"></i> Modifier
                                     </a>
                                     <!-- 🗑️ SUPPRIMER (Résiliation) -->
-                                    <a href="index.php?page=supprimer-abo&id=<?= $abo['id'] ?>" 
+                                    <a href="index.php?page=supprimer-abonnement&id=<?= $abo['id'] ?>" 
                                        class="btn-danger"
                                        style="display: inline-flex; align-items: center; gap: 0.35rem; background: #e74c3c; color: white; padding: 0.4rem 0.9rem; border-radius: 8px; font-size: 0.82rem; text-decoration: none; cursor: pointer; border: none;"
                                        title="Résilier"
@@ -99,63 +99,190 @@
 <?php include __DIR__ . '/../layout/footer.php'; ?>
 
 <style>
-.abonnements-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 20px;
-    margin-top: 30px;
-}
-.abonnement-card {
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    overflow: hidden;
-    transition: transform 0.2s;
-}
-.abonnement-card:hover {
-    transform: translateY(-5px);
-}
-.card-header {
-    background: #0A1F44;
+/* Style global pour la page mes abonnements - Texte BLANC */
+.container {
     color: white;
-    padding: 15px;
+}
+
+.page-header h1 {
+    color: white;
+}
+
+.page-header p {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Tableau */
+.table-container {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.table-header h3 {
+    color: white;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th {
+    background: rgba(0, 168, 107, 0.3);
+    color: white;
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: 600;
+}
+
+.data-table td {
+    color: white;
+    padding: 12px 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.data-table tr:hover td {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Badge statut */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-actif {
+    background: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
+    border: 1px solid rgba(46, 204, 113, 0.5);
+}
+
+.badge-actif i {
+    color: #2ecc71;
+}
+
+/* Boutons d'action */
+.table-actions {
     display: flex;
-    justify-content: space-between;
+    gap: 8px;
 }
-.card-body {
-    padding: 20px;
-    text-align: center;
-}
-.prix {
-    font-size: 28px;
-    font-weight: bold;
-    color: #00A86B;
-}
-.periode {
-    margin-top: 10px;
-    color: #666;
-    font-size: 14px;
-}
-.card-actions {
-    display: flex;
-    gap: 10px;
-    padding: 15px;
-    border-top: 1px solid #eee;
-}
-.card-actions a {
-    flex: 1;
-    text-align: center;
-    padding: 8px;
-    border-radius: 8px;
+
+.btn-sm-green {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(52, 152, 219, 0.2);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 6px;
     text-decoration: none;
-    font-size: 14px;
+    font-size: 0.75rem;
+    transition: all 0.3s;
+    border: 1px solid rgba(52, 152, 219, 0.5);
 }
-.btn-view { background: #3498db; color: white; }
-.btn-edit { background: #f39c12; color: white; }
-.btn-delete { background: #e74c3c; color: white; }
-.statut-badge.actif { background: #2ecc71; color: white; padding: 3px 10px; border-radius: 20px; font-size: 12px; }
-.statut-badge.expiré { background: #e74c3c; color: white; padding: 3px 10px; border-radius: 20px; font-size: 12px; }
-.type-badge { background: #00A86B; padding: 3px 10px; border-radius: 20px; font-size: 12px; }
+
+.btn-sm-green:hover {
+    background: #3498db;
+    color: white;
+}
+
+.btn-sm-outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(243, 156, 18, 0.2);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.75rem;
+    transition: all 0.3s;
+    border: 1px solid rgba(243, 156, 18, 0.5);
+}
+
+.btn-sm-outline:hover {
+    background: #f39c12;
+    color: white;
+}
+
+.btn-danger {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(231, 76, 60, 0.2);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.75rem;
+    transition: all 0.3s;
+    border: 1px solid rgba(231, 76, 60, 0.5);
+}
+
+.btn-danger:hover {
+    background: #e74c3c;
+    color: white;
+}
+
+/* Message vide */
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+/* Alertes */
+.alert-success {
+    background: rgba(0, 168, 107, 0.2);
+    border: 1px solid rgba(0, 168, 107, 0.5);
+    color: #2ecc71;
+    padding: 12px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Prix en vert */
+.data-table td:nth-child(2) {
+    color: #2ecc71;
+    font-weight: bold;
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.alert-success, .table-container {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .table-actions {
+        flex-direction: column;
+        gap: 5px;
+    }
+    .btn-sm-green, .btn-sm-outline, .btn-danger {
+        justify-content: center;
+    }
+}
 </style>
 
 <?php include __DIR__ . '/../layout/footer.php'; ?>

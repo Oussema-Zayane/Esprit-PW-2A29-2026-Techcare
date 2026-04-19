@@ -74,7 +74,7 @@
 
             <!-- Actions -->
             <div class="form-actions" style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 2rem;">
-                <a href="index.php?page=mes-abonnements" class="btn-secondary" style="color: #333;">
+                <a href="index.php?page=mes-abonnements" class="btn-secondary" style="color: #0c0b0b;">
                     <i class="fa-solid fa-arrow-left"></i> Retour
                 </a>
                 <a href="index.php?page=modifier-abo&id=<?= $abonnement['id'] ?>" class="btn-primary">

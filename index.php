@@ -1,25 +1,24 @@
 <?php
 /**
- * TechCare - Routeur principal
- * Front Office = page=xxx
- * Back Office = action=xxx
+ * TechCare - Point d'entrée unique (Router)
  */
 
-// Démarrer la session
-session_start();
-
-// Configuration base de données
 require_once 'config/database.php';
+
+// Démarrer la session
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Récupérer les paramètres
 $page = $_GET['page'] ?? null;
 $action = $_GET['action'] ?? null;
 
-// ========== FRONT OFFICE (Pages publiques) ==========
+// ========== FRONT OFFICE ==========
 if ($page !== null) {
     require_once 'app/controllers/FrontController.php';
     $controller = new FrontController();
-    
+
     switch ($page) {
         case 'accueil':
             $controller->accueil();
@@ -42,8 +41,14 @@ if ($page !== null) {
         case 'supprimer-abonnement':
             $controller->supprimerAbonnementFront();
             break;
-        case 'suivi':
-            $controller->suivi();
+        case 'login':
+            $controller->login();
+            break;
+        case 'register':
+            $controller->register();
+            break;
+        case 'logout':
+            $controller->logout();
             break;
         case 'contact':
             $controller->contact();
@@ -53,49 +58,98 @@ if ($page !== null) {
             break;
     }
 }
-// ========== BACK OFFICE (Administration) ==========
+// ========== BACK OFFICE ==========
 else {
-    require_once 'app/controllers/AdminController.php';
-    $controller = new AdminController();
-    $action = $action ?? 'dashboard';
-    
-    // Vérifier l'authentification (sauf pour login)
-    if ($action !== 'login' && !isset($_SESSION['user_id'])) {
-        header('Location: index.php?action=login');
-        exit();
+    // Vérifier si l'action concerne les types d'abonnement
+    if (strpos($action, 'types-') === 0 || $action === 'types') {
+        require_once 'app/controllers/TypeController.php';
+        $controller = new TypeController();
+        
+        switch ($action) {
+            case 'types':
+                $controller->liste();
+                break;
+            case 'types-ajouter':
+                $controller->ajouter();
+                break;
+            case 'types-modifier':
+                $controller->modifier();
+                break;
+            case 'types-supprimer':
+                $controller->supprimer();
+                break;
+            case 'types-detail':
+                $controller->detail();
+                break;
+            default:
+                $controller->liste();
+                break;
+        }
     }
-    
-    switch ($action) {
-        case 'dashboard':
-            $controller->dashboard();
-            break;
-        case 'liste':
-            $controller->listeAbonnements();
-            break;
-        case 'ajouter':
-            $controller->ajouterAbonnement();
-            break;
-        case 'modifier':
-            $controller->modifierAbonnement();
-            break;
-        case 'supprimer':
-            $controller->supprimerAbonnement();
-            break;
-        case 'detail':
-            $controller->detailAbonnement();
-            break;
-        case 'statistiques':
-            $controller->statistiques();
-            break;
-        case 'login':
-            $controller->login();
-            break;
-        case 'logout':
-            $controller->logout();
-            break;
-        default:
-            $controller->dashboard();
-            break;
+    // Vérifier si l'action concerne les offres
+    elseif (strpos($action, 'offres-') === 0 || $action === 'offres') {
+        require_once 'app/controllers/OffreController.php';
+        $controller = new OffreController();
+        
+        switch ($action) {
+            case 'offres':
+                $controller->liste();
+                break;
+            case 'offres-ajouter':
+                $controller->ajouter();
+                break;
+            case 'offres-modifier':
+                $controller->modifier();
+                break;
+            case 'offres-supprimer':
+                $controller->supprimer();
+                break;
+            case 'offres-detail':
+                $controller->detail();
+                break;
+            default:
+                $controller->liste();
+                break;
+        }
+    }
+    // Actions pour les abonnements et dashboard
+    else {
+        require_once 'app/controllers/AdminController.php';
+        $controller = new AdminController();
+        $action = $action ?? 'dashboard';
+
+        switch ($action) {
+            case 'dashboard':
+                $controller->dashboard();
+                break;
+            case 'liste':
+                $controller->liste();
+                break;
+            case 'ajouter':
+                $controller->ajouter();
+                break;
+            case 'modifier':
+                $controller->modifier();
+                break;
+            case 'supprimer':
+                $controller->supprimer();
+                break;
+            case 'detail':
+                $controller->detail();
+                break;
+            case 'statistiques':
+                $controller->statistiques();
+                break;
+            case 'recherche':
+                $controller->recherche();
+                break;
+            case 'logout':
+                $controller->logout();
+                break;
+            default:
+                $controller->dashboard();
+                break;
+        }
     }
 }
 ?>

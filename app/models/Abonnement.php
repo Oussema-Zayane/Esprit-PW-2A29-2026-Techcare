@@ -9,38 +9,271 @@ class Abonnement {
     }
 
     /**
-     * Récupérer tous les abonnements
+     * Récupérer TOUS les abonnements avec jointure sur type_abonnement
      */
     public function getAll() {
-        $sql = "SELECT id, nom_client, email, type_abonnement, prix, date_debut, date_fin, statut, created_at FROM abonnements ORDER BY date_debut DESC";
+        $sql = "SELECT a.*, 
+                       t.nom_type, 
+                       t.prix_base,
+                       t.duree_jours
+                FROM abonnements a
+                LEFT JOIN type_abonnement t ON a.type_abonnement = t.nom_type
+                ORDER BY a.date_debut DESC";
         $result = $this->conn->query($sql);
-        
-        // Vérifier si la requête a réussi
-        if (!$result) {
-            // Si la table n'existe pas, créer les tables
-            $this->createTables();
-            $result = $this->conn->query($sql);
-        }
         
         if ($result && $result->num_rows > 0) {
             return $result->fetch_all(MYSQLI_ASSOC);
         }
-        
         return [];
     }
 
     /**
-     * Récupérer un abonnement par ID
+     * Récupérer un abonnement par son ID
      */
     public function getById($id) {
-        $stmt = $this->conn->prepare("SELECT * FROM abonnements WHERE id = ?");
-        if (!$stmt) {
-            return null;
-        }
+        $stmt = $this->conn->prepare("
+            SELECT a.*, 
+                   t.nom_type, 
+                   t.prix_base,
+                   t.duree_jours
+            FROM abonnements a
+            LEFT JOIN type_abonnement t ON a.type_abonnement = t.nom_type
+            WHERE a.id = ?
+        ");
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $result = $stmt->get_result();
         return $result->fetch_assoc();
+    }
+
+    /**
+     * Récupérer les options supplémentaires d'un abonnement
+     */
+    public function getOptions($abonnement_id) {
+        $stmt = $this->conn->prepare("
+            SELECT * FROM offre WHERE id_abonnement = ?
+        ");
+        $stmt->bind_param("i", $abonnement_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Récupérer les abonnements d'un utilisateur
+     */
+    public function getByUserId($user_id) {
+        $stmt = $this->conn->prepare("
+            SELECT a.*, 
+                   t.nom_type, 
+                   t.prix_base,
+                   t.duree_jours
+            FROM abonnements a
+            LEFT JOIN type_abonnement t ON a.type_abonnement = t.nom_type
+            WHERE a.user_id = ?
+            ORDER BY a.date_debut DESC
+        ");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result && $result->num_rows > 0) {
+            return $result->fetch_all(MYSQLI_ASSOC);
+        }
+        return [];
+    }
+
+    /**
+     * Récupérer les abonnements par type d'abonnement (nom)
+     */
+    public function getByTypeName($type_abonnement) {
+        $stmt = $this->conn->prepare("
+            SELECT a.*, t.nom_type, t.prix_base, t.duree_jours
+            FROM abonnements a
+            INNER JOIN type_abonnement t ON a.type_abonnement = t.nom_type
+            WHERE a.type_abonnement = ?
+            ORDER BY a.date_debut DESC
+        ");
+        $stmt->bind_param("s", $type_abonnement);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result && $result->num_rows > 0) {
+            return $result->fetch_all(MYSQLI_ASSOC);
+        }
+        return [];
+    }
+
+    /**
+     * Récupérer les abonnements par ID de type
+     */
+    public function getByTypeId($id_type) {
+        $stmt = $this->conn->prepare("
+            SELECT a.*, t.nom_type, t.prix_base, t.duree_jours
+            FROM abonnements a
+            INNER JOIN type_abonnement t ON a.type_abonnement = t.nom_type
+            WHERE t.id_type = ?
+            ORDER BY a.date_debut DESC
+        ");
+        $stmt->bind_param("i", $id_type);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result && $result->num_rows > 0) {
+            return $result->fetch_all(MYSQLI_ASSOC);
+        }
+        return [];
+    }
+
+    /**
+     * Recherche avancée d'abonnements avec critères multiples
+     */
+    public function rechercheAvancee($type_abonnement = null, $statut = null, $nom_client = null, $email = null, $date_debut_min = null, $date_debut_max = null, $prix_min = null, $prix_max = null) {
+        $sql = "SELECT a.*, t.nom_type, t.prix_base, t.duree_jours 
+                FROM abonnements a 
+                LEFT JOIN type_abonnement t ON a.type_abonnement = t.nom_type 
+                WHERE 1=1";
+        $params = [];
+        $types = "";
+        
+        if ($type_abonnement && $type_abonnement !== '') {
+            $sql .= " AND a.type_abonnement = ?";
+            $params[] = $type_abonnement;
+            $types .= "s";
+        }
+        if ($statut && $statut !== '') {
+            $sql .= " AND a.statut = ?";
+            $params[] = $statut;
+            $types .= "s";
+        }
+        if ($nom_client && $nom_client !== '') {
+            $sql .= " AND a.nom_client LIKE ?";
+            $params[] = "%$nom_client%";
+            $types .= "s";
+        }
+        if ($email && $email !== '') {
+            $sql .= " AND a.email LIKE ?";
+            $params[] = "%$email%";
+            $types .= "s";
+        }
+        if ($date_debut_min && $date_debut_min !== '') {
+            $sql .= " AND a.date_debut >= ?";
+            $params[] = $date_debut_min;
+            $types .= "s";
+        }
+        if ($date_debut_max && $date_debut_max !== '') {
+            $sql .= " AND a.date_debut <= ?";
+            $params[] = $date_debut_max;
+            $types .= "s";
+        }
+        if ($prix_min && $prix_min !== '') {
+            $sql .= " AND a.prix >= ?";
+            $params[] = (float)$prix_min;
+            $types .= "d";
+        }
+        if ($prix_max && $prix_max !== '') {
+            $sql .= " AND a.prix <= ?";
+            $params[] = (float)$prix_max;
+            $types .= "d";
+        }
+        
+        $sql .= " ORDER BY a.date_debut DESC";
+        
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            error_log("Erreur prepare rechercheAvancee: " . $this->conn->error);
+            return [];
+        }
+        
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result && $result->num_rows > 0) {
+            return $result->fetch_all(MYSQLI_ASSOC);
+        }
+        return [];
+    }
+
+    /**
+     * Recherche par critères simples (nom, email, type, date, prix)
+     * Utilisé par la recherche avancée du Back Office
+     */
+    public function rechercheParCritere($type_abonnement = null, $nom_client = null, $email = null, $date_debut = null, $prix = null, $date_fin = null) {
+        $sql = "SELECT a.*, t.nom_type, t.prix_base, t.duree_jours 
+                FROM abonnements a 
+                LEFT JOIN type_abonnement t ON a.type_abonnement = t.nom_type 
+                WHERE 1=1";
+        $params = [];
+        $types = "";
+        
+        if ($type_abonnement && $type_abonnement !== '') {
+            $sql .= " AND a.type_abonnement = ?";
+            $params[] = $type_abonnement;
+            $types .= "s";
+        }
+        if ($nom_client && $nom_client !== '') {
+            $sql .= " AND a.nom_client LIKE ?";
+            $params[] = "%$nom_client%";
+            $types .= "s";
+        }
+        if ($email && $email !== '') {
+            $sql .= " AND a.email LIKE ?";
+            $params[] = "%$email%";
+            $types .= "s";
+        }
+        if ($date_debut && $date_debut !== '') {
+            $sql .= " AND a.date_debut = ?";
+            $params[] = $date_debut;
+            $types .= "s";
+        }
+        if ($prix && $prix !== '') {
+            $sql .= " AND a.prix = ?";
+            $params[] = (float)$prix;
+            $types .= "d";
+        }
+        if ($date_fin && $date_fin !== '') {
+            $sql .= " AND a.date_fin = ?";
+            $params[] = $date_fin;
+            $types .= "s";
+        }
+        
+        $sql .= " ORDER BY a.date_debut DESC";
+        
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            error_log("Erreur prepare rechercheParCritere: " . $this->conn->error);
+            return [];
+        }
+        
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result && $result->num_rows > 0) {
+            return $result->fetch_all(MYSQLI_ASSOC);
+        }
+        return [];
+    }
+
+    /**
+     * Recherche simple (alias pour rechercheAvancee)
+     */
+    public function search($filters = []) {
+        $type_abonnement = $filters['type_abonnement'] ?? null;
+        $statut = $filters['statut'] ?? null;
+        $nom_client = $filters['nom_client'] ?? null;
+        $email = $filters['email'] ?? null;
+        $date_debut_min = $filters['date_debut_min'] ?? null;
+        $date_debut_max = $filters['date_debut_max'] ?? null;
+        $prix_min = $filters['prix_min'] ?? null;
+        $prix_max = $filters['prix_max'] ?? null;
+        
+        return $this->rechercheAvancee($type_abonnement, $statut, $nom_client, $email, $date_debut_min, $date_debut_max, $prix_min, $prix_max);
     }
 
     /**
@@ -53,35 +286,63 @@ class Abonnement {
         ");
         
         if (!$stmt) {
-            error_log("Erreur prédparation: " . $this->conn->error);
+            error_log("Erreur préparation create: " . $this->conn->error);
             return false;
         }
         
         $email = $data['email'] ?? null;
-        $prix = floatval($data['prix']);
-        
-        if (!$stmt->bind_param("sssdss",
+        $stmt->bind_param("sssdss",
             $data['nom_client'],
             $email,
             $data['type_abonnement'],
-            $prix,
+            $data['prix'],
             $data['date_debut'],
             $data['date_fin']
-        )) {
-            error_log("Erreur bind_param: " . $stmt->error);
-            return false;
-        }
+        );
         
         if (!$stmt->execute()) {
-            error_log("Erreur exécution: " . $stmt->error);
+            error_log("Erreur exécution create: " . $stmt->error);
             return false;
         }
         
-        return $stmt->insert_id ?? true;
+        return $stmt->insert_id;
     }
 
     /**
-     * Mettre à jour un abonnement
+     * Créer un abonnement avec user_id (Front Office)
+     */
+    public function createWithUser($data, $user_id) {
+        $stmt = $this->conn->prepare("
+            INSERT INTO abonnements (nom_client, email, type_abonnement, prix, date_debut, date_fin, statut, user_id)
+            VALUES (?, ?, ?, ?, ?, ?, 'actif', ?)
+        ");
+        
+        if (!$stmt) {
+            error_log("Erreur préparation createWithUser: " . $this->conn->error);
+            return false;
+        }
+        
+        $email = $data['email'] ?? null;
+        $stmt->bind_param("sssdssi",
+            $data['nom_client'],
+            $email,
+            $data['type_abonnement'],
+            $data['prix'],
+            $data['date_debut'],
+            $data['date_fin'],
+            $user_id
+        );
+        
+        if (!$stmt->execute()) {
+            error_log("Erreur exécution createWithUser: " . $stmt->error);
+            return false;
+        }
+        
+        return $stmt->insert_id;
+    }
+
+    /**
+     * Mettre à jour un abonnement (Back Office)
      */
     public function update($id, $data) {
         $stmt = $this->conn->prepare("
@@ -110,6 +371,30 @@ class Abonnement {
     }
 
     /**
+     * Mettre à jour un abonnement (Front Office - champs limités)
+     */
+    public function updateFront($id, $data) {
+        $stmt = $this->conn->prepare("
+            UPDATE abonnements 
+            SET type_abonnement=?, date_debut=?, date_fin=?
+            WHERE id=?
+        ");
+        
+        if (!$stmt) {
+            return false;
+        }
+        
+        $stmt->bind_param("sssi",
+            $data['type_abonnement'],
+            $data['date_debut'],
+            $data['date_fin'],
+            $id
+        );
+        
+        return $stmt->execute();
+    }
+
+    /**
      * Supprimer un abonnement
      */
     public function delete($id) {
@@ -122,25 +407,7 @@ class Abonnement {
     }
 
     /**
-     * Récupérer les abonnements par email client
-     */
-    public function getByEmail($email) {
-        $stmt = $this->conn->prepare("SELECT * FROM abonnements WHERE email = ? ORDER BY date_debut DESC");
-        if (!$stmt) {
-            return [];
-        }
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        if ($result && $result->num_rows > 0) {
-            return $result->fetch_all(MYSQLI_ASSOC);
-        }
-        return [];
-    }
-
-    /**
-     * Compter le nombre d'abonnements (tous)
+     * Compter le nombre total d'abonnements
      */
     public function count() {
         $result = $this->conn->query("SELECT COUNT(*) as total FROM abonnements");
@@ -164,7 +431,7 @@ class Abonnement {
     }
 
     /**
-     * Récupérer le total des revenus
+     * Calculer le revenu total
      */
     public function getTotalRevenue() {
         $result = $this->conn->query("SELECT SUM(prix) as revenue FROM abonnements WHERE statut = 'actif'");
@@ -176,85 +443,26 @@ class Abonnement {
     }
 
     /**
-     * Créer les tables si elles n'existent pas
+     * Récupérer les statistiques par type d'abonnement
      */
-    private function createTables() {
-        try {
-            // 1. Créer la table si elle n'existe pas
-            $createTableSQL = "
-                CREATE TABLE IF NOT EXISTS abonnements (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    nom_client VARCHAR(100) NOT NULL,
-                    email VARCHAR(100),
-                    type_abonnement ENUM('mensuel', 'annuel', 'ponctuel') NOT NULL DEFAULT 'mensuel',
-                    prix DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-                    date_debut DATE NOT NULL,
-                    date_fin DATE NOT NULL,
-                    statut ENUM('actif', 'suspendu', 'expiré', 'annulé') DEFAULT 'actif',
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                    INDEX idx_email (email),
-                    INDEX idx_statut (statut)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-            ";
-            
-            if (!$this->conn->query($createTableSQL)) {
-                error_log("[TECHCARE] Erreur création table abonnements: " . $this->conn->error);
-                return;
-            }
-            
-            error_log("[TECHCARE] Table abonnements créée/vérifiée");
-            
-            // 2. Vérifier et ajouter la colonne email si elle n'existe pas
-            $checkEmail = $this->conn->query("SHOW COLUMNS FROM abonnements LIKE 'email'");
-            if (!$checkEmail || $checkEmail->num_rows === 0) {
-                if (!$this->conn->query("ALTER TABLE abonnements ADD COLUMN email VARCHAR(100) AFTER nom_client")) {
-                    error_log("[TECHCARE] Erreur ajout colonne email: " . $this->conn->error);
-                } else {
-                    error_log("[TECHCARE] Colonne email ajoutée");
-                }
-            } else {
-                error_log("[TECHCARE] Colonne email existe déjà");
-            }
-            
-            // 3. Vérifier et ajouter les indexes
-            $checkIndexEmail = $this->conn->query("SHOW INDEX FROM abonnements WHERE Column_name = 'email' AND Seq_in_index = 1");
-            if (!$checkIndexEmail || $checkIndexEmail->num_rows === 0) {
-                $result = @$this->conn->query("ALTER TABLE abonnements ADD INDEX idx_email (email)");
-                if (!$result && strpos($this->conn->error, 'Duplicate') === false) {
-                    error_log("[TECHCARE] Erreur ajout index email: " . $this->conn->error);
-                } else if ($result) {
-                    error_log("[TECHCARE] Index email ajouté");
-                }
-            }
-            
-            // 4. Vérifier et ajouter les données de test si la table est vide
-            $countResult = $this->conn->query("SELECT COUNT(*) as total FROM abonnements");
-            if ($countResult) {
-                $row = $countResult->fetch_assoc();
-                if ($row['total'] == 0) {
-                    $today = date('Y-m-d');
-                    $nextMonth = date('Y-m-d', strtotime($today . ' +1 month'));
-                    $nextYear = date('Y-m-d', strtotime($today . ' +1 year'));
-                    
-                    $insertSQL = "
-                        INSERT INTO abonnements (nom_client, email, type_abonnement, prix, date_debut, date_fin, statut) VALUES
-                        ('Ahmed Ben Ali', 'ahmed@techcare.tn', 'mensuel', 29.90, '$today', '$nextMonth', 'actif'),
-                        ('Sara Mansouri', 'sara@techcare.tn', 'annuel', 299.00, '$today', '$nextYear', 'actif'),
-                        ('Karim Jbeli', 'karim@techcare.tn', 'ponctuel', 49.90, '$today', '$nextMonth', 'expiré')
-                    ";
-                    if (!$this->conn->query($insertSQL)) {
-                        error_log("[TECHCARE] Erreur insertion données test: " . $this->conn->error);
-                    } else {
-                        error_log("[TECHCARE] Données de test insérées");
-                    }
-                } else {
-                    error_log("[TECHCARE] Table a déjà " . $row['total'] . " enregistrements");
-                }
-            }
-        } catch (Exception $e) {
-            error_log("[TECHCARE] Exception lors de createTables: " . $e->getMessage());
+    public function getStatsByType() {
+        $sql = "SELECT 
+                    t.id_type,
+                    t.nom_type,
+                    t.prix_base,
+                    COUNT(a.id) as total,
+                    COALESCE(SUM(a.prix), 0) as revenus,
+                    COALESCE(AVG(a.prix), 0) as moyenne
+                FROM type_abonnement t
+                LEFT JOIN abonnements a ON t.nom_type = a.type_abonnement
+                GROUP BY t.id_type
+                ORDER BY total DESC";
+        $result = $this->conn->query($sql);
+        
+        if ($result && $result->num_rows > 0) {
+            return $result->fetch_all(MYSQLI_ASSOC);
         }
+        return [];
     }
 }
 ?>

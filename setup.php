@@ -39,7 +39,7 @@ if ($conn->connect_error) {
 
 $steps[] = ['✅ Connexion à la base de données', 'good'];
 
-// Étape 3: Créer la table si elle n'existe pas
+// Étape 3: Créer la table abonnements si elle n'existe pas
 $createTableSQL = "CREATE TABLE IF NOT EXISTS abonnements (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nom_client VARCHAR(100) NOT NULL,
@@ -56,9 +56,44 @@ $createTableSQL = "CREATE TABLE IF NOT EXISTS abonnements (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci";
 
 if ($conn->query($createTableSQL)) {
-    $steps[] = ['✅ Table créée/existe', 'good'];
+    $steps[] = ['✅ Table abonnements créée/existe', 'good'];
 } else {
-    $steps[] = ['❌ Erreur création table: ' . $conn->error, 'error'];
+    $steps[] = ['❌ Erreur création table abonnements: ' . $conn->error, 'error'];
+}
+
+// Étape 3b: Créer la table type_abonnement si elle n'existe pas
+$createTypeTableSQL = "CREATE TABLE IF NOT EXISTS type_abonnement (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nom_type VARCHAR(50) NOT NULL UNIQUE,
+    prix_base DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    duree_jours INT NOT NULL DEFAULT 30,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_nom_type (nom_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci";
+
+if ($conn->query($createTypeTableSQL)) {
+    $steps[] = ['✅ Table type_abonnement créée/existe', 'good'];
+} else {
+    $steps[] = ['❌ Erreur création table type_abonnement: ' . $conn->error, 'error'];
+}
+
+// Étape 3c: Créer la table offre si elle n'existe pas
+$createOffreTableSQL = "CREATE TABLE IF NOT EXISTS offre (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_abonnement INT NOT NULL,
+    description TEXT NOT NULL,
+    prix_supplementaire DECIMAL(10,2) DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_abonnement) REFERENCES abonnements(id) ON DELETE CASCADE,
+    INDEX idx_id_abonnement (id_abonnement)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci";
+
+if ($conn->query($createOffreTableSQL)) {
+    $steps[] = ['✅ Table offre créée/existe', 'good'];
+} else {
+    $steps[] = ['❌ Erreur création table offre: ' . $conn->error, 'error'];
 }
 
 // Étape 4: Vérifier et ajouter la colonne email si elle manque
@@ -85,7 +120,7 @@ if (!$checkIndex || $checkIndex->num_rows === 0) {
     $steps[] = ['✅ Index email existe', 'good'];
 }
 
-// Étape 6: Vérifier le nombre de lignes et insérer des données de test si vide
+// Étape 6: Vérifier le nombre de lignes dans abonnements et insérer des données de test si vide
 $countResult = $conn->query("SELECT COUNT(*) as count FROM abonnements");
 $row = $countResult->fetch_assoc();
 $count = $row['count'];
@@ -101,12 +136,32 @@ if ($count == 0) {
         ('Mohamed Salah', 'mohamed@example.com', 'mensuel', 29.90, '$today', '$nextMonth', 'actif')";
     
     if ($conn->query($insertSQL)) {
-        $steps[] = ['✅ Données de test insérées', 'good'];
+        $steps[] = ['✅ Données de test abonnements insérées', 'good'];
     } else {
-        $steps[] = ['❌ Erreur insertion données: ' . $conn->error, 'error'];
+        $steps[] = ['❌ Erreur insertion données abonnements: ' . $conn->error, 'error'];
     }
 } else {
-    $steps[] = ["✅ Table a déjà $count enregistrements", 'good'];
+    $steps[] = ["✅ Table abonnements a déjà $count enregistrements", 'good'];
+}
+
+// Étape 7: Vérifier le nombre de lignes dans type_abonnement et insérer des données de test si vide
+$countTypeResult = $conn->query("SELECT COUNT(*) as count FROM type_abonnement");
+$rowType = $countTypeResult->fetch_assoc();
+$countType = $rowType['count'];
+
+if ($countType == 0) {
+    $insertTypeSQL = "INSERT INTO type_abonnement (nom_type, prix_base, duree_jours, description) VALUES
+        ('mensuel', 29.90, 30, 'Abonnement mensuel avec support technique'),
+        ('annuel', 299.00, 365, 'Abonnement annuel avec remise et support premium'),
+        ('ponctuel', 49.90, 15, 'Service ponctuel pour intervention spécifique')";
+    
+    if ($conn->query($insertTypeSQL)) {
+        $steps[] = ['✅ Données de test types insérées', 'good'];
+    } else {
+        $steps[] = ['❌ Erreur insertion données types: ' . $conn->error, 'error'];
+    }
+} else {
+    $steps[] = ["✅ Table type_abonnement a déjà $countType enregistrements", 'good'];
 }
 
 // Afficher les résultats

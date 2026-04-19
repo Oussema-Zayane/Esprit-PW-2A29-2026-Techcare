@@ -1,16 +1,28 @@
 <?php
+/**
+ * ====================================
+ * FRONT CONTROLLER - PAGES PUBLIQUES
+ * ====================================
+ * Gere les pages accessibles a TOUS les visiteurs :
+ * - Accueil, offres, souscription
+ * - Gestion des abonnements utilisateur
+ * Pas d'authentification requise - libre acces
+ */
 require_once __DIR__ . '/../models/Abonnement.php';
+require_once __DIR__ . '/../models/Type.php';
 
 class FrontController {
     private $model;
 
     public function __construct() {
         $this->model = new Abonnement();
-        session_start();
+        // session_start() est deja appelee dans index.php
     }
 
     /**
-     * Page d'accueil
+     * PAGE ACCUEIL - Landing page principale
+     * Presente TechCare et incite a explorer les offres
+     * Point d'entree du site public
      */
     public function accueil() {
         require_once __DIR__ . '/../views/front/layout/header.php';
@@ -39,60 +51,71 @@ class FrontController {
     }
 
     /**
-     * Page des offres d'abonnements
-     */
-    public function offres() {
-        $abonnements = $this->model->getAll();
-        require_once __DIR__ . '/../views/front/layout/header.php';
-        require_once __DIR__ . '/../views/front/abonnements/index.php';
-        require_once __DIR__ . '/../views/front/layout/footer.php';
-    }
-
-    /**
-     * Page de souscription
+     * PAGE SOUSCRIRE - Formulaire de souscription a un plan
+     * GET  : Affiche le formulaire
+     * POST : Cree l'abonnement et sauvegarde en BDD
+     * 
+     * FEATURES:
+     * - Calcul auto du prix selon type (Mensuel 29.90 / Annuel 299)
+     * - Calcul auto date fin (+1 mois ou +1 an)
+     * - Validation email
+     * - Sauvegarde email en session pour retrouver les abonnements
      */
     public function souscrire() {
         $erreur = null;
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $type = $_POST['type_abonnement'] ?? 'mensuel';
-            // Définir les prix selon le type
-            $prices = [
-                'mensuel' => 29.90,
-                'annuel' => 299.00
-            ];
-            
-            // Calculer la date de fin selon le type
-            $dateDebut = $_POST['date_debut'] ?? date('Y-m-d');
-            if ($type === 'mensuel') {
-                $dateFin = date('Y-m-d', strtotime($dateDebut . ' +1 month'));
-            } else {
-                $dateFin = date('Y-m-d', strtotime($dateDebut . ' +1 year'));
-            }
-            
             // Valider l'email
             $email = filter_var($_POST['email'] ?? '', FILTER_SANITIZE_EMAIL);
+            $nom_client = htmlspecialchars($_POST['nom_client'] ?? '');
+            $type = $_POST['type_abonnement'] ?? 'mensuel';
+            
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 $erreur = "Email invalide";
+            } elseif (empty($nom_client)) {
+                $erreur = "Nom requis";
             } else {
+                // Calculer les prix et dates selon le type
+                $date_debut = date('Y-m-d');
+                
+                switch ($type) {
+                    case 'mensuel':
+                        $date_fin = date('Y-m-d', strtotime('+1 month'));
+                        $prix = 29.90;
+                        break;
+                    case 'annuel':
+                        $date_fin = date('Y-m-d', strtotime('+1 year'));
+                        $prix = 299.00;
+                        break;
+                    case 'ponctuel':
+                        $date_fin = date('Y-m-d', strtotime('+7 days'));
+                        $prix = 49.90;
+                        break;
+                    default:
+                        $date_fin = $date_debut;
+                        $prix = 29.90;
+                }
+                
                 $data = [
-                    'nom_client' => htmlspecialchars($_POST['nom_client'] ?? ''),
+                    'nom_client' => $nom_client,
                     'email' => $email,
                     'type_abonnement' => $type,
-                    'prix' => $prices[$type] ?? 29.90,
-                    'date_debut' => $dateDebut,
-                    'date_fin' => $dateFin
+                    'prix' => $prix,
+                    'date_debut' => $date_debut,
+                    'date_fin' => $date_fin
                 ];
                 
+                // Creer l'abonnement
                 $result = $this->model->create($data);
                 
                 if ($result) {
-                    $_SESSION['success'] = "Souscription réussie !";
-                    $_SESSION['user_email'] = $data['email'];
+                    // Sauvegarder l'email dans la session pour retrouver les abonnements
+                    $_SESSION['user_email'] = $email;
+                    $_SESSION['success'] = "Souscription reussie !";
                     header('Location: index.php?page=mes-abonnements');
                     exit();
                 } else {
-                    $erreur = "Erreur lors de la souscription. Veuillez réessayer.";
+                    $erreur = "Erreur lors de la souscription. Veuillez recessayer.";
                 }
             }
         }
@@ -111,11 +134,25 @@ class FrontController {
 
     /**
      * Mes abonnements (client)
+     * Recupere via email de session ou du formulaire
      */
     public function mesAbonnements() {
-        // Pour l'exemple, on utilise un email fixe ou de session
-        $email = $_SESSION['user_email'] ?? $_GET['email'] ?? 'client@techcare.com';
-        $mesAbonnements = $this->model->getByEmail($email);
+        $email = '';
+        $mesAbonnements = [];
+        
+        // Si email fourni en GET (formulaire de recherche)
+        if (!empty($_GET['email'])) {
+            $email = filter_var($_GET['email'], FILTER_SANITIZE_EMAIL);
+            if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $_SESSION['user_email'] = $email;
+                $mesAbonnements = $this->model->getByEmail($email);
+            }
+        }
+        // Sinon utiliser l'email en session
+        elseif (!empty($_SESSION['user_email'])) {
+            $email = $_SESSION['user_email'];
+            $mesAbonnements = $this->model->getByEmail($email);
+        }
         
         require_once __DIR__ . '/../views/front/layout/header.php';
         require_once __DIR__ . '/../views/front/abonnements/mes-abonnements.php';
@@ -243,5 +280,15 @@ class FrontController {
         <?php
         require_once __DIR__ . '/../views/front/layout/footer.php';
     }
+    /**
+ * Page des offres d'abonnement
+ */
+public function offres() {
+    // Récupérer tous les types d'abonnement depuis la base de données
+    $typeModel = new Type();
+    $types = $typeModel->getAll();
+    
+    include __DIR__ . '/../views/front/abonnements/index.php';
+}
 }
 ?>
