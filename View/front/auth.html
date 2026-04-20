@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/style.css">
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
         /* Styles spécifiques à la page auth */
         body {
@@ -373,6 +374,9 @@
                     <label><i class="fas fa-lock"></i> Mot de passe</label>
                     <input type="password" name="password" id="login-password" placeholder="Votre mot de passe" required>
                 </div>
+                <!-- Google reCAPTCHA -->
+                <div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" style="margin-bottom: 1rem; display: flex; justify-content: center;"></div>
+                
                 <button type="submit" class="btn-submit">
                     <i class="fas fa-arrow-right-to-bracket"></i> Se connecter
                 </button>
@@ -426,6 +430,10 @@
                     <div id="confirm-error" class="field-error">❌ Les mots de passe ne correspondent pas</div>
                     <div id="confirm-success" class="field-success">✅ Les mots de passe correspondent</div>
                 </div>
+                
+                <!-- Google reCAPTCHA -->
+                <div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" style="margin-bottom: 1rem; display: flex; justify-content: center;"></div>
+                
                 <button type="submit" class="btn-submit" id="registerBtn">
                     <i class="fas fa-check-circle"></i> S'inscrire
                 </button>
@@ -761,6 +769,15 @@
             const messageDiv = document.getElementById('login-message');
             messageDiv.innerHTML = '<i class="fas fa-times-circle"></i> Email ou mot de passe incorrect';
             messageDiv.className = 'message error';
+        }
+        
+        if (error === 'recaptcha') {
+            const loginMsg = document.getElementById('login-message');
+            const regMsg = document.getElementById('register-message');
+            loginMsg.innerHTML = '<i class="fas fa-robot"></i> Veuillez vérifier que vous n\'êtes pas un robot.';
+            loginMsg.className = 'message error';
+            regMsg.innerHTML = '<i class="fas fa-robot"></i> Veuillez vérifier que vous n\'êtes pas un robot.';
+            regMsg.className = 'message error';
         }
         
         if (error === 'password') {

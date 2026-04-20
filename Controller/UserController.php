@@ -4,9 +4,23 @@ require_once __DIR__ . "/../Model/User.php";
 
 session_start();
 
+function verifyRecaptcha($response) {
+    if (empty($response)) return false;
+    $secret = "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe";
+    $verifyUrl = 'https://www.google.com/recaptcha/api/siteverify?secret='.$secret.'&response='.$response;
+    $verifyResponse = file_get_contents($verifyUrl);
+    $responseData = json_decode($verifyResponse);
+    return $responseData->success;
+}
+
 $action = $_GET['action'] ?? '';
 
 if ($action == "login") {
+    if (!verifyRecaptcha($_POST['g-recaptcha-response'] ?? '')) {
+        header("Location: ../View/front/auth.html?error=recaptcha");
+        exit();
+    }
+    
     $email = $_POST['email'];
     $password = $_POST['password'];
 
@@ -35,6 +49,11 @@ if ($action == "login") {
 }
 
 if ($action == "register") {
+    if (!verifyRecaptcha($_POST['g-recaptcha-response'] ?? '')) {
+        header("Location: ../View/front/auth.html?error=recaptcha");
+        exit();
+    }
+    
     $nom = trim($_POST['nom']);
     $prenom = trim($_POST['prenom']);
     $email = trim($_POST['email']);
@@ -92,6 +111,11 @@ if ($action == "register") {
 if ($action == "add") {
     if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
         header("Location: ../View/front/auth.html");
+        exit();
+    }
+    
+    if (!verifyRecaptcha($_POST['g-recaptcha-response'] ?? '')) {
+        header("Location: ../View/front/profile.php?admin_action=1&error=recaptcha");
         exit();
     }
 

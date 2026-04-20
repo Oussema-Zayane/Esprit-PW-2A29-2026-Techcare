@@ -15,6 +15,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/style.css">
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
         .admin-section {
             margin: 2rem auto;
@@ -247,6 +248,9 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
                         </div>
                         <div id="add_password_error" class="admin-field-error"><i class="fas fa-exclamation-circle"></i> Au moins 8 caractères requis</div>
                     </div>
+                    
+                    <!-- Google reCAPTCHA -->
+                    <div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" style="margin-bottom: 1.5rem; display: flex; justify-content: center;"></div>
                     
                     <button type="submit" class="admin-submit-btn" id="addUserBtn">
                         <i class="fas fa-check"></i> Enregistrer l'utilisateur
