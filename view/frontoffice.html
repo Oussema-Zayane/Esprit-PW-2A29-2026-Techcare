@@ -12,8 +12,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
   <style>
-    .nav-link.nav-user     { border-color: #7c3aed; color: #7c3aed; }
-    .nav-link.nav-user:hover { background: #7c3aed; color: #fff; }
     .nav-link.nav-gamif    { border-color: #f59e0b; color: #f59e0b; }
     .nav-link.nav-gamif:hover { background: #f59e0b; color: #fff; }
     .nav-link.nav-diag     { border-color: #06b6d4; color: #06b6d4; }
@@ -79,9 +77,6 @@
         <button class="nav-link active" id="btn-boutique" onclick="navigate('front')">
           <i class="fas fa-store"></i> Boutique
         </button>
-        <button class="nav-link nav-user" onclick="openPage('user')">
-          <i class="fas fa-user"></i> User
-        </button>
         <button class="nav-link nav-gamif" onclick="openPage('gamification')">
           <i class="fas fa-gamepad"></i> Gamification
         </button>
@@ -131,14 +126,6 @@
 
 
   <!-- ── Modales ──────────────────────────────────────── -->
-  <div class="page-overlay" id="overlay-user">
-    <div class="page-modal">
-      <button class="close-modal" onclick="closePage('user')"><i class="fas fa-times"></i></button>
-      <div class="modal-icon">👤</div>
-      <h2>Gestion des Utilisateurs</h2>
-      <p>Module de gestion des comptes, profils et rôles utilisateurs.<br/>En cours de développement.</p>
-    </div>
-  </div>
   <div class="page-overlay" id="overlay-gamification">
     <div class="page-modal">
       <button class="close-modal" onclick="closePage('gamification')"><i class="fas fa-times"></i></button>

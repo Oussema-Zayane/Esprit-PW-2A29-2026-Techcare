@@ -28,13 +28,14 @@ class CategorieModel {
 
     // ── CREATE : Ajouter une catégorie ──────────────────
     public function addCategorie(array $data): array {
-        $sql = "INSERT INTO categorie (nom, description)
-                VALUES (:nom, :description)";
+        $sql = "INSERT INTO categorie (nom, description, image)
+                VALUES (:nom, :description, :image)";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             ':nom'         => trim($data['nom']),
             ':description' => trim($data['description'] ?? ''),
+            ':image'       => trim($data['image'] ?? ''),
         ]);
 
         $newId = (int)$this->pdo->lastInsertId();
@@ -44,13 +45,14 @@ class CategorieModel {
     // ── UPDATE : Modifier une catégorie ────────────────
     public function updateCategorie(int $id, array $data): ?array {
         $sql = "UPDATE categorie
-                SET nom = :nom, description = :description
+                SET nom = :nom, description = :description, image = :image
                 WHERE id = :id";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             ':nom'         => trim($data['nom']),
             ':description' => trim($data['description'] ?? ''),
+            ':image'       => trim($data['image'] ?? ''),
             ':id'          => $id,
         ]);
 
