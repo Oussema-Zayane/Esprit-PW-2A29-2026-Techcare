@@ -189,8 +189,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
         <div class="admin-section">
             <div class="admin-header">
                 <h3><i class="fas fa-user-plus" style="color: var(--green);"></i> Ajouter un nouvel utilisateur</h3>
-                <a href="dashboard.php" class="btn-back">
-                    <i class="fas fa-arrow-left"></i> Retour au tableau
+                <a href="../front/profile.php" class="btn-back">
+                    <i class="fas fa-arrow-left"></i> Retour à l'acceuil
                 </a>
             </div>
             

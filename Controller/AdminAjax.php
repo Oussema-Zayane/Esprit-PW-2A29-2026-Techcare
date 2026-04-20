@@ -49,7 +49,16 @@ if ($action == 'role_stats') {
 }
 
 if ($action == 'get_users') {
-    $users = User::getAllUsers();
+    $search = $_GET['search'] ?? '';
+    if (!empty($search)) {
+        $conn = Config::getConnexion();
+        $stmt = $conn->prepare("SELECT * FROM personne WHERE nom LIKE ? OR prenom LIKE ? OR email LIKE ? OR telephone LIKE ? OR role LIKE ? ORDER BY id DESC");
+        $term = "%" . $search . "%";
+        $stmt->execute([$term, $term, $term, $term, $term]);
+        $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        $users = User::getAllUsers();
+    }
     ?>
     <style>
         .admin-input-group {

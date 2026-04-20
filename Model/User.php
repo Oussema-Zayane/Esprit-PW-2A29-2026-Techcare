@@ -49,5 +49,17 @@ class User {
         
         return $stmt->execute([$nom, $prenom, $email, $telephone, $role, $id]);
     }
+    public static function updateProfile($id, $nom, $prenom, $email, $telephone, $picture = null) {
+        $conn = Config::getConnexion();
+        if ($picture) {
+            $sql = "UPDATE personne SET nom = ?, prenom = ?, email = ?, telephone = ?, profile_picture = ? WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            return $stmt->execute([$nom, $prenom, $email, $telephone, $picture, $id]);
+        } else {
+            $sql = "UPDATE personne SET nom = ?, prenom = ?, email = ?, telephone = ? WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            return $stmt->execute([$nom, $prenom, $email, $telephone, $id]);
+        }
+    }
 }
 ?>

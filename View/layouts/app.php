@@ -13,6 +13,8 @@ if (session_status() === PHP_SESSION_NONE) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <style>
         .admin-section {
             margin-top: 2rem;
@@ -234,6 +236,15 @@ if (session_status() === PHP_SESSION_NONE) {
                         </div>
                         
                         <div id="adminTabUsers" class="admin-tab-pane">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <div style="position: relative; width: 300px;">
+                                    <i class="fas fa-search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--txt-muted);"></i>
+                                    <input type="text" id="adminSearchInput" placeholder="Rechercher (Nom, Email, Rôle...)" onkeyup="handleAdminSearch(this.value)" style="width: 100%; padding: 10px 15px 10px 40px; border-radius: var(--r-md); border: 1px solid var(--border); background: var(--surface2); color: var(--txt); font-family: inherit;">
+                                </div>
+                                <button onclick="exportUsersPDF()" class="btn-primary" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">
+                                    <i class="fas fa-file-pdf"></i> Exporter PDF
+                                </button>
+                            </div>
                             <div id="usersContent"></div>
                         </div>
                         
@@ -332,7 +343,8 @@ if (session_status() === PHP_SESSION_NONE) {
     }
     
     function loadUsersList() {
-        fetch('../../Controller/AdminAjax.php?action=get_users')
+        const query = document.getElementById('adminSearchInput') ? document.getElementById('adminSearchInput').value : '';
+        fetch('../../Controller/AdminAjax.php?action=get_users&search=' + encodeURIComponent(query))
             .then(response => response.text())
             .then(html => { document.getElementById('usersContent').innerHTML = html; loadChartData(); loadDashboardStats(); })
             .catch(error => console.error('Erreur:', error));
@@ -421,6 +433,90 @@ if (session_status() === PHP_SESSION_NONE) {
     function loadOrdersList() {
         document.getElementById('ordersContent').innerHTML = '<div class="table-scroll"><p class="table-empty"><i class="fas fa-shopping-cart"></i> Gestion des commandes à implémenter</p></div>';
     }
+    
+    // NOUVELLES FONCTIONS : PDF, FILTRE et AUTO-LOGOUT
+    let searchTimeout;
+    function handleAdminSearch(value) {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            loadUsersList();
+        }, 300);
+    }
+
+    function exportUsersPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // --- Génération d'un logo "TC" pour la société ---
+        const canvas = document.createElement('canvas');
+        canvas.width = 100; canvas.height = 100;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = "#00A86B";
+        ctx.beginPath(); ctx.arc(50, 50, 50, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 50px Arial";
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText("TC", 50, 50);
+        const logoData = canvas.toDataURL("image/png");
+        
+        doc.addImage(logoData, 'PNG', 14, 10, 15, 15);
+        // ------------------------------------------------
+        
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(22);
+        doc.setTextColor(0, 168, 107);
+        doc.text("TechCare", 32, 21);
+        
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(14);
+        doc.setTextColor(50, 50, 50);
+        doc.text("Liste complète des collaborateurs / utilisateurs", 14, 35);
+        
+        const table = document.querySelector('.data-table');
+        if (table) {
+            const rows = table.querySelectorAll('tbody tr');
+            const data = [];
+            
+            rows.forEach(row => {
+                const id = row.cells[0].innerText.trim();
+                const nom = row.cells[1].querySelector('input') ? row.cells[1].querySelector('input').value : '';
+                const prenom = row.cells[2].querySelector('input') ? row.cells[2].querySelector('input').value : '';
+                const email = row.cells[3].querySelector('input') ? row.cells[3].querySelector('input').value : '';
+                const telephone = row.cells[4].querySelector('input') ? row.cells[4].querySelector('input').value : '';
+                const roleSelect = row.cells[5].querySelector('select');
+                const role = roleSelect ? (roleSelect.value === 'admin' ? 'Admin' : 'User') : '';
+                
+                // On inclut uniquement les 6 premières colonnes (en ignorant 'Actions' qui est à l'index 6)
+                data.push([id, nom, prenom, email, telephone, role]);
+            });
+
+            doc.autoTable({ 
+                head: [['ID', 'Nom', 'Prénom', 'Email', 'Téléphone', 'Rôle']],
+                body: data,
+                startY: 42, 
+                theme: 'grid',
+                headStyles: { fillColor: [0, 168, 107], textColor: 255 },
+                alternateRowStyles: { fillColor: [240, 248, 245] }
+            });
+            doc.save('Utilisateurs_TechCare.pdf');
+            showToast('✅ Export PDF réussi !', 'success');
+        } else {
+            showToast('❌ Aucune donnée à exporter', 'error');
+        }
+    }
+
+    let inactivityTimer;
+    function resetInactivityTimer() {
+        clearTimeout(inactivityTimer);
+        inactivityTimer = setTimeout(() => {
+            window.location.href = '../../Controller/logout.php';
+        }, 120000); // 2 minutes
+    }
+    
+    ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(evt => {
+        document.body.addEventListener(evt, resetInactivityTimer, { passive: true });
+    });
+    resetInactivityTimer();
     
     document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', () => { document.getElementById('mobileMenu')?.classList.remove('open'); });
