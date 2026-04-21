@@ -1,20 +1,14 @@
-/**
- * TechCare - Main JavaScript File
- */
+// TechCare - JavaScript Principal
 
 function toggleMobileMenu() {
     const menu = document.getElementById('mobileMenu');
-    if (menu) {
-        menu.classList.toggle('open');
-    }
+    if (menu) menu.classList.toggle('open');
 }
 
 document.querySelectorAll('.nav-link').forEach(link => {
     link.addEventListener('click', () => {
         const menu = document.getElementById('mobileMenu');
-        if (menu && menu.classList.contains('open')) {
-            menu.classList.remove('open');
-        }
+        if (menu && menu.classList.contains('open')) menu.classList.remove('open');
     });
 });
 
@@ -36,9 +30,7 @@ function showToast(message, type = 'success') {
     const container = getToastContainer();
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    let icon = 'fa-check-circle';
-    if (type === 'error') icon = 'fa-exclamation-circle';
-    if (type === 'info') icon = 'fa-info-circle';
+    let icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
     toast.innerHTML = `<i class="fas ${icon}"></i><span>${message}</span>`;
     container.appendChild(toast);
     setTimeout(() => {
@@ -53,11 +45,13 @@ function formatNumber(num) {
 
 function formatDate(dateString) {
     const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+    return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+// Confirmation avant suppression
+function confirmDelete(message, url) {
+    if (confirm(message || 'Êtes-vous sûr de vouloir supprimer cet élément ?')) {
+        window.location.href = url;
+    }
+    return false;
 }
