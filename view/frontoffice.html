@@ -92,26 +92,54 @@
       </div>
     </nav>
 
-    <section class="hero">
-      <div class="hero-content">
-        <span class="hero-badge"><i class="fas fa-star"></i> Nouveautés 2025</span>
-        <h1 class="hero-title">Découvrez la<br /><span class="gradient-text">Tech de Demain</span></h1>
-        <p class="hero-subtitle">Les meilleurs produits technologiques au meilleur prix.</p>
-        <div class="search-wrap">
-          <div class="search-box">
+    <section class="hero-section">
+      <div class="hero-wrapper">
+        <div class="hero-title-group">
+          <h1>Nos Produits</h1>
+          <p>Découvrez notre sélection de technologie</p>
+        </div>
+
+        <div class="hero-filters">
+          <div class="search-bar">
             <i class="fas fa-search"></i>
             <input type="search" id="searchInput" placeholder="Rechercher un produit…" />
+            <button class="clear-search" id="clearSearch">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <div class="filter-actions">
+            <div class="sort-dropdown">
+              <select id="sortSelect">
+                <option value="recent">📅 Plus récent</option>
+                <option value="price-asc">📈 Prix croissant</option>
+                <option value="price-desc">📉 Prix décroissant</option>
+                <option value="name-asc">A → Z</option>
+                <option value="name-desc">Z → A</option>
+                <option value="stock">📦 Stock</option>
+              </select>
+            </div>
+            <span class="result-badge"><span id="resultCount">0</span> produits</span>
           </div>
         </div>
       </div>
     </section>
 
     <main class="products-section">
-      <div class="section-header">
-        <h2 class="section-title">Nos Produits</h2>
-      </div>
+
+      <!-- Products Grid -->
       <div class="products-grid" id="productGrid">
         <p class="empty-state" style="grid-column:1/-1;text-align:center;">Chargement…</p>
+      </div>
+
+      <!-- No Results Message -->
+      <div id="noResults" class="no-results hidden">
+        <div class="no-results-content">
+          <i class="fas fa-search"></i>
+          <h3>Aucun produit trouvé</h3>
+          <p>Essayez de modifier vos critères de recherche ou de tri</p>
+          <button class="btn-reset" id="resetButton">Réinitialiser</button>
+        </div>
       </div>
     </main>
 
@@ -187,24 +215,37 @@
     const view = {
       renderFront(products) {
         const grid = document.getElementById('productGrid');
+        const noResults = document.getElementById('noResults');
+        const resultCount = document.getElementById('resultCount');
+        
         if (!grid) return;
+        
+        resultCount.textContent = products.length;
+        
         if (!products.length) {
-          grid.innerHTML = '<p class="empty-state" style="grid-column:1/-1;text-align:center;">Catalogue vide</p>';
+          grid.classList.add('hidden');
+          noResults.classList.remove('hidden');
           return;
         }
-        grid.innerHTML = products.map(p => `
-          <div class="product-card">
+        
+        grid.classList.remove('hidden');
+        noResults.classList.add('hidden');
+        
+        grid.innerHTML = products.map((p, idx) => `
+          <div class="product-card" style="animation: cardIn 0.4s ease ${idx * 0.03}s both;">
             <div class="card-img-wrap">
+              ${p.stock <= 0 ? '<div class="stock-overlay">Rupture</div>' : ''}
               <img src="${p.image}" alt="${p.nom}" loading="lazy" referrerpolicy="no-referrer" 
-                onerror="this.onerror=null;this.src='https://placehold.co/400x300/141d2e/00A86B?text=${encodeURIComponent(p.nom)}'">
+                onerror="this.onerror=null;this.src='https://placehold.co/300x200/141d2e/00A86B?text=${encodeURIComponent(p.nom)}'">
             </div>
             <div class="card-body">
-              <h3 class="card-name">${p.nom}</h3>
-              ${p.marque ? `<p style="font-size:.75rem;color:rgba(255,255,255,.4);">🏷️ ${p.marque}</p>` : ''}
-              <p style="font-size:.8rem;color:rgba(255,255,255,.45);">${p.description || ''}</p>
+              <span class="product-category">${p.categorie_nom || ''}</span>
+              <div class="card-name">${p.nom || ''}</div>
+              <div class="product-brand">${p.marque || ''}</div>
+              <div class="product-description">${p.description || ''}</div>
               <div class="card-footer">
-                <span class="card-price">${parseFloat(p.prix).toFixed(2)} DT</span>
-                <span class="badge-${p.etat || 'neuf'}">${p.etat === 'occasion' ? '🔄 Occasion' : '✅ Neuf'}</span>
+                <div class="card-price">${parseFloat(p.prix).toFixed(0)} DT</div>
+                <button class="btn-cart-mini"><i class="fas fa-shopping-cart"></i> Ajouter</button>
               </div>
             </div>
           </div>
@@ -225,14 +266,120 @@
     };
 
     const appController = {
+      allProducts: [],
+      filteredProducts: [],
+
       async init() {
         try {
-          const products = await api.getAll();
-          view.renderFront(products);
+          this.allProducts = await api.getAll();
+          this.filteredProducts = [...this.allProducts];
+          view.renderFront(this.filteredProducts);
+          this.setupEventListeners();
         } catch (err) {
           console.error('Erreur:', err);
           view.showToast('Impossible de charger les produits', 'error');
         }
+      },
+
+      setupEventListeners() {
+        const searchInput = document.getElementById('searchInput');
+        const sortSelect = document.getElementById('sortSelect');
+        const clearSearch = document.getElementById('clearSearch');
+        const resetButton = document.getElementById('resetButton');
+
+        if (searchInput) {
+          searchInput.addEventListener('input', (e) => {
+            this.handleSearch(e.target.value);
+          });
+        }
+
+        if (clearSearch) {
+          clearSearch.addEventListener('click', () => {
+            searchInput.value = '';
+            clearSearch.classList.remove('active');
+            this.handleSearch('');
+          });
+        }
+
+        if (sortSelect) {
+          sortSelect.addEventListener('change', (e) => {
+            this.handleSort(e.target.value);
+          });
+        }
+
+        if (resetButton) {
+          resetButton.addEventListener('click', () => {
+            this.resetFilters();
+          });
+        }
+      },
+
+      handleSearch(query) {
+        const searchTerm = query.toLowerCase().trim();
+        const clearSearch = document.getElementById('clearSearch');
+
+        if (searchTerm === '') {
+          this.filteredProducts = [...this.allProducts];
+          if (clearSearch) clearSearch.classList.remove('active');
+        } else {
+          if (clearSearch) clearSearch.classList.add('active');
+          this.filteredProducts = this.allProducts.filter(product => {
+            const nom = (product.nom || '').toLowerCase();
+            const categorie = (product.categorie_nom || '').toLowerCase();
+            const marque = (product.marque || '').toLowerCase();
+            const description = (product.description || '').toLowerCase();
+
+            return nom.includes(searchTerm) || 
+                   categorie.includes(searchTerm) || 
+                   marque.includes(searchTerm) ||
+                   description.includes(searchTerm);
+          });
+        }
+
+        const sortSelect = document.getElementById('sortSelect');
+        const currentSort = sortSelect ? sortSelect.value : 'recent';
+        this.handleSort(currentSort);
+      },
+
+      handleSort(sortType) {
+        const products = [...this.filteredProducts];
+
+        switch (sortType) {
+          case 'price-asc':
+            products.sort((a, b) => parseFloat(a.prix) - parseFloat(b.prix));
+            break;
+          case 'price-desc':
+            products.sort((a, b) => parseFloat(b.prix) - parseFloat(a.prix));
+            break;
+          case 'name-asc':
+            products.sort((a, b) => (a.nom || '').localeCompare(b.nom || '', 'fr'));
+            break;
+          case 'name-desc':
+            products.sort((a, b) => (b.nom || '').localeCompare(a.nom || '', 'fr'));
+            break;
+          case 'stock':
+            products.sort((a, b) => parseInt(b.stock || 0) - parseInt(a.stock || 0));
+            break;
+          case 'recent':
+          default:
+            products.sort((a, b) => new Date(b.date_ajout) - new Date(a.date_ajout));
+        }
+
+        this.filteredProducts = products;
+        view.renderFront(this.filteredProducts);
+      },
+
+      resetFilters() {
+        const searchInput = document.getElementById('searchInput');
+        const sortSelect = document.getElementById('sortSelect');
+        const clearSearch = document.getElementById('clearSearch');
+
+        if (searchInput) searchInput.value = '';
+        if (sortSelect) sortSelect.value = 'recent';
+        if (clearSearch) clearSearch.classList.remove('active');
+
+        this.filteredProducts = [...this.allProducts];
+        view.renderFront(this.filteredProducts);
       },
 
       navigate(viewName) {
