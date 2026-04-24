@@ -16,41 +16,76 @@ function verifyRecaptcha($response) {
 $action = $_GET['action'] ?? '';
 
 if ($action == "login") {
-    if (!verifyRecaptcha($_POST['g-recaptcha-response'] ?? '')) {
-        header("Location: ../View/front/auth.html?error=recaptcha");
-        exit();
-    }
+    $email = $_POST['email'] ?? '';
+    $password = $_POST['password'] ?? '';
+    $recaptchaResponse = $_POST['g-recaptcha-response'] ?? '';
     
-    $email = $_POST['email'];
-    $password = $_POST['password'];
-
     $user = User::findByEmail($email);
-
-    if (!$user) {
-        header("Location: ../View/front/auth.html?error=login");
-        exit();
-    } else {
+    
+    // Si l'utilisateur existe, on vérifie d'abord son statut et le lockout
+    if ($user) {
         if (isset($user['status']) && $user['status'] === 'inactif') {
             header("Location: ../View/front/auth.html?error=banned");
             exit();
         }
 
-        if (password_verify($password, $user['password'])) {
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['email'] = $user['email'];
-            $_SESSION['nom'] = $user['nom'];
-            $_SESSION['prenom'] = $user['prenom'];
-            $_SESSION['role'] = $user['role'];
-            $_SESSION['telephone'] = $user['telephone'];
-            $_SESSION['profile_picture'] = $user['profile_picture'] ?? 'default.png';
-
-            header("Location: ../View/front/profile.php");
-            exit();
-        } else {
-            header("Location: ../View/front/auth.html?error=login");
+        // Vérification du lockout (is_locked vient de notre requête SQL NOW())
+        if (isset($user['is_locked']) && $user['is_locked']) {
+            $seconds = $user['seconds_left'] ?? 0;
+            header("Location: ../View/front/auth.html?error=locked&seconds=$seconds");
             exit();
         }
     }
+
+    $isRecaptchaValid = verifyRecaptcha($recaptchaResponse);
+
+    // Si l'utilisateur n'existe pas
+    if (!$user) {
+        $error = $isRecaptchaValid ? "login" : "recaptcha";
+        header("Location: ../View/front/auth.html?error=$error");
+        exit();
+    }
+
+    // Gestion des échecs (Mot de passe ou Recaptcha)
+    $passwordValid = password_verify($password, $user['password']);
+    
+    if (!$isRecaptchaValid || !$passwordValid) {
+        $attempts = ($user['failed_attempts'] ?? 0) + 1;
+        $lockoutMinutes = 0;
+        
+        if ($attempts == 4) {
+            $lockoutMinutes = 1;
+        } elseif ($attempts == 5) {
+            $lockoutMinutes = 5;
+        } elseif ($attempts >= 6) {
+            $lockoutMinutes = 120; // 2 heures
+        }
+        
+        User::recordFailedAttempt($user['id'], $attempts, $lockoutMinutes);
+        
+        if ($lockoutMinutes > 0) {
+            $seconds = $lockoutMinutes * 60;
+            header("Location: ../View/front/auth.html?error=locked_now&seconds=$seconds");
+        } else {
+            $error = !$isRecaptchaValid ? "recaptcha" : "login";
+            header("Location: ../View/front/auth.html?error=$error");
+        }
+        exit();
+    }
+
+    // Succès : Tout est valide
+    User::resetFailedAttempts($user['id']);
+
+    $_SESSION['user_id'] = $user['id'];
+    $_SESSION['email'] = $user['email'];
+    $_SESSION['nom'] = $user['nom'];
+    $_SESSION['prenom'] = $user['prenom'];
+    $_SESSION['role'] = $user['role'];
+    $_SESSION['telephone'] = $user['telephone'];
+    $_SESSION['profile_picture'] = $user['profile_picture'] ?? 'default.png';
+
+    header("Location: ../View/front/profile.php");
+    exit();
 }
 
 if ($action == "register") {

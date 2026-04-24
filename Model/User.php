@@ -5,7 +5,10 @@ class User {
 
     public static function findByEmail($email) {
         $conn = Config::getConnexion();
-        $sql = "SELECT * FROM personne WHERE email = ?";
+        $sql = "SELECT *, 
+                (lockout_time IS NOT NULL AND lockout_time > NOW()) as is_locked,
+                (CASE WHEN lockout_time > NOW() THEN TIMESTAMPDIFF(SECOND, NOW(), lockout_time) ELSE 0 END) as seconds_left 
+                FROM personne WHERE email = ?";
         $stmt = $conn->prepare($sql);
         $stmt->execute([$email]);
         return $stmt->fetch();
@@ -68,5 +71,24 @@ class User {
         $stmt = $conn->prepare($sql);
         return $stmt->execute([$status, $id]);
     }
+
+    public static function recordFailedAttempt($id, $attempts, $lockoutMinutes) {
+        $conn = Config::getConnexion();
+        if ($lockoutMinutes > 0) {
+            $sql = "UPDATE personne SET failed_attempts = ?, lockout_time = DATE_ADD(NOW(), INTERVAL ? MINUTE) WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            return $stmt->execute([$attempts, $lockoutMinutes, $id]);
+        } else {
+            $sql = "UPDATE personne SET failed_attempts = ? WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            return $stmt->execute([$attempts, $id]);
+        }
+    }
+
+    public static function resetFailedAttempts($id) {
+        $conn = Config::getConnexion();
+        $sql = "UPDATE personne SET failed_attempts = 0, lockout_time = NULL WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        return $stmt->execute([$id]);
+    }
 }
-?>
