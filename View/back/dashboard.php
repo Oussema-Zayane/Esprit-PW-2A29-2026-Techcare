@@ -17,12 +17,14 @@ if (isset($_GET['success'])) {
     if ($_GET['success'] == 'update') $success_message = "✅ Utilisateur modifié avec succès !";
     if ($_GET['success'] == 'add') $success_message = "✅ Utilisateur ajouté avec succès !";
     if ($_GET['success'] == 'delete') $success_message = "✅ Utilisateur supprimé avec succès !";
+    if ($_GET['success'] == 'status_updated') $success_message = "✅ Statut de l'utilisateur mis à jour avec succès !";
 }
 
 if (isset($_GET['error'])) {
     if ($_GET['error'] == 'update') $error_message = "❌ Erreur lors de la modification !";
     if ($_GET['error'] == 'add') $error_message = "❌ Erreur lors de l'ajout !";
     if ($_GET['error'] == 'delete') $error_message = "❌ Erreur lors de la suppression !";
+    if ($_GET['error'] == 'status_updated') $error_message = "❌ Erreur lors de la mise à jour du statut !";
 }
 ?>
 
@@ -298,6 +300,7 @@ if (isset($_GET['error'])) {
                         <th>Email</th>
                         <th>Téléphone</th>
                         <th>Rôle</th>
+                        <th>Statut</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -318,11 +321,22 @@ if (isset($_GET['error'])) {
                                     <option value="admin" <?= $user['role'] == 'admin' ? 'selected' : '' ?>>Admin</option>
                                 </select>
                             </td>
+                            <td>
+                                <span style="padding: 5px; border-radius: 5px; color: white; background: <?= ($user['status'] ?? 'actif') == 'actif' ? '#48bb78' : '#e53e3e' ?>;">
+                                    <?= ucfirst($user['status'] ?? 'actif') ?>
+                                </span>
+                            </td>
                             <td class="action-buttons">
                                 <button type="submit" class="btn btn-warning" style="padding: 5px 10px;">✏ Modifier</button>
                             </td>
                         </form>
                         <td class="action-buttons">
+                            <a href="../../Controller/UserController.php?action=toggle_status&id=<?= $user['id'] ?>&status=<?= ($user['status'] ?? 'actif') == 'actif' ? 'inactif' : 'actif' ?>" 
+                               class="btn <?= ($user['status'] ?? 'actif') == 'actif' ? 'btn-danger' : 'btn-success' ?>" 
+                               style="padding: 5px 10px; text-decoration: none; display: inline-block;"
+                               onclick="return confirm('<?= ($user['status'] ?? 'actif') == 'actif' ? 'Bloquer' : 'Débloquer' ?> cet utilisateur ?')">
+                                <?= ($user['status'] ?? 'actif') == 'actif' ? '🚫 Bloquer' : '✅ Débloquer' ?>
+                            </a>
                             <a href="../../Controller/UserController.php?action=delete&id=<?= $user['id'] ?>" 
                                class="btn btn-danger" 
                                style="padding: 5px 10px; text-decoration: none; display: inline-block;"

@@ -147,7 +147,7 @@ if ($action == 'get_users') {
     <div class="table-scroll">
         <table class="data-table">
             <thead>
-                <tr><th>ID</th><th>Nom</th><th>Prénom</th><th>Email</th><th>Téléphone</th><th>Rôle</th><th>Actions</th></tr>
+                <tr><th>ID</th><th>Nom</th><th>Prénom</th><th>Email</th><th>Téléphone</th><th>Rôle</th><th>Statut</th><th>Actions</th></tr>
             </thead>
             <tbody id="users-table-body">
                 <?php foreach($users as $user): ?>
@@ -163,8 +163,17 @@ if ($action == 'get_users') {
                             <option value="admin" <?= $user['role'] == 'admin' ? 'selected' : '' ?>>Admin</option>
                         </select>
                      </td>
+                     <td>
+                        <span style="padding: 3px 8px; border-radius: 4px; color: white; background: <?= ($user['status'] ?? 'actif') == 'actif' ? '#48bb78' : '#e53e3e' ?>; font-size: 0.8rem;">
+                            <?= ucfirst($user['status'] ?? 'actif') ?>
+                        </span>
+                     </td>
                     <td class="tbl-actions">
                         <button class="btn-edit" onclick="updateUser(<?= $user['id'] ?>)"><i class="fas fa-edit"></i> Modifier</button>
+                        <button onclick="toggleStatus(<?= $user['id'] ?>, '<?= $user['status'] ?? 'actif' ?>')" 
+                           style="background: <?= ($user['status'] ?? 'actif') == 'actif' ? '#e53e3e' : '#48bb78' ?>; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; text-decoration: none;">
+                            <i class="fas <?= ($user['status'] ?? 'actif') == 'actif' ? 'fa-ban' : 'fa-check' ?>"></i>
+                        </button>
                         <button class="btn-del" onclick="deleteUser(<?= $user['id'] ?>)"><i class="fas fa-trash"></i> Supprimer</button>
                     </td>
                 </tr>

@@ -416,6 +416,21 @@ if (session_status() === PHP_SESSION_NONE) {
             .catch(error => { console.error('Erreur:', error); showToast('❌ Erreur lors de la suppression !', 'error'); });
     }
     
+    function toggleStatus(userId, currentStatus) {
+        const actionText = currentStatus === 'actif' ? 'Bloquer' : 'Débloquer';
+        if (!confirm(`${actionText} cet utilisateur ?`)) return;
+        
+        const newStatus = currentStatus === 'actif' ? 'inactif' : 'actif';
+        fetch(`../../Controller/UserController.php?action=toggle_status&id=${userId}&status=${newStatus}`)
+            .then(response => {
+                if (response.redirected && response.url.includes('success=status_updated')) {
+                    showToast(`✅ Statut de l'utilisateur mis à jour avec succès !`, 'success');
+                    loadUsersList(); loadDashboardStats(); loadChartData();
+                } else { showToast('❌ Erreur lors de la mise à jour du statut !', 'error'); }
+            })
+            .catch(error => { console.error('Erreur:', error); showToast('❌ Erreur lors de la mise à jour du statut !', 'error'); });
+    }
+    
     function showToast(message, type = 'info') {
         let container = document.querySelector('.toast-container');
         if (!container) { container = document.createElement('div'); container.className = 'toast-container'; document.body.appendChild(container); }
@@ -509,6 +524,7 @@ if (session_status() === PHP_SESSION_NONE) {
     function resetInactivityTimer() {
         clearTimeout(inactivityTimer);
         inactivityTimer = setTimeout(() => {
+            alert("Attention: Vous avez été déconnecté en raison d'une inactivité prolongée.");
             window.location.href = '../../Controller/logout.php';
         }, 120000); // 2 minutes
     }

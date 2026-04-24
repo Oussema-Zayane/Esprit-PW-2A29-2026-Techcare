@@ -794,6 +794,14 @@
             switchTab('register');
         }
         
+        if (error === 'banned') {
+            alert("Votre compte a été bloqué. Veuillez contacter l'administration par mail.");
+            const messageDiv = document.getElementById('login-message');
+            messageDiv.innerHTML = '<i class="fas fa-ban"></i> Votre compte a été bloqué. Veuillez contacter l\'administration par mail.';
+            messageDiv.className = 'message error';
+            switchTab('login');
+        }
+        
         if (error === 'register') {
             const messageDiv = document.getElementById('register-message');
             messageDiv.innerHTML = '<i class="fas fa-times-circle"></i> Erreur lors de l\'inscription';

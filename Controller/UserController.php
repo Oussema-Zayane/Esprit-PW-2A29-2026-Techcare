@@ -30,6 +30,11 @@ if ($action == "login") {
         header("Location: ../View/front/auth.html?error=login");
         exit();
     } else {
+        if (isset($user['status']) && $user['status'] === 'inactif') {
+            header("Location: ../View/front/auth.html?error=banned");
+            exit();
+        }
+
         if (password_verify($password, $user['password'])) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['email'] = $user['email'];
@@ -232,6 +237,24 @@ if ($action == "delete") {
         header("Location: ../View/back/dashboard.php?success=delete");
     } else {
         header("Location: ../View/back/dashboard.php?error=delete");
+    }
+    exit();
+}
+
+if ($action == "toggle_status") {
+    if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
+        header("Location: ../View/front/auth.html");
+        exit();
+    }
+
+    $id = $_GET['id'];
+    $status = $_GET['status'];
+    $result = User::updateStatus($id, $status);
+    
+    if ($result) {
+        header("Location: ../View/back/dashboard.php?success=status_updated");
+    } else {
+        header("Location: ../View/back/dashboard.php?error=status_updated");
     }
     exit();
 }

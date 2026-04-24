@@ -61,5 +61,12 @@ class User {
             return $stmt->execute([$nom, $prenom, $email, $telephone, $id]);
         }
     }
+
+    public static function updateStatus($id, $status) {
+        $conn = Config::getConnexion();
+        $sql = "UPDATE personne SET status = ? WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        return $stmt->execute([$status, $id]);
+    }
 }
 ?>
