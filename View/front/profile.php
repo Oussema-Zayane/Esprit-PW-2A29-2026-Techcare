@@ -99,19 +99,129 @@ ob_start();
     
     <div class="section-header" style="margin-top: 2.5rem;">
         <div class="section-title">
+            <i class="fas fa-shield-halved" style="color: #00A86B;"></i>
+            Sécurité & Biométrie
+        </div>
+    </div>
+    
+    <div style="background: var(--surface2); padding: 2rem; border-radius: var(--r-lg); max-width: 600px; border: 1px solid var(--border);">
+        <p style="color: var(--txt-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+            Enregistrez votre visage pour vous connecter rapidement et en toute sécurité sans mot de passe.
+        </p>
+        <button id="btn-register-face" class="btn-face" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.8rem; padding: 1rem; background: rgba(0, 168, 107, 0.1); border: 1px solid var(--green); color: var(--green); border-radius: var(--r-md); font-weight: 600; cursor: pointer; transition: all 0.2s;">
+            <i class="fas fa-camera"></i> Enregistrer mon visage
+        </button>
+        <div id="face-status" style="margin-top: 1rem; font-size: 0.85rem; text-align: center; color: var(--txt-muted);"></div>
+    </div>
+
+    <div class="section-header" style="margin-top: 2.5rem;">
+        <div class="section-title">
             <i class="fas fa-cog" style="color: #00A86B;"></i>
             Actions rapides
         </div>
     </div>
     
     <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-        <a href="../../Controller/logout.php" class="btn-primary" style="background: rgba(231,76,60,0.1); color: var(--danger); border: 1px solid var(--danger);">
+        <a href="../../Controller/logout.php" class="btn-primary" style="background: rgba(231,76,60,0.1); color: var(--danger); border: 1px solid var(--danger); text-decoration: none; padding: 0.8rem 1.5rem; border-radius: var(--r-md); font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
             <i class="fas fa-sign-out-alt"></i> Se déconnecter
         </a>
     </div>
 </div>
 
+<!-- Modal pour la caméra -->
+<div id="camera-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; align-items: center; justify-content: center; flex-direction: column;">
+    <div style="background: var(--surface); padding: 1.5rem; border-radius: var(--r-lg); position: relative; max-width: 90%; text-align: center;">
+        <h3 style="margin-bottom: 1rem; color: var(--txt);">Scan Facial</h3>
+        <div style="position: relative; overflow: hidden; border-radius: var(--r-md); background: #000; width: 400px; height: 300px; max-width: 100%;">
+            <video id="video" width="400" height="300" autoplay muted style="transform: scaleX(-1);"></video>
+            <canvas id="overlay" style="position: absolute; top: 0; left: 0;"></canvas>
+        </div>
+        <p id="modal-status" style="margin-top: 1rem; font-size: 0.9rem; color: var(--txt-muted);">Initialisation de la caméra...</p>
+        <button id="btn-close-modal" style="margin-top: 1.5rem; padding: 0.6rem 1.2rem; background: var(--border); border: none; border-radius: var(--r-md); color: var(--txt); cursor: pointer;">Annuler</button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+<script>
+    const btnRegister = document.getElementById('btn-register-face');
+    const cameraModal = document.getElementById('camera-modal');
+    const video = document.getElementById('video');
+    const modalStatus = document.getElementById('modal-status');
+    const btnClose = document.getElementById('btn-close-modal');
+    
+    let isModelsLoaded = false;
+
+    async function loadModels() {
+        if (isModelsLoaded) return;
+        modalStatus.innerText = "Chargement des modèles d'IA...";
+        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+        await Promise.all([
+            faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+            faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+        ]);
+        isModelsLoaded = true;
+    }
+
+    btnRegister.addEventListener('click', async () => {
+        cameraModal.style.display = 'flex';
+        await loadModels();
+        
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+            video.srcObject = stream;
+            modalStatus.innerText = "Positionnez votre visage devant la caméra...";
+            
+            // Attendre la détection
+            const detectionInterval = setInterval(async () => {
+                const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                    .withFaceLandmarks()
+                    .withFaceDescriptor();
+                
+                if (detection) {
+                    clearInterval(detectionInterval);
+                    modalStatus.innerText = "Visage détecté ! Enregistrement...";
+                    
+                    const descriptor = Array.from(detection.descriptor);
+                    
+                    // Envoyer au serveur
+                    const response = await fetch('../../Controller/UserController.php?action=update_face', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: 'descriptor=' + JSON.stringify(descriptor)
+                    });
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        modalStatus.innerText = "Succès ! Votre visage est enregistré.";
+                        setTimeout(() => closeModal(), 2000);
+                        document.getElementById('face-status').innerText = "✅ Visage enregistré";
+                    } else {
+                        modalStatus.innerText = "Erreur: " + data.error;
+                    }
+                }
+            }, 1000);
+            
+        } catch (err) {
+            modalStatus.innerText = "Erreur d'accès à la caméra.";
+            console.error(err);
+        }
+    });
+
+    function closeModal() {
+        const stream = video.srcObject;
+        if (stream) {
+            const tracks = stream.getTracks();
+            tracks.forEach(track => track.stop());
+        }
+        video.srcObject = null;
+        cameraModal.style.display = 'none';
+    }
+
+    btnClose.addEventListener('click', closeModal);
+</script>
+
 <?php
 $content = ob_get_clean();
-include "../layouts/app.php";
+require_once __DIR__ . '/../layouts/app.php';
 ?>

@@ -88,6 +88,130 @@ if ($action == "login") {
     exit();
 }
 
+if ($action == "face_login") {
+    $descriptor = json_decode($_POST['descriptor'] ?? '[]', true);
+    if (empty($descriptor)) {
+        echo json_encode(['success' => false, 'error' => 'Descriptor manquant']);
+        exit();
+    }
+
+    $conn = Config::getConnexion();
+    $stmt = $conn->query("SELECT id, email, nom, prenom, role, telephone, profile_picture, status, face_descriptor FROM personne WHERE face_descriptor IS NOT NULL");
+    $users = $stmt->fetchAll();
+
+    foreach ($users as $user) {
+        $storedDescriptor = json_decode($user['face_descriptor'], true);
+        if (!$storedDescriptor) continue;
+
+        $distance = 0;
+        for ($i = 0; $i < count($descriptor); $i++) {
+            $distance += pow($descriptor[$i] - $storedDescriptor[$i], 2);
+        }
+        $distance = sqrt($distance);
+
+        // Seuil de tolérance (0.6 est standard)
+        if ($distance < 0.6) {
+            if ($user['status'] === 'inactif') {
+                echo json_encode(['success' => false, 'error' => 'Compte banni']);
+                exit();
+            }
+
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['email'] = $user['email'];
+            $_SESSION['nom'] = $user['nom'];
+            $_SESSION['prenom'] = $user['prenom'];
+            $_SESSION['role'] = $user['role'];
+            $_SESSION['telephone'] = $user['telephone'] ?? '';
+            $_SESSION['profile_picture'] = $user['profile_picture'] ?? 'default.png';
+
+            echo json_encode(['success' => true]);
+            exit();
+        }
+    }
+
+    echo json_encode(['success' => false, 'error' => 'Visage non reconnu']);
+    exit();
+}
+
+if ($action == "google_login") {
+    $idToken = $_POST['id_token'] ?? '';
+    if (empty($idToken)) {
+        echo json_encode(['success' => false, 'error' => 'Token manquant']);
+        exit();
+    }
+
+    // Vérifier le token avec Google API
+    $url = "https://oauth2.googleapis.com/tokeninfo?id_token=" . $idToken;
+    $response = @file_get_contents($url);
+    if ($response === false) {
+        echo json_encode(['success' => false, 'error' => 'Erreur de vérification Google']);
+        exit();
+    }
+
+    $data = json_decode($response, true);
+    if (!isset($data['sub'])) {
+        echo json_encode(['success' => false, 'error' => 'Token invalide']);
+        exit();
+    }
+
+    $googleId = $data['sub'];
+    $email = $data['email'];
+    $nom = $data['family_name'] ?? 'Utilisateur';
+    $prenom = $data['given_name'] ?? 'Google';
+
+    $user = User::findByGoogleId($googleId);
+    if (!$user) {
+        $user = User::findByEmail($email);
+        if ($user) {
+            // Lier le compte Google au compte existant
+            $conn = Config::getConnexion();
+            $stmt = $conn->prepare("UPDATE personne SET google_id = ? WHERE id = ?");
+            $stmt->execute([$googleId, $user['id']]);
+        } else {
+            // Créer un nouveau compte
+            User::register($nom, $prenom, $email, '', password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT), 'user', $googleId);
+            $user = User::findByGoogleId($googleId);
+        }
+    }
+
+    if ($user['status'] === 'inactif') {
+        echo json_encode(['success' => false, 'error' => 'Compte banni']);
+        exit();
+    }
+
+    // Login
+    $_SESSION['user_id'] = $user['id'];
+    $_SESSION['email'] = $user['email'];
+    $_SESSION['nom'] = $user['nom'];
+    $_SESSION['prenom'] = $user['prenom'];
+    $_SESSION['role'] = $user['role'];
+    $_SESSION['telephone'] = $user['telephone'] ?? '';
+    $_SESSION['profile_picture'] = $user['profile_picture'] ?? 'default.png';
+
+    echo json_encode(['success' => true]);
+    exit();
+}
+
+if ($action == "update_face") {
+    if (!isset($_SESSION['user_id'])) {
+        echo json_encode(['success' => false, 'error' => 'Non connecté']);
+        exit();
+    }
+    
+    $descriptor = $_POST['descriptor'] ?? '';
+    if (empty($descriptor)) {
+        echo json_encode(['success' => false, 'error' => 'Descriptor manquant']);
+        exit();
+    }
+    
+    if (User::updateFaceDescriptor($_SESSION['user_id'], $descriptor)) {
+        echo json_encode(['success' => true]);
+    } else {
+        echo json_encode(['success' => false, 'error' => 'Erreur DB']);
+    }
+    exit();
+}
+
 if ($action == "register") {
     if (!verifyRecaptcha($_POST['g-recaptcha-response'] ?? '')) {
         header("Location: ../View/front/auth.html?error=recaptcha");

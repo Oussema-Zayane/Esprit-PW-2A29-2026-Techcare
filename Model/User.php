@@ -14,11 +14,19 @@ class User {
         return $stmt->fetch();
     }
 
-    public static function register($nom, $prenom, $email, $telephone, $password, $role) {
+    public static function findByGoogleId($googleId) {
         $conn = Config::getConnexion();
-        $sql = "INSERT INTO personne (nom, prenom, email, telephone, password, role) VALUES (?, ?, ?, ?, ?, ?)";
+        $sql = "SELECT * FROM personne WHERE google_id = ?";
         $stmt = $conn->prepare($sql);
-        return $stmt->execute([$nom, $prenom, $email, $telephone, $password, $role]);
+        $stmt->execute([$googleId]);
+        return $stmt->fetch();
+    }
+
+    public static function register($nom, $prenom, $email, $telephone, $password, $role, $googleId = null) {
+        $conn = Config::getConnexion();
+        $sql = "INSERT INTO personne (nom, prenom, email, telephone, password, role, google_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $conn->prepare($sql);
+        return $stmt->execute([$nom, $prenom, $email, $telephone, $password, $role, $googleId]);
     }
 
     public static function getAllUsers() {
@@ -90,5 +98,12 @@ class User {
         $sql = "UPDATE personne SET failed_attempts = 0, lockout_time = NULL WHERE id = ?";
         $stmt = $conn->prepare($sql);
         return $stmt->execute([$id]);
+    }
+
+    public static function updateFaceDescriptor($id, $descriptor) {
+        $conn = Config::getConnexion();
+        $sql = "UPDATE personne SET face_descriptor = ? WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        return $stmt->execute([$descriptor, $id]);
     }
 }

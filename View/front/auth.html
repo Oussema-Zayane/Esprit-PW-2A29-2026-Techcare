@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/style.css">
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         /* Styles spécifiques à la page auth */
         body {
@@ -338,6 +339,61 @@
             .auth-form { padding: 1.5rem; }
             .auth-header { padding: 1.2rem 1.5rem; }
         }
+
+        /* Styles Social Login & Face Recognition */
+        .social-login {
+            margin-top: 1.5rem;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 1.5rem 0;
+            color: var(--txt-muted);
+            font-size: 0.8rem;
+        }
+
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .divider span {
+            padding: 0 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .social-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn-face {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(0, 168, 107, 0.05);
+            border: 1px solid var(--green);
+            color: var(--green);
+            border-radius: var(--r-md);
+            font: 600 0.9rem var(--font);
+            cursor: pointer;
+            transition: var(--t);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+        }
+
+        .btn-face:hover {
+            background: var(--green);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 168, 107, 0.2);
+        }
     </style>
 </head>
 <body>
@@ -381,6 +437,35 @@
                     <i class="fas fa-arrow-right-to-bracket"></i> Se connecter
                 </button>
             </form>
+
+            <div class="social-login">
+                <div class="divider">
+                    <span>OU</span>
+                </div>
+                <div class="social-buttons">
+                    <div id="g_id_onload"
+                         data-client_id="298158060437-c9b2bt9j9kt5tm3r34vahltomldfmo42.apps.googleusercontent.com"
+                         data-context="signin"
+                         data-ux_mode="popup"
+                         data-callback="handleGoogleLogin"
+                         data-auto_prompt="false">
+                    </div>
+                    <div class="g_id_signin"
+                         data-type="standard"
+                         data-shape="rectangular"
+                         data-theme="outline"
+                         data-text="signin_with"
+                         data-size="large"
+                         data-logo_alignment="left"
+                         data-width="400">
+                    </div>
+                    
+                    <button type="button" class="btn-face" onclick="startFaceLogin()">
+                        <i class="fas fa-user-astronaut"></i> Connexion Faciale
+                    </button>
+                </div>
+            </div>
+
             <div id="login-message" class="message"></div>
         </div>
 
@@ -446,6 +531,19 @@
         </div>
     </div>
 
+    <!-- Modal pour la caméra -->
+    <div id="camera-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; align-items: center; justify-content: center; flex-direction: column;">
+        <div style="background: var(--surface); padding: 1.5rem; border-radius: var(--r-lg); position: relative; max-width: 90%; text-align: center; border: 1px solid var(--border);">
+            <h3 style="margin-bottom: 1rem; color: var(--txt);">Scan Facial de Connexion</h3>
+            <div style="position: relative; overflow: hidden; border-radius: var(--r-md); background: #000; width: 400px; height: 300px; max-width: 100%;">
+                <video id="video" width="400" height="300" autoplay muted style="transform: scaleX(-1);"></video>
+            </div>
+            <p id="modal-status" style="margin-top: 1rem; font-size: 0.9rem; color: var(--txt-muted);">Initialisation...</p>
+            <button id="btn-close-modal" style="margin-top: 1.5rem; padding: 0.6rem 1.2rem; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r-md); color: var(--txt); cursor: pointer;">Annuler</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
     <script>
         // Éléments DOM
         const phoneInput = document.getElementById('reg-telephone');
@@ -880,6 +978,106 @@
                 switchTab('login');
             }, 2000);
         }
+        // ========== GOOGLE LOGIN HANDLER ==========
+        function handleGoogleLogin(response) {
+            const idToken = response.credential;
+            const messageDiv = document.getElementById('login-message');
+            
+            messageDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authentification avec Google...';
+            messageDiv.className = 'message success'; // Blue-ish info style
+            
+            fetch('../../Controller/UserController.php?action=google_login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'id_token=' + encodeURIComponent(idToken)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = 'profile.php';
+                } else {
+                    messageDiv.innerHTML = '<i class="fas fa-times-circle"></i> ' + (data.error || 'Erreur Google');
+                    messageDiv.className = 'message error';
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                messageDiv.innerHTML = '<i class="fas fa-times-circle"></i> Erreur de connexion au serveur';
+                messageDiv.className = 'message error';
+            });
+        }
+
+        // ========== FACE LOGIN HANDLER ==========
+        const cameraModal = document.getElementById('camera-modal');
+        const video = document.getElementById('video');
+        const modalStatus = document.getElementById('modal-status');
+        const btnClose = document.getElementById('btn-close-modal');
+        let isModelsLoaded = false;
+
+        async function loadModels() {
+            if (isModelsLoaded) return;
+            modalStatus.innerText = "Chargement des modèles d'IA...";
+            const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+            await Promise.all([
+                faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+            ]);
+            isModelsLoaded = true;
+        }
+
+        async function startFaceLogin() {
+            cameraModal.style.display = 'flex';
+            await loadModels();
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+                video.srcObject = stream;
+                modalStatus.innerText = "Positionnez votre visage devant la caméra...";
+                
+                const detectionInterval = setInterval(async () => {
+                    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                        .withFaceLandmarks()
+                        .withFaceDescriptor();
+                    
+                    if (detection) {
+                        clearInterval(detectionInterval);
+                        modalStatus.innerText = "Analyse faciale en cours...";
+                        
+                        const descriptor = Array.from(detection.descriptor);
+                        
+                        const response = await fetch('../../Controller/UserController.php?action=face_login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: 'descriptor=' + JSON.stringify(descriptor)
+                        });
+                        
+                        const data = await response.json();
+                        if (data.success) {
+                            modalStatus.innerText = "Identification réussie ! Redirection...";
+                            setTimeout(() => window.location.href = 'profile.php', 1000);
+                        } else {
+                            modalStatus.innerText = "Erreur: " + data.error;
+                            setTimeout(() => closeModal(), 3000);
+                        }
+                    }
+                }, 1000);
+            } catch (err) {
+                modalStatus.innerText = "Accès caméra refusé ou non disponible.";
+                console.error(err);
+            }
+        }
+
+        function closeModal() {
+            const stream = video.srcObject;
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            video.srcObject = null;
+            cameraModal.style.display = 'none';
+        }
+
+        btnClose.addEventListener('click', closeModal);
     </script>
 </body>
 </html>
