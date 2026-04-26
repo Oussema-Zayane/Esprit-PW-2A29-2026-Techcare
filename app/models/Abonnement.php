@@ -84,6 +84,30 @@ class Abonnement {
     }
 
     /**
+     * Récupérer les abonnements par email
+     */
+    public function getByEmail($email) {
+        $stmt = $this->conn->prepare("
+            SELECT a.*, 
+                   t.nom_type, 
+                   t.prix_base,
+                   t.duree_jours
+            FROM abonnements a
+            LEFT JOIN type_abonnement t ON a.type_abonnement = t.nom_type
+            WHERE a.email = ?
+            ORDER BY a.date_debut DESC
+        ");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result && $result->num_rows > 0) {
+            return $result->fetch_all(MYSQLI_ASSOC);
+        }
+        return [];
+    }
+
+    /**
      * Récupérer les abonnements par type d'abonnement (nom)
      */
     public function getByTypeName($type_abonnement) {
@@ -281,8 +305,8 @@ class Abonnement {
      */
     public function create($data) {
         $stmt = $this->conn->prepare("
-            INSERT INTO abonnements (nom_client, email, type_abonnement, prix, date_debut, date_fin, statut)
-            VALUES (?, ?, ?, ?, ?, ?, 'actif')
+            INSERT INTO abonnements (nom_client, email, telephone, type_abonnement, prix, date_debut, date_fin, statut)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'actif')
         ");
         
         if (!$stmt) {
@@ -290,10 +314,12 @@ class Abonnement {
             return false;
         }
         
-        $email = $data['email'] ?? null;
-        $stmt->bind_param("sssdss",
+        $email     = $data['email'] ?? null;
+        $telephone = $data['telephone'] ?? null;
+        $stmt->bind_param("sssdsss",
             $data['nom_client'],
             $email,
+            $telephone,
             $data['type_abonnement'],
             $data['prix'],
             $data['date_debut'],

@@ -87,6 +87,38 @@ class Database {
         }
     }
 
+    /**
+     * Créer les tables manquantes si elles n'existent pas
+     */
+    public static function ensureTablesExist() {
+        $conn = self::getConnection();
+        
+        // Table sms_logs
+        $conn->query("CREATE TABLE IF NOT EXISTS sms_logs (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            abonnement_id INT,
+            telephone VARCHAR(20) NOT NULL,
+            nom_client VARCHAR(100),
+            message TEXT NOT NULL,
+            type_sms ENUM('bienvenue', 'rappel_j7', 'rappel_j3', 'manuel') NOT NULL DEFAULT 'manuel',
+            statut ENUM('envoye', 'echoue', 'simule') NOT NULL DEFAULT 'simule',
+            api_response TEXT,
+            message_sid VARCHAR(100),
+            date_envoi DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_abonnement_id (abonnement_id),
+            INDEX idx_telephone (telephone),
+            INDEX idx_statut (statut),
+            INDEX idx_type_sms (type_sms),
+            INDEX idx_date_envoi (date_envoi)
+        )");
+        
+        // Ajouter la colonne telephone si elle n'existe pas dans abonnements
+        $result = $conn->query("SHOW COLUMNS FROM abonnements LIKE 'telephone'");
+        if ($result && $result->num_rows === 0) {
+            $conn->query("ALTER TABLE abonnements ADD COLUMN telephone VARCHAR(20) AFTER email");
+        }
+    }
+
     public static function isConnected() {
         return self::$conn !== null && !self::$conn->connect_error;
     }

@@ -86,7 +86,7 @@ else {
                 break;
         }
     }
-    // Vérifier si l'action concerne les offres
+    // Vérifier si l'action concerne les offres (options supplémentaires)
     elseif (strpos($action, 'offres-') === 0 || $action === 'offres') {
         require_once 'app/controllers/OffreController.php';
         $controller = new OffreController();
@@ -109,6 +109,32 @@ else {
                 break;
             default:
                 $controller->liste();
+                break;
+        }
+    }
+    // Actions SMS
+    elseif (strpos($action, 'sms') === 0) {
+        require_once 'app/controllers/AdminController.php';
+        $controller = new AdminController();
+        
+        switch ($action) {
+            case 'smsLogs':
+                $controller->smsLogs();
+                break;
+            case 'smsEnvoyer':
+                $controller->smsEnvoyer();
+                break;
+            case 'smsDeleteLog':
+                $controller->smsDeleteLog();
+                break;
+            case 'smsRappels':
+                $controller->smsRappels();
+                break;
+            case 'smsRenvoyer':
+                $controller->smsRenvoyer();
+                break;
+            default:
+                $controller->dashboard();
                 break;
         }
     }

@@ -3,26 +3,22 @@
  * ====================================
  * FRONT CONTROLLER - PAGES PUBLIQUES
  * ====================================
- * Gere les pages accessibles a TOUS les visiteurs :
- * - Accueil, offres, souscription
- * - Gestion des abonnements utilisateur
- * Pas d'authentification requise - libre acces
  */
 require_once __DIR__ . '/../models/Abonnement.php';
 require_once __DIR__ . '/../models/Type.php';
+require_once __DIR__ . '/../models/Sms.php'; // ← AJOUT SMS
 
 class FrontController {
     private $model;
+    private $sms; // ← AJOUT SMS
 
     public function __construct() {
         $this->model = new Abonnement();
-        // session_start() est deja appelee dans index.php
+        $this->sms   = new Sms(); // ← AJOUT SMS
     }
 
     /**
-     * PAGE ACCUEIL - Landing page principale
-     * Presente TechCare et incite a explorer les offres
-     * Point d'entree du site public
+     * PAGE ACCUEIL
      */
     public function accueil() {
         require_once __DIR__ . '/../views/front/layout/header.php';
@@ -44,82 +40,120 @@ class FrontController {
                 margin: 40px 0;
             }
             .hero-section h1 { font-size: 48px; margin-bottom: 20px; }
-            .hero-section p { font-size: 20px; margin-bottom: 30px; opacity: 0.9; }
+            .hero-section p  { font-size: 20px; margin-bottom: 30px; opacity: 0.9; }
         </style>
         <?php
         require_once __DIR__ . '/../views/front/layout/footer.php';
     }
 
     /**
-     * PAGE SOUSCRIRE - Formulaire de souscription a un plan
-     * GET  : Affiche le formulaire
-     * POST : Cree l'abonnement et sauvegarde en BDD
-     * 
-     * FEATURES:
-     * - Calcul auto du prix selon type (Mensuel 29.90 / Annuel 299)
-     * - Calcul auto date fin (+1 mois ou +1 an)
-     * - Validation email
-     * - Sauvegarde email en session pour retrouver les abonnements
+     * PAGE SOUSCRIRE
+     * ── MODIFIÉ : ajout champ téléphone + envoi SMS bienvenue ──
      */
     public function souscrire() {
         $erreur = null;
-        
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Valider l'email
-            $email = filter_var($_POST['email'] ?? '', FILTER_SANITIZE_EMAIL);
+
+            // ── Récupération et nettoyage des données ────────
+            $email      = filter_var($_POST['email']      ?? '', FILTER_SANITIZE_EMAIL);
             $nom_client = htmlspecialchars($_POST['nom_client'] ?? '');
-            $type = $_POST['type_abonnement'] ?? 'mensuel';
-            
+            $type       = $_POST['type_abonnement'] ?? 'mensuel';
+
+            // ── NOUVEAU : récupération téléphone ─────────────
+            $telephone = trim($_POST['telephone'] ?? '');
+            // Normaliser : si l'utilisateur a envoyé +216XXXXXXXX (déjà formaté par le JS)
+            if (!empty($telephone) && !str_starts_with($telephone, '+')) {
+                $telephone = '+216' . preg_replace('/\D/', '', $telephone);
+            }
+
+            // ── Validation ───────────────────────────────────
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $erreur = "Email invalide";
+                $erreur = "Email invalide.";
             } elseif (empty($nom_client)) {
-                $erreur = "Nom requis";
+                $erreur = "Le nom est obligatoire.";
+            } elseif (!empty($telephone) && !preg_match('/^\+\d{10,15}$/', $telephone)) {
+                $erreur = "Numéro de téléphone invalide.";
             } else {
-                // Calculer les prix et dates selon le type
+
+                // ── Calcul prix et dates selon type ──────────
                 $date_debut = date('Y-m-d');
-                
                 switch ($type) {
                     case 'mensuel':
                         $date_fin = date('Y-m-d', strtotime('+1 month'));
-                        $prix = 29.90;
+                        $prix     = 29.90;
                         break;
                     case 'annuel':
                         $date_fin = date('Y-m-d', strtotime('+1 year'));
-                        $prix = 299.00;
+                        $prix     = 299.00;
                         break;
                     case 'ponctuel':
                         $date_fin = date('Y-m-d', strtotime('+7 days'));
-                        $prix = 49.90;
+                        $prix     = 49.90;
                         break;
                     default:
-                        $date_fin = $date_debut;
-                        $prix = 29.90;
+                        $date_fin = date('Y-m-d', strtotime('+1 month'));
+                        $prix     = 29.90;
                 }
-                
+
                 $data = [
-                    'nom_client' => $nom_client,
-                    'email' => $email,
+                    'nom_client'      => $nom_client,
+                    'email'           => $email,
+                    'telephone'       => $telephone, // ← NOUVEAU
                     'type_abonnement' => $type,
-                    'prix' => $prix,
-                    'date_debut' => $date_debut,
-                    'date_fin' => $date_fin
+                    'prix'            => $prix,
+                    'date_debut'      => $date_debut,
+                    'date_fin'        => $date_fin,
                 ];
-                
-                // Creer l'abonnement
+
                 $result = $this->model->create($data);
-                
+
                 if ($result) {
-                    // Sauvegarder l'email dans la session pour retrouver les abonnements
+
+                    // ═══ ENVOI SMS BIENVENUE ═══════════════════
+                    if (!empty($telephone)) {
+                        $data['id'] = $result; // injecter l'ID créé
+                        $smsResult  = $this->sms->envoyerBienvenue($data);
+
+                        // Debug: vérifier le résultat
+                        error_log("[TechCare] SMS Résultat: " . json_encode($smsResult));
+
+                        if (!$smsResult['success']) {
+                            // Ne pas bloquer la souscription si le SMS échoue
+                            error_log("[TechCare] SMS bienvenue échoué : " .
+                                ($smsResult['error'] ?? 'inconnu'));
+                        }
+
+                        // ═══ NOTIFICATION ADMIN ════════════════════
+                        $this->sms->notifierAdmin($data);
+                    } else {
+                        error_log("[TechCare] Telephone vide, SMS non envoyé");
+                    }
+                    // ═══════════════════════════════════════════
+
                     $_SESSION['user_email'] = $email;
-                    $_SESSION['success'] = "Souscription reussie !";
+                    
+                    // Message différent selon le mode SMS
+                    if (!empty($telephone)) {
+                        $twilioConfigured = defined('TWILIO_SID') && TWILIO_SID !== 'VOTRE_ACCOUNT_SID';
+                        if ($twilioConfigured) {
+                            $_SESSION['success'] = "Souscription réussie ! Un SMS de confirmation vous a été envoyé.";
+                        } else {
+                            $_SESSION['success'] = "Souscription réussie ! (Mode test - SMS simulé)";
+                        }
+                    } else {
+                        $_SESSION['success'] = "Souscription réussie !";
+                    }
+
                     header('Location: index.php?page=mes-abonnements');
                     exit();
+
                 } else {
-                    $erreur = "Erreur lors de la souscription. Veuillez recessayer.";
+                    $erreur = "Erreur lors de la souscription. Veuillez réessayer.";
                 }
             }
         }
-        
+
         require_once __DIR__ . '/../views/front/layout/header.php';
         require_once __DIR__ . '/../views/front/abonnements/souscrire.php';
         require_once __DIR__ . '/../views/front/layout/footer.php';
@@ -134,26 +168,22 @@ class FrontController {
 
     /**
      * Mes abonnements (client)
-     * Recupere via email de session ou du formulaire
      */
     public function mesAbonnements() {
-        $email = '';
+        $email          = '';
         $mesAbonnements = [];
-        
-        // Si email fourni en GET (formulaire de recherche)
+
         if (!empty($_GET['email'])) {
             $email = filter_var($_GET['email'], FILTER_SANITIZE_EMAIL);
             if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 $_SESSION['user_email'] = $email;
                 $mesAbonnements = $this->model->getByEmail($email);
             }
-        }
-        // Sinon utiliser l'email en session
-        elseif (!empty($_SESSION['user_email'])) {
-            $email = $_SESSION['user_email'];
+        } elseif (!empty($_SESSION['user_email'])) {
+            $email          = $_SESSION['user_email'];
             $mesAbonnements = $this->model->getByEmail($email);
         }
-        
+
         require_once __DIR__ . '/../views/front/layout/header.php';
         require_once __DIR__ . '/../views/front/abonnements/mes-abonnements.php';
         require_once __DIR__ . '/../views/front/layout/footer.php';
@@ -163,29 +193,29 @@ class FrontController {
      * Modifier un abonnement (Front Office)
      */
     public function modifierAbonnement() {
-        $id = intval($_GET['id'] ?? 0);
-        $abonnement = $this->model->getById($id);
-        
+        $id          = intval($_GET['id'] ?? 0);
+        $abonnement  = $this->model->getById($id);
+
         if (!$abonnement) {
             header('Location: index.php?page=mes-abonnements');
             exit();
         }
-        
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $data = [
-                'nom_client' => htmlspecialchars($_POST['nom_client'] ?? ''),
+                'nom_client'      => htmlspecialchars($_POST['nom_client'] ?? ''),
                 'type_abonnement' => $_POST['type_abonnement'] ?? '',
-                'prix' => floatval($_POST['prix'] ?? 0),
-                'date_debut' => $_POST['date_debut'] ?? '',
-                'date_fin' => $_POST['date_fin'] ?? '',
-                'statut' => 'actif'
+                'prix'            => floatval($_POST['prix']   ?? 0),
+                'date_debut'      => $_POST['date_debut']      ?? '',
+                'date_fin'        => $_POST['date_fin']        ?? '',
+                'statut'          => 'actif',
             ];
             $this->model->update($id, $data);
-            $_SESSION['success'] = "Abonnement modifié avec succès";
+            $_SESSION['success'] = "Abonnement modifié avec succès.";
             header('Location: index.php?page=mes-abonnements');
             exit();
         }
-        
+
         require_once __DIR__ . '/../views/front/layout/header.php';
         require_once __DIR__ . '/../views/front/abonnements/modifier-abo.php';
         require_once __DIR__ . '/../views/front/layout/footer.php';
@@ -197,7 +227,7 @@ class FrontController {
     public function supprimerAbonnement() {
         $id = intval($_GET['id'] ?? 0);
         $this->model->delete($id);
-        $_SESSION['success'] = "Abonnement résilié avec succès";
+        $_SESSION['success'] = "Abonnement résilié avec succès.";
         header('Location: index.php?page=mes-abonnements');
         exit();
     }
@@ -206,9 +236,9 @@ class FrontController {
      * Détail d'un abonnement (Front Office)
      */
     public function detailAbonnement() {
-        $id = intval($_GET['id'] ?? 0);
+        $id         = intval($_GET['id'] ?? 0);
         $abonnement = $this->model->getById($id);
-        
+
         require_once __DIR__ . '/../views/front/layout/header.php';
         ?>
         <div class="container">
@@ -216,18 +246,21 @@ class FrontController {
                 <h1>Détail de l'abonnement #<?= $abonnement['id'] ?></h1>
                 <div class="detail-grid">
                     <div><strong>Client :</strong> <?= htmlspecialchars($abonnement['nom_client']) ?></div>
-                    <div><strong>Type :</strong> <?= $abonnement['type_abonnement'] ?></div>
-                    <div><strong>Prix :</strong> <?= $abonnement['prix'] ?> DT</div>
-                    <div><strong>Début :</strong> <?= $abonnement['date_debut'] ?></div>
-                    <div><strong>Fin :</strong> <?= $abonnement['date_fin'] ?></div>
+                    <div><strong>Type :</strong>   <?= $abonnement['type_abonnement'] ?></div>
+                    <div><strong>Prix :</strong>   <?= $abonnement['prix'] ?> DT</div>
+                    <div><strong>Début :</strong>  <?= $abonnement['date_debut'] ?></div>
+                    <div><strong>Fin :</strong>    <?= $abonnement['date_fin'] ?></div>
                     <div><strong>Statut :</strong> <?= $abonnement['statut'] ?></div>
+                    <?php if (!empty($abonnement['telephone'])): ?>
+                    <div><strong>Téléphone :</strong> <?= htmlspecialchars($abonnement['telephone']) ?></div>
+                    <?php endif; ?>
                 </div>
                 <a href="index.php?page=mes-abonnements" class="btn-secondary">← Retour</a>
             </div>
         </div>
         <style>
-            .detail-card { background: white; padding: 30px; border-radius: 16px; margin: 40px 0; }
-            .detail-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 20px; margin: 20px 0; }
+            .detail-card  { background: white; padding: 30px; border-radius: 16px; margin: 40px 0; }
+            .detail-grid  { display: grid; grid-template-columns: repeat(2,1fr); gap: 20px; margin: 20px 0; }
         </style>
         <?php
         require_once __DIR__ . '/../views/front/layout/footer.php';
@@ -238,14 +271,14 @@ class FrontController {
      */
     public function contact() {
         $success_message = null;
-        
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $nom = htmlspecialchars($_POST['nom'] ?? '');
-            $email = filter_var($_POST['email'] ?? '', FILTER_SANITIZE_EMAIL);
+            $nom     = htmlspecialchars($_POST['nom']     ?? '');
+            $email   = filter_var($_POST['email'] ?? '', FILTER_SANITIZE_EMAIL);
             $message = htmlspecialchars($_POST['message'] ?? '');
             $success_message = "Merci pour votre message. Nous vous recontacterons bientôt.";
         }
-        
+
         require_once __DIR__ . '/../views/front/layout/header.php';
         ?>
         <div class="container">
@@ -270,25 +303,24 @@ class FrontController {
             </form>
         </div>
         <style>
-            .contact-form { max-width: 600px; margin: 30px auto; background: white; padding: 30px; border-radius: 16px; }
-            .form-group { margin-bottom: 20px; }
-            .form-group label { display: block; margin-bottom: 8px; font-weight: bold; }
-            .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
-            .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-            .alert.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+            .contact-form { max-width:600px; margin:30px auto; background:white; padding:30px; border-radius:16px; }
+            .form-group   { margin-bottom:20px; }
+            .form-group label { display:block; margin-bottom:8px; font-weight:bold; }
+            .form-group input, .form-group textarea { width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; }
+            .alert { padding:15px; border-radius:8px; margin-bottom:20px; }
+            .alert.success { background:#d4edda; color:#155724; border:1px solid #c3e6cb; }
         </style>
         <?php
         require_once __DIR__ . '/../views/front/layout/footer.php';
     }
+
     /**
- * Page des offres d'abonnement
- */
-public function offres() {
-    // Récupérer tous les types d'abonnement depuis la base de données
-    $typeModel = new Type();
-    $types = $typeModel->getAll();
-    
-    include __DIR__ . '/../views/front/abonnements/index.php';
-}
+     * Page des offres d'abonnement
+     */
+    public function offres() {
+        $typeModel = new Type();
+        $types     = $typeModel->getAll();
+        include __DIR__ . '/../views/front/abonnements/index.php';
+    }
 }
 ?>
