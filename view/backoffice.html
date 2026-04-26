@@ -10,6 +10,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
     .page-overlay {
@@ -143,6 +145,36 @@
                 <span class="stat-label">Stock Total</span>
               </div>
             </div>
+            <div class="stat-card c-red">
+              <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+              <div class="stat-info">
+                <span class="stat-value" id="out-of-stock">–</span>
+                <span class="stat-label">En Rupture</span>
+              </div>
+            </div>
+            <div class="stat-card c-orange">
+              <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
+              <div class="stat-info">
+                <span class="stat-value" id="stock-value">–</span>
+                <span class="stat-label">Valeur du Stock (DT)</span>
+              </div>
+            </div>
+            <div class="stat-card c-teal">
+              <div class="stat-icon"><i class="fas fa-recycle"></i></div>
+              <div class="stat-info">
+                <span class="stat-value" id="used-products">–</span>
+                <span class="stat-label">Occasion</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="admin-card" style="margin-top: 2rem;">
+            <div class="card-head">
+              <h3><i class="fas fa-chart-pie"></i> Répartition du Stock par État (Neuf / Occasion)</h3>
+            </div>
+            <div style="padding: 1.5rem; height: 350px;">
+              <canvas id="stockChart"></canvas>
+            </div>
           </div>
         </div>
 
@@ -169,7 +201,7 @@
 
               <div class="form-group">
                 <label for="p-stock">Stock</label>
-                <input type="text" id="p-stock" value="0" placeholder="0" />
+                <input type="text" id="p-stock" value="10" placeholder="10" />
               </div>
 
               <div class="form-group">
@@ -279,9 +311,14 @@
           <div class="admin-card">
             <div class="card-head">
               <h3><i class="fas fa-list"></i> Liste des produits</h3>
-              <button class="btn-sm-green" onclick="appController.showTab('add-product')">
-                <i class="fas fa-plus"></i> Ajouter
-              </button>
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="appController.exportPDF()">
+                  <i class="fas fa-file-pdf"></i> Exporter PDF
+                </button>
+                <button class="btn-sm-green" onclick="appController.showTab('add-product')">
+                  <i class="fas fa-plus"></i> Ajouter
+                </button>
+              </div>
             </div>
             <div class="table-scroll">
               <table class="data-table">
@@ -291,7 +328,6 @@
                     <th>Image</th>
                     <th>Nom</th>
                     <th>Marque</th>
-                    <th>Catégorie</th>
                     <th>État</th>
                     <th>Stock</th>
                     <th>Prix</th>
@@ -383,7 +419,7 @@
         const tbody = document.getElementById('admin-product-list');
         if (!tbody) return;
         if (!products.length) {
-          tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:2rem;">Aucun produit dans la base de données.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:2rem;">Aucun produit dans la base de données.</td></tr>';
           return;
         }
         tbody.innerHTML = products.map((p, i) => `
@@ -411,6 +447,10 @@
         const countEl = document.getElementById('count-products');
         const avgEl   = document.getElementById('avg-price');
         const stEl    = document.getElementById('total-stock');
+        const outEl   = document.getElementById('out-of-stock');
+        const valEl   = document.getElementById('stock-value');
+        const usedEl  = document.getElementById('used-products');
+
         if (countEl) countEl.textContent = products.length;
         if (avgEl) {
           avgEl.textContent = products.length
@@ -418,8 +458,73 @@
             : '0';
         }
         if (stEl) {
-          stEl.textContent = products.reduce((s, p) => s + parseInt(p.stock), 0);
+          stEl.textContent = products.reduce((s, p) => s + parseInt(p.stock || 0), 0);
         }
+        if (outEl) {
+          outEl.textContent = products.filter(p => parseInt(p.stock || 0) <= 0).length;
+        }
+        if (valEl) {
+          const totalVal = products.reduce((s, p) => s + (parseFloat(p.prix) * parseInt(p.stock || 0)), 0);
+          valEl.textContent = totalVal.toFixed(2);
+        }
+        if (usedEl) {
+          usedEl.textContent = products.filter(p => p.etat === 'occasion').length;
+        }
+
+        this.renderChart(products);
+      },
+
+      chartInstance: null,
+
+      renderChart(products) {
+        const ctx = document.getElementById('stockChart');
+        if (!ctx) return;
+
+        // Group stock by etat
+        const categories = {};
+        products.forEach(p => {
+          const etatValue = p.etat === 'occasion' ? 'Occasion' : 'Neuf';
+          categories[etatValue] = (categories[etatValue] || 0) + parseInt(p.stock || 0);
+        });
+
+        const labels = Object.keys(categories);
+        const data = Object.values(categories);
+
+        if (this.chartInstance) {
+          this.chartInstance.destroy();
+        }
+
+        this.chartInstance = new Chart(ctx, {
+          type: 'pie',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Quantité en Stock',
+              data: data,
+              backgroundColor: [
+                'rgba(0, 168, 107, 0.7)',
+                'rgba(59, 130, 246, 0.7)',
+                'rgba(168, 85, 247, 0.7)',
+                'rgba(249, 115, 22, 0.7)',
+                'rgba(20, 184, 166, 0.7)',
+                'rgba(239, 68, 68, 0.7)',
+                'rgba(234, 179, 8, 0.7)'
+              ],
+              borderColor: '#141d2e',
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'right',
+                labels: { color: '#f0f4ff', font: { family: 'Inter' }, padding: 15 }
+              }
+            }
+          }
+        });
       },
 
       renderAll(products) {
@@ -731,6 +836,60 @@
           view.showToast('Erreur de connexion au serveur.', 'error');
           console.error(err);
         }
+      },
+
+      exportPDF() {
+        const table = document.querySelector('.data-table');
+        if (!table) return;
+
+        const clonedTable = table.cloneNode(true);
+        
+        // Remove 'Actions' column from cloned table
+        const ths = clonedTable.querySelectorAll('th');
+        if (ths.length > 0) ths[ths.length - 1].remove();
+        
+        const trs = clonedTable.querySelectorAll('tbody tr');
+        trs.forEach(tr => {
+          const tds = tr.querySelectorAll('td');
+          if (tds.length > 0) tds[tds.length - 1].remove();
+        });
+
+        const container = document.createElement('div');
+        container.style.padding = '20px';
+        container.innerHTML = '<h2 style="color: #0b0f1a; font-family: Inter, sans-serif; margin-bottom: 20px;">Catalogue TechCare</h2>';
+        
+        // Apply inline styles for PDF rendering to avoid background/dark mode issues
+        clonedTable.style.width = '100%';
+        clonedTable.style.borderCollapse = 'collapse';
+        clonedTable.style.color = '#000';
+        clonedTable.style.fontFamily = 'Inter, sans-serif';
+        clonedTable.style.fontSize = '12px';
+        
+        // Force text color for all nested elements to override dark mode styles
+        clonedTable.querySelectorAll('*').forEach(el => {
+          el.style.color = '#000';
+        });
+
+        clonedTable.querySelectorAll('th, td').forEach(cell => {
+          cell.style.border = '1px solid #ddd';
+          cell.style.padding = '8px';
+          cell.style.textAlign = 'left';
+        });
+        
+        container.appendChild(clonedTable);
+
+        const opt = {
+          margin:       0.5,
+          filename:     'Catalogue_TechCare.pdf',
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2 },
+          jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+        };
+
+        view.showToast('Génération du PDF en cours...', 'warn');
+        html2pdf().set(opt).from(container).save().then(() => {
+          view.showToast('PDF téléchargé avec succès !', 'success');
+        });
       }
     };
 

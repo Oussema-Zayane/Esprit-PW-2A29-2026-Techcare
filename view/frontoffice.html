@@ -179,6 +179,28 @@
     </div>
   </div>
 
+  <!-- ── Panier (Cart Drawer) ──────────────────────────────────────── -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <div class="cart-drawer" id="cartDrawer">
+    <div class="cart-header">
+      <h3><i class="fas fa-shopping-cart"></i> Panier</h3>
+      <button onclick="closeCart()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty">
+        <i class="fas fa-shopping-cart"></i>
+        <p>Votre panier est vide</p>
+      </div>
+    </div>
+    <div class="cart-footer">
+      <div class="cart-total">
+        <span>Total:</span>
+        <span id="cartTotal">0.00 DT</span>
+      </div>
+      <button class="btn-primary" style="width:100%;">Passer la commande</button>
+    </div>
+  </div>
+
   <div class="toast-container" id="toast-container"></div>
 
   <script>
@@ -232,7 +254,7 @@
         noResults.classList.add('hidden');
         
         grid.innerHTML = products.map((p, idx) => `
-          <div class="product-card" style="animation: cardIn 0.4s ease ${idx * 0.03}s both;">
+          <div class="product-card" style="animation: cardIn 0.4s ease ${idx * 0.03}s both;" data-product-id="${p.id}">
             <div class="card-img-wrap">
               ${p.stock <= 0 ? '<div class="stock-overlay">Rupture</div>' : ''}
               <img src="${p.image}" alt="${p.nom}" loading="lazy" referrerpolicy="no-referrer" 
@@ -245,11 +267,23 @@
               <div class="product-description">${p.description || ''}</div>
               <div class="card-footer">
                 <div class="card-price">${parseFloat(p.prix).toFixed(0)} DT</div>
-                <button class="btn-cart-mini"><i class="fas fa-shopping-cart"></i> Ajouter</button>
+                <button class="btn-cart-mini" data-product-id="${p.id}" data-product-name="${p.nom}" data-product-price="${p.prix}" data-product-image="${p.image}" data-product-stock="${p.stock}"><i class="fas fa-shopping-cart"></i> Ajouter</button>
               </div>
             </div>
           </div>
         `).join('');
+        
+        // Ajouter les écouteurs d'événements après le rendu
+        grid.querySelectorAll('.btn-cart-mini').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const id = parseInt(btn.dataset.productId);
+            const name = btn.dataset.productName;
+            const price = parseFloat(btn.dataset.productPrice);
+            const image = btn.dataset.productImage;
+            const stock = parseInt(btn.dataset.productStock);
+            appController.addToCart(id, name, price, image, stock);
+          });
+        });
       },
 
       showToast(message, type = 'success') {
@@ -268,16 +302,117 @@
     const appController = {
       allProducts: [],
       filteredProducts: [],
+      cart: [],
 
       async init() {
         try {
           this.allProducts = await api.getAll();
           this.filteredProducts = [...this.allProducts];
+          this.loadCart();
           view.renderFront(this.filteredProducts);
           this.setupEventListeners();
         } catch (err) {
           console.error('Erreur:', err);
           view.showToast('Impossible de charger les produits', 'error');
+        }
+      },
+
+      loadCart() {
+        const saved = localStorage.getItem('techcare-cart');
+        this.cart = saved ? JSON.parse(saved) : [];
+        this.updateCartUI();
+      },
+
+      saveCart() {
+        localStorage.setItem('techcare-cart', JSON.stringify(this.cart));
+        this.updateCartUI();
+      },
+
+      addToCart(productId, productName, productPrice, productImage, stock) {
+        if (stock <= 0) {
+          view.showToast('Ce produit est en rupture de stock', 'error');
+          return;
+        }
+
+        const existingItem = this.cart.find(item => item.id === productId);
+        
+        if (existingItem) {
+          existingItem.quantity += 1;
+        } else {
+          this.cart.push({
+            id: productId,
+            name: productName,
+            price: parseFloat(productPrice),
+            image: productImage,
+            quantity: 1
+          });
+        }
+
+        this.saveCart();
+        view.showToast(`"${productName}" ajouté au panier`, 'success');
+        openCart();
+      },
+
+      removeFromCart(productId) {
+        this.cart = this.cart.filter(item => item.id !== productId);
+        this.saveCart();
+      },
+
+      updateQuantity(productId, newQuantity) {
+        const item = this.cart.find(item => item.id === productId);
+        if (item) {
+          if (newQuantity <= 0) {
+            this.removeFromCart(productId);
+          } else {
+            item.quantity = newQuantity;
+            this.saveCart();
+          }
+        }
+      },
+
+      updateCartUI() {
+        const cartItemsContainer = document.getElementById('cartItems');
+        const cartTotal = document.getElementById('cartTotal');
+        const cartOverlay = document.getElementById('cartOverlay');
+
+        if (!cartItemsContainer) return;
+
+        if (this.cart.length === 0) {
+          cartItemsContainer.innerHTML = `
+            <div class="cart-empty">
+              <i class="fas fa-shopping-cart"></i>
+              <p>Votre panier est vide</p>
+            </div>
+          `;
+          return;
+        }
+
+        let total = 0;
+        cartItemsContainer.innerHTML = this.cart.map(item => {
+          const itemTotal = item.price * item.quantity;
+          total += itemTotal;
+          return `
+            <div class="cart-item">
+              <img src="${item.image}" alt="${item.name}" class="cart-item-img" 
+                onerror="this.onerror=null;this.src='https://placehold.co/52x52/141d2e/00A86B'">
+              <div class="cart-item-info">
+                <div class="cart-item-name">${item.name}</div>
+                <div class="cart-item-price">${parseFloat(item.price).toFixed(2)} DT</div>
+              </div>
+              <div class="cart-item-qty">
+                <button onclick="appController.updateQuantity(${item.id}, ${item.quantity - 1})">−</button>
+                <span>${item.quantity}</span>
+                <button onclick="appController.updateQuantity(${item.id}, ${item.quantity + 1})">+</button>
+              </div>
+              <button class="cart-item-remove" onclick="appController.removeFromCart(${item.id})">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          `;
+        }).join('');
+
+        if (cartTotal) {
+          cartTotal.textContent = total.toFixed(2) + ' DT';
         }
       },
 
@@ -398,6 +533,20 @@
     function navigate(v) { appController.navigate(v); }
     function openPage(name) { document.getElementById('overlay-' + name).classList.add('open'); }
     function closePage(name) { document.getElementById('overlay-' + name).classList.remove('open'); }
+    function openCart() { 
+      const cartDrawer = document.getElementById('cartDrawer');
+      const cartOverlay = document.getElementById('cartOverlay');
+      if (cartDrawer) cartDrawer.classList.add('open');
+      if (cartOverlay) cartOverlay.classList.add('open');
+    }
+    function closeCart() { 
+      const cartDrawer = document.getElementById('cartDrawer');
+      const cartOverlay = document.getElementById('cartOverlay');
+      if (cartDrawer) cartDrawer.classList.remove('open');
+      if (cartOverlay) cartOverlay.classList.remove('open');
+    }
+
+    document.getElementById('cartOverlay')?.addEventListener('click', closeCart);
 
     document.querySelectorAll('.page-overlay').forEach(overlay => {
       overlay.addEventListener('click', e => {
