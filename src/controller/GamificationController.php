@@ -9,13 +9,19 @@ class GamificationController {
             session_start();
         }
         $this->model = new GamificationModel();
-        if (!isset($_SESSION['username'])) {
+        
+        if (!isset($_SESSION['user_id'])) {
+            $_SESSION['user_id'] = 1;
             $_SESSION['username'] = 'Ayari Firas';
             $_SESSION['role'] = 'admin';
-            $_SESSION['user_id'] = 1;
         }
     }
     
+    // =====================================================
+    // PAGES PRINCIPALES
+    // =====================================================
+    
+    // Dashboard - Page d'accueil
     public function dashboard() {
         $user = $this->model->getUser(1);
         $history = $this->model->getHistory(1, 5);
@@ -38,25 +44,18 @@ class GamificationController {
         
         $pageTitle = "Dashboard";
         $activeTab = "dashboard";
+        $points = $user['points'];
+        $level = $user['level'];
+        $badgesCount = count($userBadges);
+        $actionsCount = $user['total_actions'];
+        
         ob_start();
         require_once __DIR__ . '/../View/frontoffice/dashboard.php';
         $content = ob_get_clean();
         require_once __DIR__ . '/../View/layout/app.php';
     }
     
-    public function addPoints() {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $points = intval($_POST['points'] ?? 0);
-            $action = $_POST['action'] ?? '';
-            if ($points > 0 && $action) {
-                $this->model->addPoints(1, $points, $action);
-                $_SESSION['success'] = "+$points points gagnés !";
-            }
-        }
-        header('Location: index.php?controller=gamification&action=dashboard');
-        exit;
-    }
-    
+    // Mes Points - Historique
     public function points() {
         $user = $this->model->getUser(1);
         $history = $this->model->getHistory(1, 50);
@@ -69,16 +68,7 @@ class GamificationController {
         require_once __DIR__ . '/../View/layout/app.php';
     }
     
-    public function deleteHistory() {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $historyId = intval($_POST['id'] ?? 0);
-            $this->model->deleteHistoryItem($historyId, 1);
-            $_SESSION['success'] = "Entrée supprimée !";
-        }
-        header('Location: index.php?controller=gamification&action=points');
-        exit;
-    }
-    
+    // Badges
     public function badges() {
         $user = $this->model->getUser(1);
         $allBadges = $this->model->getAllBadges();
@@ -93,9 +83,9 @@ class GamificationController {
         require_once __DIR__ . '/../View/layout/app.php';
     }
     
+    // Classement
     public function leaderboard() {
         $users = $this->model->getAllUsers();
-        $userPoints = $this->model->getUser(1)['points'];
         
         $pageTitle = "Classement";
         $activeTab = "leaderboard";
@@ -105,6 +95,7 @@ class GamificationController {
         require_once __DIR__ . '/../View/layout/app.php';
     }
     
+    // Récompenses
     public function rewards() {
         $user = $this->model->getUser(1);
         $rewards = $this->model->getRewards();
@@ -118,48 +109,112 @@ class GamificationController {
         require_once __DIR__ . '/../View/layout/app.php';
     }
     
+    // =====================================================
+    // ACTIONS (POST)
+    // =====================================================
+    
+    // Ajouter des points
+    public function addPoints() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $points = intval($_POST['points'] ?? 0);
+            $action = $_POST['action'] ?? 'Action';
+            
+            if ($points > 0) {
+                $this->model->addPoints(1, $points, $action);
+                $_SESSION['success'] = "+$points points gagnés !";
+            }
+        }
+        header('Location: index.php?controller=gamification&action=dashboard');
+        exit;
+    }
+    
+    // Échanger une récompense
     public function redeemReward() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $rewardId = intval($_POST['reward_id'] ?? 0);
             if ($this->model->redeemReward(1, $rewardId)) {
                 $_SESSION['success'] = "Récompense obtenue avec succès !";
             } else {
-                $_SESSION['error'] = "Impossible d'échanger cette récompense.";
+                $_SESSION['error'] = "Points insuffisants ou stock épuisé";
             }
         }
         header('Location: index.php?controller=gamification&action=rewards');
         exit;
     }
     
-    public function loyalty() {
-        $user = $this->model->getUser(1);
-        
-        $pageTitle = "Fidélité";
-        $activeTab = "loyalty";
-        ob_start();
-        require_once __DIR__ . '/../View/frontoffice/loyalty.php';
-        $content = ob_get_clean();
-        require_once __DIR__ . '/../View/layout/app.php';
+    // Supprimer une entrée de l'historique
+    public function deleteHistory() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $historyId = intval($_POST['id'] ?? 0);
+            if ($this->model->deleteHistoryItem($historyId, 1)) {
+                $_SESSION['success'] = "Entrée supprimée !";
+            }
+        }
+        header('Location: index.php?controller=gamification&action=points');
+        exit;
     }
     
-    // API Methods for AJAX
+    // =====================================================
+    // API (AJAX)
+    // =====================================================
+    
+    // Récupérer les données utilisateur pour le FrontOffice
+    public function getUserData() {
+        header('Content-Type: application/json');
+        
+        $user = $this->model->getUser(1);
+        $history = $this->model->getHistory(1, 10);
+        $userBadges = $this->model->getUserBadges(1);
+        $userRewards = $this->model->getUserRewards(1);
+        
+        echo json_encode([
+            'points' => $user['points'],
+            'level' => $user['level'],
+            'actions' => $user['total_actions'],
+            'badges' => array_column($userBadges, 'badge_id'),
+            'userRewards' => $userRewards,
+            'history' => array_map(function($h) {
+                return [
+                    'id' => $h['history_id'],
+                    'date' => date('d/m/Y H:i', strtotime($h['created_at'])),
+                    'action' => $h['reason'],
+                    'points' => $h['points_change']
+                ];
+            }, $history)
+        ]);
+        exit;
+    }
+    
+    // Récupérer le classement
+    public function getLeaderboard() {
+        header('Content-Type: application/json');
+        $users = $this->model->getAllUsers();
+        echo json_encode($users);
+        exit;
+    }
+    
+    // Récupérer tous les badges (API)
     public function getBadgesApi() {
         header('Content-Type: application/json');
         echo json_encode($this->model->getAllBadges());
         exit;
     }
     
+    // Récupérer toutes les récompenses (API)
     public function getRewardsApi() {
         header('Content-Type: application/json');
         echo json_encode($this->model->getRewards());
         exit;
     }
     
+    // Ajouter des points via API (BackOffice)
     public function addPointsApi() {
+        header('Content-Type: application/json');
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $userId = intval($_POST['userId'] ?? 1);
             $points = intval($_POST['points'] ?? 0);
             $reason = $_POST['reason'] ?? 'Ajout admin';
+            
             if ($points > 0) {
                 $this->model->addPoints($userId, $points, $reason);
                 echo json_encode(['success' => true]);

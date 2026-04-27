@@ -1,106 +1,89 @@
 <?php
-/**
- * TechCare - Routeur principal (MVC)
- * Toutes les requêtes passent par ce fichier
- */
+session_start();
 
-// Démarrer la session
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-// Définir l'utilisateur par défaut pour la démo
-if (!isset($_SESSION['username'])) {
-    $_SESSION['username'] = 'Ayari Firas';
-    $_SESSION['role'] = 'admin';
-    $_SESSION['user_id'] = 1;
-}
-
-// Inclure les dépendances
+// Inclusion des contrôleurs
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../src/Controller/GamificationController.php';
+require_once __DIR__ . '/../src/Controller/FideliteController.php';
 require_once __DIR__ . '/../src/Controller/UserController.php';
+require_once __DIR__ . '/../src/Controller/BadgeController.php';
 
 // Récupérer le contrôleur et l'action depuis l'URL
 $controller = $_GET['controller'] ?? 'gamification';
 $action = $_GET['action'] ?? 'dashboard';
 
 // =====================================================
-// ROUTAGE - GAMIFICATION (Front Office)
+// ROUTAGE - GAMIFICATION (FrontOffice)
 // =====================================================
 if ($controller === 'gamification') {
     $ctrl = new GamificationController();
-    
-    switch ($action) {
-        case 'dashboard':
-            $ctrl->dashboard();
-            break;
-        case 'addPoints':
-            $ctrl->addPoints();
-            break;
-        case 'points':
-            $ctrl->points();
-            break;
-        case 'deleteHistory':
-            $ctrl->deleteHistory();
-            break;
-        case 'badges':
-            $ctrl->badges();
-            break;
-        case 'leaderboard':
-            $ctrl->leaderboard();
-            break;
-        case 'rewards':
-            $ctrl->rewards();
-            break;
-        case 'redeemReward':
-            $ctrl->redeemReward();
-            break;
-        case 'loyalty':
-            $ctrl->loyalty();
-            break;
-        case 'getBadgesApi':
-            $ctrl->getBadgesApi();
-            break;
-        case 'getRewardsApi':
-            $ctrl->getRewardsApi();
-            break;
-        case 'addPointsApi':
-            $ctrl->addPointsApi();
-            break;
-        default:
-            $ctrl->dashboard();
-            break;
+    if (method_exists($ctrl, $action)) {
+        $ctrl->$action();
+    } else {
+        $ctrl->dashboard();
     }
 }
 // =====================================================
-// ROUTAGE - USER (Back Office)
+// ROUTAGE - FIDELITE (BackOffice + FrontOffice + Jointures)
+// =====================================================
+elseif ($controller === 'fidelite') {
+    $ctrl = new FideliteController();
+    switch($action) {
+        // BackOffice CRUD
+        case 'index': $ctrl->index(); break;
+        case 'create': $ctrl->create(); break;
+        case 'store': $ctrl->store(); break;
+        case 'edit': $ctrl->edit(); break;
+        case 'update': $ctrl->update(); break;
+        case 'delete': $ctrl->delete(); break;
+        // FrontOffice
+        case 'frontoffice': $ctrl->frontoffice(); break;
+        case 'manageFront': $ctrl->manageFront(); break;
+        case 'storeFront': $ctrl->storeFront(); break;
+        case 'editFront': $ctrl->editFront(); break;
+        case 'updateFront': $ctrl->updateFront(); break;
+        case 'deleteFront': $ctrl->deleteFront(); break;
+        // API
+        case 'getUserFidelites': $ctrl->getUserFidelites(); break;
+        case 'getAll': $ctrl->getAll(); break;
+        case 'addPoints': $ctrl->addPoints(); break;
+        // Jointure
+        case 'showByUser': $ctrl->showByUser(); break;
+        default: $ctrl->index(); break;
+    }
+}
+// =====================================================
+// ROUTAGE - BADGE (BackOffice CRUD + IA + Jointures)
+// =====================================================
+elseif ($controller === 'badge') {
+    $ctrl = new BadgeController();
+    switch($action) {
+        // BackOffice CRUD
+        case 'index': $ctrl->index(); break;
+        case 'create': $ctrl->create(); break;
+        case 'store': $ctrl->store(); break;
+        case 'edit': $ctrl->edit(); break;
+        case 'update': $ctrl->update(); break;
+        case 'delete': $ctrl->delete(); break;
+        // API
+        case 'getAll': $ctrl->getAll(); break;
+        // Jointure Fidélité + Badges
+        case 'showFideliteWithBadges': $ctrl->showFideliteWithBadges(); break;
+        default: $ctrl->index(); break;
+    }
+}
+// =====================================================
+// ROUTAGE - USER (BackOffice Admin)
 // =====================================================
 elseif ($controller === 'user') {
     $ctrl = new UserController();
-    
-    switch ($action) {
-        case 'admin':
-            $ctrl->adminDashboard();
-            break;
-        case 'getStats':
-            $ctrl->getStats();
-            break;
-        case 'getUsers':
-            $ctrl->getUsers();
-            break;
-        case 'deleteUser':
-            $ctrl->deleteUser();
-            break;
-        case 'addUser':
-            $ctrl->addUser();
-            break;
-        case 'updateUser':
-            $ctrl->updateUser();
-            break;
-        default:
-            $ctrl->adminDashboard();
-            break;
+    switch($action) {
+        case 'admin': $ctrl->adminDashboard(); break;
+        case 'getStats': $ctrl->getStats(); break;
+        case 'getUsers': $ctrl->getUsers(); break;
+        case 'deleteUser': $ctrl->deleteUser(); break;
+        case 'addUser': $ctrl->addUser(); break;
+        default: $ctrl->adminDashboard(); break;
     }
 }
 // =====================================================

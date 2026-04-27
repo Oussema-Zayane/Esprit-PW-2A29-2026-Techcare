@@ -1,0 +1,115 @@
+# =====================================================
+# FICHIERS SENSIBLES - À NE JAMAIS PUBLIER
+# =====================================================
+
+# Clés API et mots de passe
+config/api_keys.php
+config/.env
+.env
+*.key
+*.pem
+secret.txt
+
+# =====================================================
+# DOSSIERS D'IMAGES GÉNÉRÉES
+# =====================================================
+
+# Images générées par l'IA (peuvent être volumineuses)
+assets/images/badges/
+assets/images/generated/
+uploads/
+temp/
+
+# =====================================================
+# FICHIERS TEMPORAIRES
+# =====================================================
+
+# Fichiers système Windows
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# Fichiers macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Fichiers Linux
+*~
+
+# =====================================================
+# FICHIERS DE LOG ET DE CACHE
+# =====================================================
+
+# Logs
+*.log
+error_log
+access_log
+
+# Cache
+.cache/
+cache/
+*.cache
+
+# =====================================================
+# FICHIERS DE L'ÉDITEUR (Visual Studio Code, etc.)
+# =====================================================
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# Sublime Text
+*.sublime-*
+
+# PHPStorm
+.idea/
+*.iml
+
+# =====================================================
+# FICHIERS DE COMPOSER (PHP)
+# =====================================================
+
+/vendor/
+composer.lock
+composer.phar
+
+# =====================================================
+# FICHIERS DE NODE (si utilisé)
+# =====================================================
+
+/node_modules/
+package-lock.json
+npm-debug.log
+
+# =====================================================
+# FICHIERS DE TEST
+# =====================================================
+
+/test/
+test_*.php
+*_test.php
+
+# =====================================================
+# ARCHIVES ET BACKUPS
+# =====================================================
+
+*.zip
+*.rar
+*.7z
+*.tar
+*.gz
+*.bak
+*.backup
+*.old
+*.orig
+
+# =====================================================
+# FICHIERS DE CONFIGURATION LOCALE
+# =====================================================
+
+config/local.php
+config/database.local.php
+.htaccess.local
+php.ini

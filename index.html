@@ -20,6 +20,7 @@
             min-height: 100vh;
         }
 
+        /* Header */
         .header {
             background: rgba(8, 12, 22, 0.95);
             padding: 20px 40px;
@@ -87,6 +88,7 @@
             transform: translateY(-2px);
         }
 
+        /* Hero Section */
         .hero {
             padding: 80px 40px;
             text-align: center;
@@ -127,6 +129,7 @@
             box-shadow: 0 8px 25px rgba(0,168,107,0.4);
         }
 
+        /* Features Section */
         .features {
             padding: 60px 40px;
             background: #0f172a;
@@ -181,6 +184,7 @@
             line-height: 1.6;
         }
 
+        /* Stats Section */
         .stats {
             padding: 60px 40px;
             background: linear-gradient(135deg, #0f172a, #1e293b);
@@ -200,6 +204,7 @@
             color: #94a3b8;
         }
 
+        /* CTA Section */
         .cta {
             padding: 80px 40px;
             text-align: center;
@@ -233,6 +238,7 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
+        /* Footer */
         .footer {
             background: #0f172a;
             padding: 40px;
@@ -244,6 +250,7 @@
             color: #64748b;
         }
 
+        /* Responsive */
         @media (max-width: 768px) {
             .header {
                 flex-direction: column;
@@ -251,9 +258,6 @@
             }
             .hero h1 {
                 font-size: 2rem;
-            }
-            .hero {
-                padding: 50px 20px;
             }
             .features-grid {
                 grid-template-columns: 1fr;
@@ -293,56 +297,20 @@
     <section class="features" id="features">
         <h2 class="section-title">Ce que <span>TechCare</span> vous offre</h2>
         <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon">⭐</div>
-                <h3>Gagnez des points</h3>
-                <p>Chaque action écologique vous rapporte des points.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🏅</div>
-                <h3>Débloquez des badges</h3>
-                <p>Atteignez des paliers pour débloquer des badges.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🏆</div>
-                <h3>Consultez le classement</h3>
-                <p>Comparez-vous aux autres utilisateurs.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🎁</div>
-                <h3>Échangez vos points</h3>
-                <p>Obtenez des réductions exclusives.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">💎</div>
-                <h3>Programme de fidélité</h3>
-                <p>Économisez avec des codes promo.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">📊</div>
-                <h3>Tableau de bord</h3>
-                <p>Suivez votre progression en temps réel.</p>
-            </div>
+            <div class="feature-card"><div class="feature-icon">⭐</div><h3>Gagnez des points</h3><p>Chaque action écologique vous rapporte des points.</p></div>
+            <div class="feature-card"><div class="feature-icon">🏅</div><h3>Débloquez des badges</h3><p>Atteignez des paliers pour débloquer des badges.</p></div>
+            <div class="feature-card"><div class="feature-icon">🏆</div><h3>Consultez le classement</h3><p>Comparez-vous aux autres utilisateurs.</p></div>
+            <div class="feature-card"><div class="feature-icon">🎁</div><h3>Échangez vos points</h3><p>Obtenez des réductions exclusives.</p></div>
+            <div class="feature-card"><div class="feature-icon">💎</div><h3>Programme de fidélité</h3><p>Économisez avec des codes promo.</p></div>
+            <div class="feature-card"><div class="feature-icon">📊</div><h3>Tableau de bord</h3><p>Suivez votre progression en temps réel.</p></div>
         </div>
     </section>
 
     <section class="stats" id="stats">
-        <div class="stat-item">
-            <h2 id="totalUsers">0</h2>
-            <p>Utilisateurs actifs</p>
-        </div>
-        <div class="stat-item">
-            <h2 id="totalPoints">0</h2>
-            <p>Points distribués</p>
-        </div>
-        <div class="stat-item">
-            <h2 id="totalActions">0</h2>
-            <p>Actions écologiques</p>
-        </div>
-        <div class="stat-item">
-            <h2 id="totalBadges">0</h2>
-            <p>Badges débloqués</p>
-        </div>
+        <div class="stat-item"><h2 id="totalUsers">0</h2><p>Utilisateurs actifs</p></div>
+        <div class="stat-item"><h2 id="totalPoints">0</h2><p>Points distribués</p></div>
+        <div class="stat-item"><h2 id="totalActions">0</h2><p>Actions écologiques</p></div>
+        <div class="stat-item"><h2 id="totalBadges">0</h2><p>Badges débloqués</p></div>
     </section>
 
     <section class="cta" id="contact">
@@ -373,7 +341,6 @@
                     document.getElementById('totalBadges').innerHTML = '23';
                 });
         }
-
         loadStats();
         setInterval(loadStats, 30000);
     </script>
