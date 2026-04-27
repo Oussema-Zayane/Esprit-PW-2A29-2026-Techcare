@@ -9,29 +9,32 @@ class FideliteModel {
     }
     
     // =====================================================
-    // CRUD pour l'entité Fidelite
+    // CRUD de base
     // =====================================================
     
-    // CREATE : Ajouter un enregistrement de fidélité
-    public function create($titre, $description, $total, $dateGain) {
-        $sql = "INSERT INTO fidelite (titre, description, total, dateGain) 
-                VALUES (:titre, :description, :total, :dateGain)";
+    public function create($titre, $description, $total, $dateGain, $userId = null) {
+        // Si userId n'est pas fourni, utiliser l'utilisateur connecté
+        if ($userId === null) {
+            $userId = $_SESSION['user_id'] ?? 1;
+        }
+        
+        $sql = "INSERT INTO fidelite (titre, description, total, dateGain, user_id) 
+                VALUES (:titre, :description, :total, :dateGain, :user_id)";
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute([
             'titre' => $titre,
             'description' => $description,
             'total' => $total,
-            'dateGain' => $dateGain
+            'dateGain' => $dateGain,
+            'user_id' => $userId
         ]);
     }
     
-    // READ : Récupérer tous les enregistrements
     public function getAll() {
         $sql = "SELECT * FROM fidelite ORDER BY dateGain DESC";
         return $this->pdo->query($sql)->fetchAll();
     }
     
-    // READ : Récupérer un enregistrement par ID
     public function getById($id) {
         $sql = "SELECT * FROM fidelite WHERE idPoints = :id";
         $stmt = $this->pdo->prepare($sql);
@@ -39,7 +42,6 @@ class FideliteModel {
         return $stmt->fetch();
     }
     
-    // UPDATE : Modifier un enregistrement
     public function update($id, $titre, $description, $total, $dateGain) {
         $sql = "UPDATE fidelite SET 
                     titre = :titre, 
@@ -57,7 +59,6 @@ class FideliteModel {
         ]);
     }
     
-    // DELETE : Supprimer un enregistrement
     public function delete($id) {
         $sql = "DELETE FROM fidelite WHERE idPoints = :id";
         $stmt = $this->pdo->prepare($sql);
@@ -65,10 +66,47 @@ class FideliteModel {
     }
     
     // =====================================================
-    // Méthodes pour les points utilisateur
+    // MÉTHODES AVEC JOINTURE (WORKSHOP)
     // =====================================================
     
-    // Récupérer les points d'un utilisateur
+    // Récupérer toutes les fidélités avec les infos utilisateur (JOINTURE)
+    public function getFidelitesWithUser() {
+        $sql = "SELECT f.*, u.id as user_id, u.nom as user_nom, u.email as user_email, u.nbPoints as user_points
+                FROM fidelite f
+                LEFT JOIN utilisateur u ON f.user_id = u.id
+                ORDER BY f.dateGain DESC";
+        return $this->pdo->query($sql)->fetchAll();
+    }
+    
+    // Récupérer les fidélités d'un utilisateur spécifique (JOINTURE avec filtre)
+    public function getFidelitesByUser($userId) {
+        $sql = "SELECT f.*, u.nom as user_nom, u.email as user_email
+                FROM fidelite f
+                INNER JOIN utilisateur u ON f.user_id = u.id
+                WHERE f.user_id = :user_id
+                ORDER BY f.dateGain DESC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['user_id' => $userId]);
+        return $stmt->fetchAll();
+    }
+    
+    // Récupérer les statistiques par utilisateur (JOINTURE avec agrégation)
+    public function getStatsByUser() {
+        $sql = "SELECT u.id, u.nom, u.email, 
+                       COUNT(f.idPoints) as total_fidelites,
+                       SUM(f.total) as total_points_offerts,
+                       MAX(f.dateGain) as derniere_date
+                FROM utilisateur u
+                LEFT JOIN fidelite f ON u.id = f.user_id
+                GROUP BY u.id
+                ORDER BY total_points_offerts DESC";
+        return $this->pdo->query($sql)->fetchAll();
+    }
+    
+    // =====================================================
+    // MÉTHODES POUR LES POINTS UTILISATEUR
+    // =====================================================
+    
     public function getUserPoints($userId) {
         $sql = "SELECT nbPoints FROM utilisateur WHERE id = :id";
         $stmt = $this->pdo->prepare($sql);
@@ -77,43 +115,10 @@ class FideliteModel {
         return $result ? $result['nbPoints'] : 0;
     }
     
-    // Ajouter des points à un utilisateur
     public function addUserPoints($userId, $points) {
         $sql = "UPDATE utilisateur SET nbPoints = nbPoints + :points WHERE id = :id";
         $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute([
-            'points' => $points,
-            'id' => $userId
-        ]);
-    }
-    
-    // Retirer des points à un utilisateur
-    public function removeUserPoints($userId, $points) {
-        $sql = "UPDATE utilisateur SET nbPoints = nbPoints - :points WHERE id = :id AND nbPoints >= :points";
-        $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute([
-            'points' => $points,
-            'id' => $userId
-        ]);
-    }
-    
-    // =====================================================
-    // Méthodes pour le FrontOffice
-    // =====================================================
-    
-    // Afficher tous les enregistrements de fidélité (alias de getAll)
-    public function afficherFidelite() {
-        return $this->getAll();
-    }
-    
-    // Consulter le total des points d'un utilisateur (alias de getUserPoints)
-    public function consulterTotal($userId) {
-        return $this->getUserPoints($userId);
-    }
-    
-    // Ajouter des points (alias)
-    public function ajouterPoints($userId, $points) {
-        return $this->addUserPoints($userId, $points);
+        return $stmt->execute(['points' => $points, 'id' => $userId]);
     }
 }
 ?>

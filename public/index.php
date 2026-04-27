@@ -24,7 +24,7 @@ if ($controller === 'gamification') {
     }
 }
 // =====================================================
-// ROUTAGE - FIDELITE (BackOffice + FrontOffice)
+// ROUTAGE - FIDELITE (BackOffice + FrontOffice + Jointures)
 // =====================================================
 elseif ($controller === 'fidelite') {
     $ctrl = new FideliteController();
@@ -43,25 +43,32 @@ elseif ($controller === 'fidelite') {
         case 'editFront': $ctrl->editFront(); break;
         case 'updateFront': $ctrl->updateFront(); break;
         case 'deleteFront': $ctrl->deleteFront(); break;
+        // API
         case 'getUserFidelites': $ctrl->getUserFidelites(); break;
         case 'getAll': $ctrl->getAll(); break;
         case 'addPoints': $ctrl->addPoints(); break;
+        // Jointure
+        case 'showByUser': $ctrl->showByUser(); break;
         default: $ctrl->index(); break;
     }
 }
 // =====================================================
-// ROUTAGE - BADGE (BackOffice CRUD)
+// ROUTAGE - BADGE (BackOffice CRUD + IA + Jointures)
 // =====================================================
 elseif ($controller === 'badge') {
     $ctrl = new BadgeController();
     switch($action) {
+        // BackOffice CRUD
         case 'index': $ctrl->index(); break;
         case 'create': $ctrl->create(); break;
         case 'store': $ctrl->store(); break;
         case 'edit': $ctrl->edit(); break;
         case 'update': $ctrl->update(); break;
         case 'delete': $ctrl->delete(); break;
+        // API
         case 'getAll': $ctrl->getAll(); break;
+        // Jointure Fidélité + Badges
+        case 'showFideliteWithBadges': $ctrl->showFideliteWithBadges(); break;
         default: $ctrl->index(); break;
     }
 }

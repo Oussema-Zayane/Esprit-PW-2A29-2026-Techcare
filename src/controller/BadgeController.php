@@ -21,34 +21,32 @@ class BadgeController {
     // BACKOFFICE - CRUD Badges
     // =====================================================
     
-    // READ - Afficher la liste des badges
     public function index() {
         $badges = $this->model->getAll();
         $pageTitle = "Gestion des Badges";
-        $activeTab = "badges";
+        $activeTab = "badges_admin";
         ob_start();
         require_once __DIR__ . '/../View/backoffice/badge_index.php';
         $content = ob_get_clean();
         require_once __DIR__ . '/../View/layout/app.php';
     }
     
-    // CREATE - Afficher le formulaire d'ajout
     public function create() {
         $pageTitle = "Ajouter un badge";
-        $activeTab = "badges";
+        $activeTab = "badges_admin";
         ob_start();
         require_once __DIR__ . '/../View/backoffice/badge_create.php';
         $content = ob_get_clean();
         require_once __DIR__ . '/../View/layout/app.php';
     }
     
-    // CREATE - Enregistrer en base
     public function store() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $nom = trim($_POST['nom'] ?? '');
             $description = trim($_POST['description'] ?? '');
             $icon = trim($_POST['icon'] ?? '🏅');
             $seuilPoints = intval($_POST['seuilPoints'] ?? 0);
+            $generateIA = isset($_POST['generate_ia']) && $_POST['generate_ia'] == '1';
             
             // Contrôle de saisie PHP
             $errors = [];
@@ -56,22 +54,14 @@ class BadgeController {
                 $errors['nom'] = "Le nom du badge est obligatoire";
             } elseif (strlen($nom) < 3) {
                 $errors['nom'] = "Le nom doit contenir au moins 3 caractères";
-            } elseif (strlen($nom) > 50) {
-                $errors['nom'] = "Le nom ne doit pas dépasser 50 caractères";
             }
-            
             if (empty($description)) {
                 $errors['description'] = "La description est obligatoire";
             } elseif (strlen($description) < 10) {
                 $errors['description'] = "La description doit contenir au moins 10 caractères";
-            } elseif (strlen($description) > 200) {
-                $errors['description'] = "La description ne doit pas dépasser 200 caractères";
             }
-            
             if ($seuilPoints <= 0) {
                 $errors['seuilPoints'] = "Le seuil de points doit être un nombre positif";
-            } elseif ($seuilPoints > 10000) {
-                $errors['seuilPoints'] = "Le seuil de points ne peut pas dépasser 10 000";
             }
             
             if (!empty($errors)) {
@@ -81,19 +71,37 @@ class BadgeController {
                 exit;
             }
             
-            if ($this->model->create($nom, $description, $icon, $seuilPoints)) {
-                $_SESSION['success'] = "Badge ajouté avec succès !";
+            // Génération d'image par IA
+            $imageIa = null;
+            if ($generateIA) {
+                $_SESSION['ia_status'] = "Génération de l'image en cours...";
+                
+                $imageIa = $this->model->generateImageWithAI($description, $nom);
+                
+                if ($imageIa) {
+                    $_SESSION['ia_status'] = "Image générée avec succès !";
+                } else {
+                    $_SESSION['ia_status'] = "Échec de la génération d'image, utilisation de l'icône par défaut";
+                }
+            }
+            
+            // Enregistrement du badge
+            if ($this->model->create($nom, $description, $icon, $seuilPoints, $imageIa)) {
+                $_SESSION['success'] = "Badge '" . $nom . "' ajouté avec succès !";
+                if ($imageIa) {
+                    $_SESSION['success'] .= " Image IA générée.";
+                }
+                unset($_SESSION['ia_status']);
                 header('Location: index.php?controller=badge&action=index');
                 exit;
             } else {
-                $_SESSION['error'] = "Erreur lors de l'ajout";
+                $_SESSION['error'] = "Erreur lors de l'ajout du badge";
                 header('Location: index.php?controller=badge&action=create');
                 exit;
             }
         }
     }
     
-    // UPDATE - Afficher le formulaire d'édition
     public function edit() {
         $id = intval($_GET['id'] ?? 0);
         $badge = $this->model->getById($id);
@@ -102,14 +110,13 @@ class BadgeController {
             exit;
         }
         $pageTitle = "Modifier un badge";
-        $activeTab = "badges";
+        $activeTab = "badges_admin";
         ob_start();
         require_once __DIR__ . '/../View/backoffice/badge_edit.php';
         $content = ob_get_clean();
         require_once __DIR__ . '/../View/layout/app.php';
     }
     
-    // UPDATE - Mettre à jour en base
     public function update() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = intval($_POST['id'] ?? 0);
@@ -117,24 +124,12 @@ class BadgeController {
             $description = trim($_POST['description'] ?? '');
             $icon = trim($_POST['icon'] ?? '🏅');
             $seuilPoints = intval($_POST['seuilPoints'] ?? 0);
+            $generateIA = isset($_POST['generate_ia']) && $_POST['generate_ia'] == '1';
             
-            // Contrôle de saisie PHP
             $errors = [];
-            if (empty($nom)) {
-                $errors['nom'] = "Le nom du badge est obligatoire";
-            } elseif (strlen($nom) < 3) {
-                $errors['nom'] = "Le nom doit contenir au moins 3 caractères";
-            }
-            
-            if (empty($description)) {
-                $errors['description'] = "La description est obligatoire";
-            } elseif (strlen($description) < 10) {
-                $errors['description'] = "La description doit contenir au moins 10 caractères";
-            }
-            
-            if ($seuilPoints <= 0) {
-                $errors['seuilPoints'] = "Le seuil de points doit être un nombre positif";
-            }
+            if (empty($nom)) $errors['nom'] = "Le nom est obligatoire";
+            if (empty($description)) $errors['description'] = "La description est obligatoire";
+            if ($seuilPoints <= 0) $errors['seuilPoints'] = "Le seuil doit être positif";
             
             if (!empty($errors)) {
                 $_SESSION['errors'] = $errors;
@@ -142,19 +137,20 @@ class BadgeController {
                 exit;
             }
             
-            if ($this->model->update($id, $nom, $description, $icon, $seuilPoints)) {
+            $imageIa = null;
+            if ($generateIA) {
+                $imageIa = $this->model->generateImageWithAI($description, $nom);
+            }
+            
+            if ($this->model->update($id, $nom, $description, $icon, $seuilPoints, $imageIa)) {
                 $_SESSION['success'] = "Badge modifié avec succès !";
+                if ($imageIa) $_SESSION['success'] .= " Nouvelle image IA générée.";
                 header('Location: index.php?controller=badge&action=index');
-                exit;
-            } else {
-                $_SESSION['error'] = "Erreur lors de la modification";
-                header("Location: index.php?controller=badge&action=edit&id=$id");
                 exit;
             }
         }
     }
     
-    // DELETE - Supprimer un badge
     public function delete() {
         $id = intval($_GET['id'] ?? 0);
         if ($this->model->delete($id)) {
@@ -173,6 +169,14 @@ class BadgeController {
     public function getAll() {
         header('Content-Type: application/json');
         echo json_encode($this->model->getAll());
+        exit;
+    }
+    
+    // Jointure Fidélité + Badges
+    public function showFideliteWithBadges() {
+        $data = $this->model->getFidelitesWithBadges();
+        header('Content-Type: application/json');
+        echo json_encode($data);
         exit;
     }
 }

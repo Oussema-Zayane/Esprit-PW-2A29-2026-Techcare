@@ -23,22 +23,27 @@ if (session_status() === PHP_SESSION_NONE) {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             color: #f1f5f9;
             min-height: 100vh;
+            padding-top: 70px; /* Pour éviter que le contenu soit caché sous la navbar fixe */
         }
 
-        /* Navbar */
+        /* Navbar FIXE (sticky) - reste en haut quand on scrolle */
         .navbar {
-            position: sticky;
+            position: fixed;
             top: 0;
+            left: 0;
+            right: 0;
             z-index: 1000;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 1rem;
             padding: 0 2rem;
-            height: 64px;
+            height: 70px;
             background: rgba(8, 12, 22, 0.95);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255,255,255,0.07);
             flex-wrap: wrap;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         }
 
         .navbar-brand {
@@ -49,18 +54,21 @@ if (session_status() === PHP_SESSION_NONE) {
             font-weight: 800;
             color: #f1f5f9;
             text-decoration: none;
+            flex-shrink: 0;
         }
 
         .navbar-brand i {
             color: #00A86B;
         }
 
+        /* Menu de navigation - centre */
         .navbar-menu {
             display: flex;
             align-items: center;
             gap: 0.4rem;
-            margin-left: auto;
             flex-wrap: wrap;
+            flex: 1;
+            justify-content: center;
         }
 
         .nav-link {
@@ -68,15 +76,16 @@ if (session_status() === PHP_SESSION_NONE) {
             align-items: center;
             gap: 0.4rem;
             padding: 0.45rem 1rem;
-            border-radius: 8px;
+            border-radius: 30px;
             color: #8b9ab5;
             text-decoration: none;
-            font: 500 0.87rem 'Inter', sans-serif;
+            font: 500 0.85rem 'Inter', sans-serif;
             transition: all 0.3s ease;
+            white-space: nowrap;
         }
 
         .nav-link:hover {
-            background: rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.08);
             color: #f1f5f9;
         }
 
@@ -85,99 +94,73 @@ if (session_status() === PHP_SESSION_NONE) {
             color: #fff;
         }
 
+        /* Partie droite de la navbar */
         .navbar-right {
-            margin-left: auto;
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.8rem;
+            flex-shrink: 0;
         }
 
+        /* Bouton Retour à l'accueil */
+        .btn-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 0.45rem 1.2rem;
+            font: 600 0.85rem 'Inter', sans-serif;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+        }
+
+        .btn-home:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(59,130,246,0.4);
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+        }
+
+        .btn-home:active {
+            transform: translateY(0);
+        }
+
+        /* Profil utilisateur */
         .topbar-user {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            color: #8b9ab5;
+            background: rgba(255,255,255,0.08);
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+            color: #f1f5f9;
             font: 500 0.85rem 'Inter', sans-serif;
+            backdrop-filter: blur(4px);
         }
 
         .topbar-user i {
             color: #00A86B;
+            font-size: 1rem;
         }
 
-        .btn-primary {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.45rem;
-            background: linear-gradient(135deg, #00A86B, #007a4e);
-            color: #fff;
+        /* Hamburger menu (mobile) */
+        .hamburger {
+            display: none;
+            background: none;
             border: none;
-            border-radius: 8px;
-            padding: 0.5rem 1rem;
-            font: 600 0.85rem 'Inter', sans-serif;
+            color: white;
+            font-size: 1.2rem;
             cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-        }
-
-        .btn-primary:hover {
-            filter: brightness(1.15);
-            transform: translateY(-1px);
-        }
-
-        .btn-outline {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.45rem;
-            background: transparent;
-            color: #8b9ab5;
-            border: 1px solid rgba(255,255,255,0.07);
-            border-radius: 8px;
-            padding: 0.5rem 1rem;
-            font: 500 0.85rem 'Inter', sans-serif;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-        }
-
-        .btn-outline:hover {
-            border-color: #00A86B;
-            color: #00A86B;
-        }
-
-        .btn-del {
-            background: rgba(231,76,60,0.11);
-            color: #e74c3c;
-            padding: 0.33rem 0.75rem;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-del:hover {
-            background: rgba(231,76,60,0.24);
-        }
-
-        .btn-edit {
-            background: rgba(245,158,11,0.11);
-            color: #f59e0b;
-            padding: 0.33rem 0.75rem;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .btn-edit:hover {
-            background: rgba(245,158,11,0.24);
+            padding: 0.5rem;
         }
 
         /* Main Content */
         .main-content {
             flex: 1;
-            min-height: calc(100vh - 64px);
+            min-height: calc(100vh - 70px);
         }
 
         .products-section {
@@ -197,7 +180,7 @@ if (session_status() === PHP_SESSION_NONE) {
             align-items: center;
             gap: 1rem;
             padding: 1.2rem 1.3rem;
-            border-radius: 14px;
+            border-radius: 16px;
             border: 1px solid rgba(255,255,255,0.07);
             transition: all 0.3s ease;
             background: linear-gradient(135deg, rgba(0,168,107,0.15), rgba(0,168,107,0.04));
@@ -209,25 +192,26 @@ if (session_status() === PHP_SESSION_NONE) {
         }
 
         .stat-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 8px;
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             background: rgba(0,168,107,0.18);
             color: #00A86B;
+            font-size: 1.3rem;
         }
 
         .stat-value {
             display: block;
-            font: 800 1.5rem 'Inter', sans-serif;
+            font: 800 1.6rem 'Inter', sans-serif;
             color: #f1f5f9;
         }
 
         .stat-label {
             display: block;
-            font: 0.76rem 'Inter', sans-serif;
+            font: 0.75rem 'Inter', sans-serif;
             color: #8b9ab5;
             margin-top: 0.15rem;
         }
@@ -353,7 +337,8 @@ if (session_status() === PHP_SESSION_NONE) {
         .site-footer {
             background: #0A1F44;
             border-top: 1px solid rgba(255,255,255,0.07);
-            padding: 1.8rem 6%;
+            padding: 1.5rem 6%;
+            margin-top: 2rem;
         }
 
         .footer-inner {
@@ -366,7 +351,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
         .footer-brand {
             color: #00A86B;
-            font: 700 1.05rem 'Inter', sans-serif;
+            font: 700 1rem 'Inter', sans-serif;
             display: flex;
             align-items: center;
             gap: 0.4rem;
@@ -374,7 +359,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
         .site-footer p {
             color: #8b9ab5;
-            font-size: 0.82rem;
+            font-size: 0.8rem;
         }
 
         .footer-links a {
@@ -428,12 +413,75 @@ if (session_status() === PHP_SESSION_NONE) {
         }
 
         /* Responsive */
+        @media (max-width: 992px) {
+            .navbar-menu {
+                gap: 0.2rem;
+            }
+            .nav-link {
+                padding: 0.45rem 0.7rem;
+                font-size: 0.8rem;
+            }
+        }
+
         @media (max-width: 768px) {
-            .navbar { padding: 0 1rem; }
-            .navbar-menu { display: none; position: absolute; top: 64px; left: 0; right: 0; background: #111827; flex-direction: column; align-items: flex-start; padding: 0.75rem 1rem; }
-            .navbar-menu.open { display: flex; }
-            .products-section { padding: 1.5rem 4% 4rem; }
-            .dashboard-stats-row { grid-template-columns: 1fr 1fr; }
+            body {
+                padding-top: 60px;
+            }
+            .navbar {
+                flex-wrap: wrap;
+                padding: 0.5rem 1rem;
+                height: auto;
+            }
+            .navbar-brand {
+                order: 1;
+            }
+            .hamburger {
+                display: block;
+                order: 2;
+            }
+            .navbar-right {
+                order: 3;
+                margin-left: auto;
+            }
+            .navbar-menu {
+                display: none;
+                width: 100%;
+                order: 4;
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 0.75rem 0;
+                gap: 0.5rem;
+            }
+            .navbar-menu.open {
+                display: flex;
+            }
+            .nav-link {
+                width: 100%;
+                padding: 0.5rem 0;
+            }
+            .products-section {
+                padding: 1.5rem 4% 4rem;
+            }
+            .dashboard-stats-row {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dashboard-stats-row {
+                grid-template-columns: 1fr;
+            }
+            .navbar-right {
+                gap: 0.4rem;
+            }
+            .btn-home {
+                padding: 0.35rem 0.8rem;
+                font-size: 0.75rem;
+            }
+            .topbar-user {
+                padding: 0.3rem 0.7rem;
+                font-size: 0.75rem;
+            }
         }
     </style>
 </head>
@@ -442,11 +490,12 @@ if (session_status() === PHP_SESSION_NONE) {
         <a href="index.php?controller=gamification&action=dashboard" class="navbar-brand">
             <i class="fas fa-bolt"></i> Tech<span style="color: #00A86B;">Care</span>
         </a>
-        <button class="hamburger" onclick="toggleMobileMenu()" style="background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; display: none;">☰</button>
+        
+        <button class="hamburger" onclick="toggleMobileMenu()">
+            <i class="fas fa-bars"></i>
+        </button>
+        
         <div class="navbar-menu" id="mobileMenu">
-            <!-- ===================================================== -->
-            <!-- FRONTOFFICE LINKS (Tous les utilisateurs) -->
-            <!-- ===================================================== -->
             <a href="index.php?controller=gamification&action=dashboard" class="nav-link <?= $activeTab == 'dashboard' ? 'active' : '' ?>">
                 <i class="fas fa-home"></i> Dashboard
             </a>
@@ -469,37 +518,41 @@ if (session_status() === PHP_SESSION_NONE) {
                 <i class="fas fa-edit"></i> Mes Demandes
             </a>
 
-            <!-- ===================================================== -->
-            <!-- BACKOFFICE LINKS (Administrateur uniquement) -->
-            <!-- ===================================================== -->
+            <!-- BACKOFFICE LINKS (Admin only) -->
             <?php if (isset($_SESSION['role']) && $_SESSION['role'] == 'admin'): ?>
                 <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 0.5rem 0; padding-top: 0.5rem;"></div>
-                <span style="color: #00A86B; font-size: 0.7rem; padding: 0.25rem 1rem;">⚙️ ADMINISTRATION</span>
+                <span style="color: #00A86B; font-size: 0.7rem; padding: 0.25rem 0;">⚙️ ADMINISTRATION</span>
                 <a href="index.php?controller=fidelite&action=index" class="nav-link <?= $activeTab == 'fidelite' ? 'active' : '' ?>">
-                    <i class="fas fa-gem"></i> 📋 Gérer Fidélité
+                    <i class="fas fa-gem"></i> Gérer Fidélité
                 </a>
                 <a href="index.php?controller=badge&action=index" class="nav-link <?= $activeTab == 'badges_admin' ? 'active' : '' ?>">
-                    <i class="fas fa-medal"></i> 🏅 Gérer Badges
+                    <i class="fas fa-medal"></i> Gérer Badges
+                </a>
+                <a href="index.php?controller=fidelite&action=showByUser" class="nav-link <?= $activeTab == 'jointure' ? 'active' : '' ?>">
+                    <i class="fas fa-link"></i> Jointure SQL
                 </a>
                 <a href="index.php?controller=user&action=admin" class="nav-link <?= $activeTab == 'admin' ? 'active' : '' ?>">
-                    <i class="fas fa-chart-line"></i> 📊 Dashboard Admin
+                    <i class="fas fa-chart-line"></i> Dashboard Admin
                 </a>
             <?php endif; ?>
         </div>
+        
         <div class="navbar-right">
-            <?php if (isset($_SESSION['role']) && $_SESSION['role'] == 'admin'): ?>
-                <button onclick="location.href='index.php?controller=user&action=admin'" class="btn-primary" style="background: linear-gradient(135deg, #7c3aed, #6d28d9);">
-                    <i class="fas fa-chart-line"></i> Admin
-                </button>
-            <?php endif; ?>
+            <!-- Bouton Retour à l'accueil -->
+            <a href="/project2A29/index.html" class="btn-home">
+                <i class="fas fa-arrow-left"></i> Retour
+            </a>
+            
             <div class="topbar-user">
                 <i class="fas fa-user-circle"></i> <?= htmlspecialchars($_SESSION['username'] ?? 'Ayari Firas') ?>
             </div>
         </div>
     </nav>
+    
     <div class="main-content">
         <?= $content ?? '<div class="products-section"><p>Chargement...</p></div>' ?>
     </div>
+    
     <footer class="site-footer">
         <div class="footer-inner">
             <div class="footer-brand"><i class="fas fa-bolt"></i> TechCare</div>
@@ -511,6 +564,7 @@ if (session_status() === PHP_SESSION_NONE) {
             </div>
         </div>
     </footer>
+    
     <div class="toast-container"></div>
 
     <script>
@@ -538,7 +592,12 @@ if (session_status() === PHP_SESSION_NONE) {
             <?php unset($_SESSION['error']); ?>
         <?php endif; ?>
 
-        document.querySelector('.hamburger')?.addEventListener('click', toggleMobileMenu);
+        // Fermer le menu mobile quand on clique sur un lien
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                document.getElementById('mobileMenu')?.classList.remove('open');
+            });
+        });
     </script>
 </body>
 </html>
