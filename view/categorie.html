@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestion des Catégories - TechCare</title>
+    <link rel="stylesheet" href="../style.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -12,6 +13,9 @@
             --green: #00A86B;
             --green-lt: #00cf85;
             --green-dk: #007a4e;
+            --blue: #0A1F44;
+            --blue-mid: #112a5e;
+            --blue-lt: #1a3a7a;
             --surface2: #1a2535;
             --surface3: #1f2f45;
             --card: #141d2e;
@@ -22,6 +26,7 @@
             --danger-dk: #c0392b;
             --warning: #f39c12;
             --sh-grn: 0 4px 16px rgba(0,168,107,0.35);
+            --sidebar-w: 255px;
         }
 
         body {
@@ -31,10 +36,19 @@
             min-height: 100vh;
         }
 
+        .admin-wrapper {
+            display: flex;
+        }
+
+        .admin-main {
+            flex: 1;
+            padding: 0;
+        }
+
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 30px 20px;
+            max-width: 100%;
+            margin: 0;
+            padding: 1rem;
         }
 
         h1 {
@@ -55,9 +69,11 @@
         .form-container {
             background: rgba(20, 29, 46, 0.6);
             border: 1px solid var(--border);
-            padding: 30px;
+            padding: 15px;
             border-radius: 12px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+            margin-left: 0;
+            margin-right: 1rem;
             backdrop-filter: blur(10px);
         }
 
@@ -325,6 +341,52 @@
     </style>
 </head>
 <body>
+
+  <!-- ═══════════════════════════════
+       VUE : GESTION CATÉGORIES (BACK)
+  ═══════════════════════════════ -->
+  <div class="admin-wrapper" style="display:flex;">
+
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <i class="fas fa-bolt"></i>
+        <span>Tech<em>Care</em> <small>Admin</small></span>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="sidebar-item" onclick="window.location.href='backoffice.html'">
+          <i class="fas fa-chart-pie"></i> Dashboard
+        </button>
+        <button class="sidebar-item" onclick="window.location.href='backoffice.html?tab=add-product'">
+          <i class="fas fa-plus-circle"></i> Ajouter Produit
+        </button>
+        <button class="sidebar-item" onclick="window.location.href='backoffice.html?tab=catalogue'">
+          <i class="fas fa-list-ul"></i> Catalogue
+        </button>
+        <button class="sidebar-item active" onclick="window.location.href='categorie.html'">
+          <i class="fas fa-folder"></i> Catégories
+        </button>
+        <hr style="border:0;border-top:1px solid rgba(255,255,255,.1);margin:.5rem 0;" />
+        <button class="sidebar-item" onclick="alert('En développement')">
+          <i class="fas fa-user"></i> Users
+        </button>
+        <button class="sidebar-item" onclick="alert('En développement')">
+          <i class="fas fa-brain"></i> Diagnostic
+        </button>
+        <button class="sidebar-item" onclick="alert('En développement')">
+          <i class="fas fa-gamepad"></i> Gamification
+        </button>
+        <button class="sidebar-item" onclick="alert('En développement')">
+          <i class="fas fa-id-card"></i> Abonnement
+        </button>
+      </nav>
+      <button class="sidebar-front-link" onclick="window.location.href='frontoffice.html'"
+        style="border:none;background:transparent;cursor:pointer;color:var(--txt-muted);">
+        <i class="fas fa-arrow-left"></i> Retour Boutique
+      </button>
+    </aside>
+
+    <div class="admin-main" style="flex:1;">
+
     <div class="container">
         <h1><i class="fas fa-folder"></i> Gestion des Catégories</h1>
 
@@ -741,5 +803,8 @@
         // Charger les catégories au chargement
         loadCategories();
     </script>
+
+    </div> <!-- Fin admin-main -->
+    </div> <!-- Fin admin-wrapper -->
 </body>
 </html>

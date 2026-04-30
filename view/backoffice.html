@@ -205,6 +205,13 @@
               </div>
 
               <div class="form-group">
+                <label for="p-categorie">Catégorie</label>
+                <select id="p-categorie">
+                  <option value="">-- Sélectionner une catégorie --</option>
+                </select>
+              </div>
+
+              <div class="form-group">
                 <label for="p-etat">État</label>
                 <select id="p-etat">
                   <option value="neuf">✅ Neuf</option>
@@ -272,6 +279,12 @@
               <div class="form-group">
                 <label for="e-stock">Stock</label>
                 <input type="text" id="e-stock" />
+              </div>
+              <div class="form-group">
+                <label for="e-categorie">Catégorie</label>
+                <select id="e-categorie">
+                  <option value="">-- Sélectionner une catégorie --</option>
+                </select>
               </div>
               <div class="form-group">
                 <label for="e-etat">État</label>
@@ -384,11 +397,17 @@
 
   <script>
     const API_URL = '../controller/controller.php';
+    const CATEGORIE_API = '../controller/categorie_controller.php';
     const UPLOAD_API = '../controller/upload.php';
 
     const api = {
       async getAll() {
         const res = await fetch(API_URL);
+        const json = await res.json();
+        return json.data || [];
+      },
+      async getCategories() {
+        const res = await fetch(CATEGORIE_API);
         const json = await res.json();
         return json.data || [];
       },
@@ -534,13 +553,14 @@
 
       getFormData() {
         return {
-          nom:         document.getElementById('p-nom').value,
-          marque:      document.getElementById('p-marque').value,
-          prix:        document.getElementById('p-prix').value,
-          stock:       document.getElementById('p-stock').value,
-          etat:        document.getElementById('p-etat').value,
-          image:       '',
-          description: document.getElementById('p-description').value
+          nom:          document.getElementById('p-nom').value,
+          marque:       document.getElementById('p-marque').value,
+          prix:         document.getElementById('p-prix').value,
+          stock:        document.getElementById('p-stock').value,
+          categorie_id: document.getElementById('p-categorie').value || null,
+          etat:         document.getElementById('p-etat').value,
+          image:        '',
+          description:  document.getElementById('p-description').value
         };
       },
 
@@ -560,6 +580,36 @@
         container.appendChild(toast);
         setTimeout(() => toast.classList.add('toast-hide'), 3000);
         setTimeout(() => toast.remove(), 3500);
+      },
+
+      async loadCategories() {
+        try {
+          const categories = await api.getCategories();
+          const addSelect = document.getElementById('p-categorie');
+          const editSelect = document.getElementById('e-categorie');
+          
+          if (addSelect) {
+            addSelect.innerHTML = '<option value="">-- Sélectionner une catégorie --</option>';
+            categories.forEach(cat => {
+              const option = document.createElement('option');
+              option.value = cat.id;
+              option.textContent = cat.nom;
+              addSelect.appendChild(option);
+            });
+          }
+          
+          if (editSelect) {
+            editSelect.innerHTML = '<option value="">-- Sélectionner une catégorie --</option>';
+            categories.forEach(cat => {
+              const option = document.createElement('option');
+              option.value = cat.id;
+              option.textContent = cat.nom;
+              editSelect.appendChild(option);
+            });
+          }
+        } catch (err) {
+          console.error('Erreur chargement catégories :', err);
+        }
       }
     };
 
@@ -672,6 +722,7 @@
     const appController = {
       async init() {
         try {
+          await view.loadCategories();
           const products = await api.getAll();
           view.renderAll(products);
         } catch (err) {
@@ -705,6 +756,7 @@
         document.getElementById('e-marque').value = p.marque || '';
         document.getElementById('e-prix').value = p.prix;
         document.getElementById('e-stock').value = p.stock || 0;
+        document.getElementById('e-categorie').value = p.categorie_id || '';
         document.getElementById('e-etat').value = p.etat || 'neuf';
         document.getElementById('e-image').value = '';
         document.getElementById('e-description').value = p.description || '';
@@ -738,6 +790,7 @@
         const stock = document.getElementById('e-stock').value.trim() || '0';
         const marque = document.getElementById('e-marque').value.trim();
         const description = document.getElementById('e-description').value.trim();
+        const categorie_id = document.getElementById('e-categorie').value;
         const etat = document.getElementById('e-etat').value;
         const imageInput = document.getElementById('e-image');
         const ePreviewImg = document.getElementById('e-image-preview-img');
@@ -755,6 +808,7 @@
             marque: marque,
             prix: prix,
             stock: stock,
+            categorie_id: categorie_id || null,
             etat: etat,
             image: imagePath,
             description: description
@@ -790,6 +844,7 @@
         const stock = document.getElementById('p-stock').value.trim() || '0';
         const marque = document.getElementById('p-marque').value.trim();
         const description = document.getElementById('p-description').value.trim();
+        const categorie_id = document.getElementById('p-categorie').value;
         const etat = document.getElementById('p-etat').value;
         const imageInput = document.getElementById('p-image');
 
@@ -802,6 +857,7 @@
             marque: marque,
             prix: prix,
             stock: stock,
+            categorie_id: categorie_id || null,
             etat: etat,
             image: imagePath,
             description: description

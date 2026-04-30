@@ -59,10 +59,28 @@ class CategorieModel {
         return $this->getCategorieById($id);
     }
 
-    // ── DELETE : Supprimer une catégorie ────────────────
+    // ── DELETE : Supprimer une catégorie (et tous ses produits) ────────────────
     public function deleteCategorie(int $id): bool {
-        $stmt = $this->pdo->prepare("DELETE FROM categorie WHERE id = ?");
-        $stmt->execute([$id]);
-        return $stmt->rowCount() > 0;
+        try {
+            // Commencer une transaction
+            $this->pdo->beginTransaction();
+            
+            // 1. Supprimer tous les produits de cette catégorie
+            $stmtProducts = $this->pdo->prepare("DELETE FROM produit WHERE categorie_id = ?");
+            $stmtProducts->execute([$id]);
+            
+            // 2. Supprimer la catégorie elle-même
+            $stmt = $this->pdo->prepare("DELETE FROM categorie WHERE id = ?");
+            $stmt->execute([$id]);
+            
+            // Valider la transaction
+            $this->pdo->commit();
+            
+            return $stmt->rowCount() > 0;
+        } catch (Exception $e) {
+            // Annuler la transaction en cas d'erreur
+            $this->pdo->rollBack();
+            throw $e;
+        }
     }
 }
