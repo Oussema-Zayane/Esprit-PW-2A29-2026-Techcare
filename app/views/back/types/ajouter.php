@@ -69,9 +69,9 @@
                                 <input type="checkbox" name="offres_selected[]" value="<?= $offre['id'] ?>">
                                 <div class="offre-info">
                                     <span class="offre-description"><?= htmlspecialchars($offre['description']) ?></span>
-                                    <?php if ($offre['id_abonnement']): ?>
+                                    <?php if (!empty($offre['types'])): ?>
                                         <span class="offre-badge linked">
-                                            <i class="fa-solid fa-link"></i> Lié à abo #<?= $offre['id_abonnement'] ?>
+                                            <i class="fa-solid fa-link"></i> Lié à <?= count($offre['types']) ?> type(s)
                                         </span>
                                     <?php else: ?>
                                         <span class="offre-badge unlinked">
