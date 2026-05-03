@@ -215,6 +215,7 @@ class AdminController {
             }
             exit();
         }
+        $types = $this->getAllTypes();
         include __DIR__ . '/../views/back/abonnements/ajouter.php';
     }
 
@@ -236,6 +237,7 @@ class AdminController {
             header('Location: index.php?action=liste&success=modifie');
             exit();
         }
+        $types = $this->getAllTypes();
         include __DIR__ . '/../views/back/abonnements/modifier.php';
     }
 

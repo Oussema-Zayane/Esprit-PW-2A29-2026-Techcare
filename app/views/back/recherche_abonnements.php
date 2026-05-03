@@ -22,7 +22,8 @@
             <h3>Filtres de recherche</h3>
         </div>
         
-        <form id="formRecherche" class="search-form" action="index.php?action=recherche" method="get" novalidate>
+        <form id="formRecherche" class="search-form" action="index.php" method="get" novalidate>
+            <input type="hidden" name="action" value="recherche">
             <div class="form-row single-column">
                 <div class="form-group">
                     <label><i class="fa-solid fa-tag"></i> Type d'abonnement</label>

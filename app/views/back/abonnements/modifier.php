@@ -44,9 +44,22 @@
                     <label><i class="fa-solid fa-tag"></i> Type d'abonnement <span class="required">*</span></label>
                     <select name="type_abonnement" id="type_abonnement">
                         <option value="">-- Sélectionner --</option>
-                        <option value="mensuel" <?= $abonnement['type_abonnement'] == 'mensuel' ? 'selected' : '' ?>>📆 Mensuel</option>
-                        <option value="annuel" <?= $abonnement['type_abonnement'] == 'annuel' ? 'selected' : '' ?>>📅 Annuel</option>
-                        <option value="ponctuel" <?= $abonnement['type_abonnement'] == 'ponctuel' ? 'selected' : '' ?>>🎟️ Ponctuel</option>
+                        <?php if (!empty($types)): ?>
+                            <?php foreach ($types as $type): ?>
+                                <?php 
+                                    $icon = '📦';
+                                    if (strtolower($type['nom_type']) === 'mensuel') $icon = '📆';
+                                    elseif (strtolower($type['nom_type']) === 'annuel') $icon = '📅';
+                                    elseif (strtolower($type['nom_type']) === 'ponctuel') $icon = '🎟️';
+                                ?>
+                                <option value="<?= htmlspecialchars($type['nom_type']) ?>" 
+                                        <?= strtolower($abonnement['type_abonnement']) == strtolower($type['nom_type']) ? 'selected' : '' ?>>
+                                    <?= $icon ?> <?= ucfirst($type['nom_type']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <option value="" disabled>Aucun type disponible</option>
+                        <?php endif; ?>
                     </select>
                     <span class="error-msg" id="error-type_abonnement"></span>
                     <span class="valid-msg" id="valid-type_abonnement"><i class="fa-solid fa-check-circle"></i> Valide</span>
@@ -443,41 +456,56 @@ document.getElementById('form-modifier').addEventListener('submit', function(e) 
     }
 });
 
+// Données des types depuis PHP
+const typesData = <?php 
+    $typesArray = [];
+    if (!empty($types)) {
+        foreach ($types as $type) {
+            $typesArray[htmlspecialchars($type['nom_type'])] = [
+                'prix_base'   => $type['prix_base'],
+                'duree_jours' => $type['duree_jours']
+            ];
+        }
+    }
+    echo json_encode($typesArray);
+?>;
+
+function calculerDateFin(dateDebut, dureeJours) {
+    if (!dateDebut || !dureeJours) return '';
+    const d = new Date(dateDebut);
+    d.setDate(d.getDate() + parseInt(dureeJours));
+    return d.toISOString().split('T')[0];
+}
+
 // Auto-calcul du prix selon le type
 document.getElementById('type_abonnement').addEventListener('change', function() {
-    const type = this.value;
+    const selectedType = this.value;
     const prixInput = document.getElementById('prix');
-    const tarifs = { mensuel: 29.90, annuel: 299.00, ponctuel: 49.90 };
-    if (tarifs[type] && (!prixInput.value || prixInput.value == 0)) {
-        prixInput.value = tarifs[type];
+    
+    if (selectedType && typesData[selectedType] && (!prixInput.value || prixInput.value == 0)) {
+        prixInput.value = typesData[selectedType].prix_base;
         validateField(prixInput, 'error-prix', 'valid-prix', validatePrix, 'Le prix doit être supérieur à 0');
     }
 });
 
 // Auto-calcul date fin
 document.getElementById('type_abonnement').addEventListener('change', function() {
-    const type = this.value;
+    const selectedType = this.value;
     const dateDebut = document.getElementById('date_debut').value;
     const dateFin = document.getElementById('date_fin');
-    if (dateDebut && type) {
-        const d = new Date(dateDebut);
-        if (type === 'mensuel') d.setMonth(d.getMonth() + 1);
-        else if (type === 'annuel') d.setFullYear(d.getFullYear() + 1);
-        else if (type === 'ponctuel') d.setDate(d.getDate() + 7);
-        dateFin.value = d.toISOString().split('T')[0];
+    
+    if (dateDebut && selectedType && typesData[selectedType]) {
+        dateFin.value = calculerDateFin(dateDebut, typesData[selectedType].duree_jours);
         validateField(dateFin, 'error-date_fin', 'valid-date_fin', validateDateFin, 'La date de fin doit être après la date de début');
     }
 });
 
 document.getElementById('date_debut').addEventListener('change', function() {
-    const type = document.getElementById('type_abonnement').value;
+    const selectedType = document.getElementById('type_abonnement').value;
     const dateFin = document.getElementById('date_fin');
-    if (this.value && type) {
-        const d = new Date(this.value);
-        if (type === 'mensuel') d.setMonth(d.getMonth() + 1);
-        else if (type === 'annuel') d.setFullYear(d.getFullYear() + 1);
-        else if (type === 'ponctuel') d.setDate(d.getDate() + 7);
-        dateFin.value = d.toISOString().split('T')[0];
+    
+    if (this.value && selectedType && typesData[selectedType]) {
+        dateFin.value = calculerDateFin(this.value, typesData[selectedType].duree_jours);
         validateField(dateFin, 'error-date_fin', 'valid-date_fin', validateDateFin, 'La date de fin doit être après la date de début');
     }
 });

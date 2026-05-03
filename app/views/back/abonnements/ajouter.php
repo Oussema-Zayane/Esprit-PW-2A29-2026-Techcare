@@ -41,9 +41,23 @@
                     <label><i class="fa-solid fa-tag"></i> Type d'abonnement *</label>
                     <select name="type_abonnement" id="type_abonnement">
                         <option value="">-- Sélectionner --</option>
-                        <option value="mensuel">📆 Mensuel - 29.90 DT/mois</option>
-                        <option value="annuel">📅 Annuel - 299 DT/an</option>
-                        <option value="ponctuel">🎟️ Ponctuel - 49.90 DT</option>
+                        <?php if (!empty($types)): ?>
+                            <?php foreach ($types as $type): ?>
+                                <?php 
+                                    $icon = '📦';
+                                    if (strtolower($type['nom_type']) === 'mensuel') $icon = '📆';
+                                    elseif (strtolower($type['nom_type']) === 'annuel') $icon = '📅';
+                                    elseif (strtolower($type['nom_type']) === 'ponctuel') $icon = '🎟️';
+                                ?>
+                                <option value="<?= htmlspecialchars($type['nom_type']) ?>" 
+                                        data-prix="<?= $type['prix_base'] ?>"
+                                        data-duree="<?= $type['duree_jours'] ?>">
+                                    <?= $icon ?> <?= ucfirst($type['nom_type']) ?> - <?= number_format($type['prix_base'], 2) ?> DT
+                                </option>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <option value="" disabled>Aucun type disponible</option>
+                        <?php endif; ?>
                     </select>
                     <span class="error-msg" id="error-type_abonnement"></span>
                 </div>
@@ -267,38 +281,54 @@ input.error, select.error {
 </style>
 
 <script>
+// Données des types depuis PHP
+const typesData = <?php 
+    $typesArray = [];
+    if (!empty($types)) {
+        foreach ($types as $type) {
+            $typesArray[htmlspecialchars($type['nom_type'])] = [
+                'prix_base'   => $type['prix_base'],
+                'duree_jours' => $type['duree_jours']
+            ];
+        }
+    }
+    echo json_encode($typesArray);
+?>;
+
+function calculerDateFin(dateDebut, dureeJours) {
+    if (!dateDebut || !dureeJours) return '';
+    const d = new Date(dateDebut);
+    d.setDate(d.getDate() + parseInt(dureeJours));
+    return d.toISOString().split('T')[0];
+}
+
 // Auto-calcul du prix et date fin selon le type
 document.getElementById('type_abonnement').addEventListener('change', function() {
-    const type = this.value;
+    const selectedType = this.value;
     const prixInput = document.getElementById('prix');
     const dateDebut = document.getElementById('date_debut');
     const dateFin = document.getElementById('date_fin');
     
-    const tarifs = { mensuel: 29.90, annuel: 299.00, ponctuel: 49.90 };
-    if (tarifs[type]) {
-        prixInput.value = tarifs[type];
-    }
-    
-    if (dateDebut.value && type) {
-        const d = new Date(dateDebut.value);
-        if (type === 'mensuel') d.setMonth(d.getMonth() + 1);
-        else if (type === 'annuel') d.setFullYear(d.getFullYear() + 1);
-        else if (type === 'ponctuel') d.setDate(d.getDate() + 7);
-        dateFin.value = d.toISOString().split('T')[0];
+    if (selectedType && typesData[selectedType]) {
+        const typeInfo = typesData[selectedType];
+        prixInput.value = typeInfo.prix_base;
+        
+        if (dateDebut.value) {
+            dateFin.value = calculerDateFin(dateDebut.value, typeInfo.duree_jours);
+        }
+    } else {
+        prixInput.value = '';
+        dateFin.value = '';
     }
 });
 
 // Mise à jour date fin quand date début change
 document.getElementById('date_debut').addEventListener('change', function() {
-    const type = document.getElementById('type_abonnement').value;
+    const selectedType = document.getElementById('type_abonnement').value;
     const dateFin = document.getElementById('date_fin');
     
-    if (this.value && type) {
-        const d = new Date(this.value);
-        if (type === 'mensuel') d.setMonth(d.getMonth() + 1);
-        else if (type === 'annuel') d.setFullYear(d.getFullYear() + 1);
-        else if (type === 'ponctuel') d.setDate(d.getDate() + 7);
-        dateFin.value = d.toISOString().split('T')[0];
+    if (this.value && selectedType && typesData[selectedType]) {
+        dateFin.value = calculerDateFin(this.value, typesData[selectedType].duree_jours);
     }
 });
 
