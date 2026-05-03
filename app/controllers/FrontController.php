@@ -234,7 +234,7 @@ class FrontController {
     public function offres() {
         $types = $this->getAllTypes();
         // Récupérer les offres liées pour chaque type
-        foreach ($types as &$type) {
+        foreach ($types as $k => $type) {
             $stmt = $this->conn->prepare("
                 SELECT o.description 
                 FROM offre o 
@@ -244,7 +244,7 @@ class FrontController {
             $stmt->bind_param("i", $type['id_type']);
             $stmt->execute();
             $result = $stmt->get_result();
-            $type['offres'] = $result->fetch_all(MYSQLI_ASSOC);
+            $types[$k]['offres'] = $result->fetch_all(MYSQLI_ASSOC);
         }
         include __DIR__ . '/../views/front/abonnements/index.php';
     }
