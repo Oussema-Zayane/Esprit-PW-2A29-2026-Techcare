@@ -117,6 +117,15 @@ class Database {
         if ($result && $result->num_rows === 0) {
             $conn->query("ALTER TABLE abonnements ADD COLUMN telephone VARCHAR(20) AFTER email");
         }
+
+        // Table offre_type_abonnement (pivot pour la relation plusieurs-à-plusieurs)
+        $conn->query("CREATE TABLE IF NOT EXISTS offre_type_abonnement (
+            id_offre INT(11) NOT NULL,
+            id_type INT(11) NOT NULL,
+            PRIMARY KEY (id_offre, id_type),
+            FOREIGN KEY (id_offre) REFERENCES offre(id) ON DELETE CASCADE,
+            FOREIGN KEY (id_type) REFERENCES type_abonnement(id_type) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
     }
 
     public static function isConnected() {

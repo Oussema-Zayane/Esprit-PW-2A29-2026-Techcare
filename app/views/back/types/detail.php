@@ -135,6 +135,53 @@
                     </div>
                 </div>
             </div>
+
+            <!-- ═══ SECTION OFFRES ASSOCIÉES ═══ -->
+            <div class="offres-section">
+                <div class="offres-header">
+                    <h3><i class="fa-solid fa-gift"></i> Offres associées à ce type</h3>
+                </div>
+                
+                <?php if (isset($offres) && !empty($offres)): ?>
+                    <div class="offres-grid">
+                        <?php foreach ($offres as $offre): ?>
+                            <div class="offre-card-item">
+                                <div class="offre-icon">
+                                    <i class="fa-solid fa-plus-circle"></i>
+                                </div>
+                                <div class="offre-content">
+                                    <div class="offre-description"><?= htmlspecialchars($offre['description']) ?></div>
+                                    <div class="offre-meta">
+                                        <span class="offre-id">ID: #<?= $offre['id'] ?></span>
+                                        <?php if ($offre['id_abonnement']): ?>
+                                            <span class="offre-badge linked">
+                                                <i class="fa-solid fa-link"></i> Lié à abo #<?= $offre['id_abonnement'] ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="offre-badge unlinked">
+                                                <i class="fa-solid fa-unlink"></i> Non lié
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                <div class="offre-actions">
+                                    <a href="index.php?action=offres-detail&id=<?= $offre['id'] ?>" class="btn-view-sm" title="Voir l'offre">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="offres-empty">
+                        <i class="fa-solid fa-inbox"></i>
+                        <p>Aucune offre associée à ce type d'abonnement</p>
+                        <a href="index.php?action=types-modifier&id=<?= isset($type['id_type']) ? $type['id_type'] : 0 ?>" class="btn-sm-green">
+                            <i class="fa-solid fa-plus"></i> Associer des offres
+                        </a>
+                    </div>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
 </div>
@@ -321,6 +368,159 @@
     border: 1px solid rgba(230,126,34,0.3);
 }
 
+/* SECTION OFFRES */
+.offres-section {
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 2px solid var(--border);
+}
+
+.offres-header h3 {
+    font-size: 1rem;
+    color: var(--txt);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.offres-header h3 i {
+    color: var(--green);
+}
+
+.offres-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 12px;
+}
+
+.offre-card-item {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 12px 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s;
+    border: 1px solid var(--border);
+}
+
+.offre-card-item:hover {
+    border-color: rgba(0,168,107,0.3);
+    background: rgba(0,168,107,0.05);
+}
+
+.offre-icon {
+    width: 32px;
+    height: 32px;
+    background: rgba(0,168,107,0.1);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.offre-icon i {
+    color: var(--green);
+    font-size: 0.9rem;
+}
+
+.offre-content {
+    flex: 1;
+}
+
+.offre-description {
+    font-size: 0.85rem;
+    color: var(--txt);
+    font-weight: 500;
+}
+
+.offre-meta {
+    font-size: 0.7rem;
+    margin-top: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.offre-id {
+    color: var(--txt-dim);
+}
+
+.offre-badge {
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+
+.offre-badge.linked {
+    background: rgba(0,168,107,0.15);
+    color: var(--green-lt);
+}
+
+.offre-badge.unlinked {
+    background: rgba(108,117,125,0.15);
+    color: var(--txt-muted);
+}
+
+.offre-actions {
+    flex-shrink: 0;
+}
+
+.btn-view-sm {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(52,152,219,0.15);
+    color: #3498db;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-view-sm:hover {
+    background: #3498db;
+    color: white;
+}
+
+.offres-empty {
+    text-align: center;
+    padding: 30px;
+    color: var(--txt-muted);
+    background: var(--surface2);
+    border-radius: 12px;
+}
+
+.offres-empty i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    opacity: 0.5;
+}
+
+.btn-sm-green {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0,168,107,0.15);
+    color: var(--green);
+    border: 1px solid rgba(0,168,107,0.3);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-sm-green:hover {
+    background: var(--green);
+    color: white;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .detail-card-header {
@@ -339,6 +539,10 @@
     }
 
     .detail-row.full-width {
+        grid-template-columns: 1fr;
+    }
+    
+    .offres-grid {
         grid-template-columns: 1fr;
     }
 }

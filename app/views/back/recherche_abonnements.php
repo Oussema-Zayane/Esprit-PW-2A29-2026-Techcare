@@ -84,7 +84,7 @@
         </form>
     </div>
 
-    <!-- Carte d'information du type sélectionné - FOND BLANC / TEXTE NOIR -->
+    <!-- Carte d'information du type sélectionné -->
     <div id="typeInfo" class="type-info-card" style="display: none;">
         <div class="type-info-header">
             <i class="fa-solid fa-circle-info"></i>
@@ -114,7 +114,7 @@
         </div>
     </div>
 
-    <!-- ===== RÉSULTATS - FOND BLANC / TEXTE NOIR ===== -->
+    <!-- ===== RÉSULTATS ===== -->
     <div class="results-card">
         <div class="results-header">
             <div class="results-header-left">
@@ -153,6 +153,7 @@
                             <th><i class="fa-solid fa-calendar-plus"></i> Début</th>
                             <th><i class="fa-solid fa-calendar-minus"></i> Fin</th>
                             <th><i class="fa-solid fa-circle-dot"></i> Statut</th>
+                            <th><i class="fa-solid fa-list-check"></i> Options</th>
                             <th><i class="fa-solid fa-gear"></i> Actions</th>
                         </tr>
                     </thead>
@@ -181,6 +182,22 @@
                                         <?= ucfirst($a['statut']) ?>
                                     </span>
                                 </td>
+                                <!-- Colonne OPTIONS -->
+                                <td class="options-cell">
+                                    <?php if (isset($a['options']) && !empty($a['options'])): ?>
+                                        <ul class="options-list">
+                                            <?php foreach ($a['options'] as $opt): ?>
+                                                <li title="<?= htmlspecialchars($opt['description']) ?>">
+                                                    <i class="fa-solid fa-plus-circle"></i>
+                                                    <?= htmlspecialchars(mb_substr($opt['description'], 0, 30)) ?>
+                                                    <?php if (mb_strlen($opt['description']) > 30): ?>...<?php endif; ?>
+                                                </li>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                    <?php else: ?>
+                                        <span class="no-options">Aucune option</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td class="actions-cell">
                                     <div class="action-buttons">
                                         <a href="index.php?action=detail&id=<?= $a['id'] ?>" class="btn-view" title="Voir">
@@ -195,7 +212,7 @@
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="9" class="empty-state">
+                                <td colspan="10" class="empty-state">
                                     <i class="fa-solid fa-magnifying-glass" style="font-size: 40px; display: block; margin-bottom: 12px;"></i>
                                     <strong>Aucun abonnement trouvé</strong>
                                     <?php if ($hasFilters): ?>
@@ -218,7 +235,7 @@
 </div>
 
 <style>
-/* ===== FORMULAIRE DE RECHERCHE ===== */
+/* ===== FORMULAIRE DE RECHERCHE (styles existants) ===== */
 .search-card {
     background: var(--card);
     border-radius: 16px;
@@ -278,8 +295,7 @@
     font-size: 0.75rem;
 }
 
-.form-group input,
-.form-group select {
+.form-group input, .form-group select {
     background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -289,8 +305,7 @@
     transition: all 0.3s;
 }
 
-.form-group input:focus,
-.form-group select:focus {
+.form-group input:focus, .form-group select:focus {
     outline: none;
     border-color: var(--green);
     box-shadow: 0 0 0 2px rgba(0,168,107,0.1);
@@ -351,7 +366,7 @@
     color: var(--txt);
 }
 
-/* ===== CARTE D'INFO TYPE - FOND BLANC / TEXTE NOIR ===== */
+/* ===== CARTE D'INFO TYPE ===== */
 .type-info-card {
     background: #ffffff;
     border: 1px solid #e0e0e0;
@@ -397,7 +412,7 @@
     word-break: break-word;
 }
 
-/* ===== RÉSULTATS - FOND BLANC / TEXTE NOIR ===== */
+/* ===== RÉSULTATS ===== */
 .results-card {
     background: #ffffff;
     border-radius: 16px;
@@ -479,7 +494,7 @@
 }
 
 .table-container {
-    min-width: 900px;
+    min-width: 1000px;
 }
 
 .results-table {
@@ -596,6 +611,37 @@
 .badge-expiré,
 .badge-annulé   { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
 
+/* Options styles */
+.options-cell {
+    max-width: 200px;
+}
+.options-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.options-list li {
+    font-size: 0.7rem;
+    padding: 3px 0;
+    color: #555;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.options-list li i {
+    color: #00A86B;
+    font-size: 0.65rem;
+    flex-shrink: 0;
+}
+.no-options {
+    font-size: 0.7rem;
+    color: #999;
+    font-style: italic;
+}
+
 /* Actions */
 .actions-cell { text-align: center; }
 
@@ -667,6 +713,7 @@
     .btn-primary, .btn-secondary { justify-content: center; width: 100%; }
     .type-info-content { grid-template-columns: 1fr; }
     .results-header { flex-direction: column; align-items: flex-start; }
+    .options-list li { white-space: normal; }
 }
 </style>
 

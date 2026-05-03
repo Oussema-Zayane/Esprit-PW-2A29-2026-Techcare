@@ -16,7 +16,10 @@
     </div>
 
     <?php if (isset($_SESSION['error'])): ?>
-        <div class="alert alert-error"><?= $_SESSION['error']; unset($_SESSION['error']); ?></div>
+        <div class="alert alert-error">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <?= $_SESSION['error']; unset($_SESSION['error']); ?>
+        </div>
     <?php endif; ?>
 
     <div class="form-card">
@@ -25,23 +28,32 @@
             <h3>Nouvelle option</h3>
         </div>
 
-        <form method="POST" action="index.php?action=offres-ajouter" id="form-ajouter" novalidate>
+        <form method="POST" action="index.php?action=offres-ajouter" id="form-offre-ajouter" novalidate>
             <div class="form-row">
                 <div class="form-group">
                     <label><i class="fa-solid fa-align-left"></i> Description *</label>
-                    <input type="text" name="description" id="description" placeholder="Ex: Accès catalogue premium" required>
+                    <input type="text" name="description" id="description" placeholder="Ex: Accès catalogue premium, Support prioritaire...">
                     <span class="error-msg" id="error-description"></span>
                 </div>
                 <div class="form-group">
-                    <label><i class="fa-solid fa-tag"></i> Abonnement lié</label>
-                    <select name="id_abonnement" id="id_abonnement">
-                        <option value="">-- Aucun --</option>
-                        <?php foreach ($abonnements as $a): ?>
-                            <option value="<?= $a['id'] ?>">
-                                #<?= $a['id'] ?> - <?= htmlspecialchars($a['nom_client']) ?> (<?= $a['type_abonnement'] ?>)
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                    <label><i class="fa-solid fa-tags"></i> Types d'abonnement associés</label>
+                    <div class="checkbox-grid" id="id_type_container">
+                        <?php if (!empty($types)): ?>
+                            <?php foreach ($types as $t): ?>
+                                <label class="checkbox-card">
+                                    <input type="checkbox" name="id_type[]" value="<?= $t['id_type'] ?>">
+                                    <span class="card-content">
+                                        <span class="type-nom"><?= ucfirst($t['nom_type']) ?></span>
+                                        <span class="type-prix"><?= number_format($t['prix_base'], 2) ?> DT</span>
+                                    </span>
+                                </label>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="no-data">Aucun type disponible</div>
+                        <?php endif; ?>
+                    </div>
+                    <span class="error-msg" id="error-id_type"></span>
+                    <small class="hint">Sélectionnez le(s) type(s) d'abonnement associé(s) à cette option</small>
                 </div>
             </div>
 
@@ -106,7 +118,7 @@
     color: var(--green);
     font-size: 0.8rem;
 }
-.form-group input, .form-group select {
+.form-group input[type="text"] {
     background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: 10px;
@@ -115,10 +127,73 @@
     font-size: 0.9rem;
     transition: all 0.3s;
 }
-.form-group input:focus, .form-group select:focus {
+.form-group input[type="text"]:focus {
     outline: none;
     border-color: var(--green);
     box-shadow: 0 0 0 3px rgba(0,168,107,0.1);
+}
+.checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin-top: 5px;
+}
+.checkbox-card {
+    position: relative;
+    cursor: pointer;
+    display: flex;
+}
+.checkbox-card input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+.card-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 12px 10px;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+.type-nom {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--txt);
+    margin-bottom: 4px;
+}
+.type-prix {
+    font-size: 0.8rem;
+    color: var(--txt-muted);
+}
+.checkbox-card:hover .card-content {
+    border-color: rgba(0, 168, 107, 0.4);
+    background: var(--surface3);
+}
+.checkbox-card input:checked ~ .card-content {
+    border-color: var(--green);
+    background: rgba(0, 168, 107, 0.05);
+    box-shadow: 0 4px 10px rgba(0, 168, 107, 0.1);
+}
+.checkbox-card input:checked ~ .card-content .type-nom {
+    color: var(--green);
+}
+.no-data {
+    color: var(--txt-muted);
+    font-style: italic;
+    font-size: 0.9rem;
+}
+.hint {
+    font-size: 0.7rem;
+    color: var(--txt-dim);
+    margin-top: 4px;
 }
 .error-msg {
     display: none;
@@ -128,6 +203,9 @@
     padding: 5px 10px;
     background: rgba(231,76,60,0.1);
     border-radius: 6px;
+}
+.error-msg.show {
+    display: block;
 }
 .form-actions {
     display: flex;
@@ -152,6 +230,10 @@
     border: none;
     cursor: pointer;
 }
+.btn-primary:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+}
 .btn-secondary {
     display: inline-flex;
     align-items: center;
@@ -166,6 +248,10 @@
     transition: all 0.3s;
     border: 1px solid var(--border);
 }
+.btn-secondary:hover {
+    background: var(--surface3);
+    color: var(--txt);
+}
 .alert-error {
     background: rgba(231,76,60,0.1);
     border: 1px solid rgba(231,76,60,0.3);
@@ -173,6 +259,9 @@
     padding: 12px 20px;
     border-radius: 8px;
     margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 @media (max-width: 768px) {
     .form-row {
@@ -189,20 +278,24 @@
 </style>
 
 <script>
-document.getElementById('form-ajouter').addEventListener('submit', function(e) {
+document.getElementById('form-offre-ajouter').addEventListener('submit', function(e) {
     let isValid = true;
     const description = document.getElementById('description');
     const errorDesc = document.getElementById('error-description');
     
+    // Nettoyer les erreurs précédentes
+    errorDesc.classList.remove('show');
+    description.classList.remove('error');
+    
+    // Validation description
     if (!description.value.trim()) {
         errorDesc.textContent = 'La description est obligatoire';
         errorDesc.classList.add('show');
         description.classList.add('error');
         isValid = false;
-    } else {
-        errorDesc.classList.remove('show');
-        description.classList.remove('error');
     }
+    
+    // Le type d'abonnement est optionnel, pas de validation obligatoire
     
     if (!isValid) {
         e.preventDefault();

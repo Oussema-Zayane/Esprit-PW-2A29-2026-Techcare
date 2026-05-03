@@ -39,11 +39,15 @@
                 </div>
                 <div class="detail-group">
                     <label><i class="fa-solid fa-tag"></i> Abonnement lié</label>
-                    <div class="detail-value">
-                        <?php if ($abonnement): ?>
-                            #<?= $abonnement['id'] ?> - <?= htmlspecialchars($abonnement['nom_client']) ?> (<?= $abonnement['type_abonnement'] ?>)
+                    <div class="detail-value types-container">
+                        <?php if (!empty($types)): ?>
+                            <?php foreach ($types as $t): ?>
+                                <span class="type-badge type-<?= strtolower(trim($t['nom_type'])) ?>">
+                                    <?= ucfirst(trim($t['nom_type'])) ?>
+                                </span>
+                            <?php endforeach; ?>
                         <?php else: ?>
-                            Non lié
+                            <span class="non-lie">Non lié à un type</span>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -140,6 +144,12 @@
     color: var(--txt);
     word-break: break-word;
 }
+.types-container { display: flex; flex-wrap: wrap; gap: 6px; }
+.type-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.type-mensuel { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdef5; }
+.type-annuel { background: #f3e5f5; color: #6a1b9a; border: 1px solid #e1bee7; }
+.type-ponctuel { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
+.non-lie { color: var(--txt-muted); font-style: italic; font-size: 12px; }
 .btn-edit {
     display: inline-flex;
     align-items: center;

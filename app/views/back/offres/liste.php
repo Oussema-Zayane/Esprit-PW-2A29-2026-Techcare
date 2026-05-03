@@ -4,8 +4,8 @@
 <div class="main-content">
     <div class="topbar">
         <div class="page-title">
-            <h1><i class="fa-solid fa-list-check"></i> Gestion des Options</h1>
-            <p>Liste des options supplémentaires</p>
+            <h1><i class="fa-solid fa-list-check"></i> Gestion des Options Supplémentaires</h1>
+            <p>Liste des options disponibles pour les abonnements</p>
         </div>
         <div class="user-info">
             <div class="user-avatar">
@@ -39,27 +39,46 @@
                     <tr>
                         <th>ID</th>
                         <th>Description</th>
-                        <th>Abonnement lié</th>
-                        <th>Client</th>
+                        <th>Type d'abonnement</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($offres)): ?>
-                        <tr><td colspan="5" class="text-center">Aucune option trouvée</td></tr>
+                        <tr><td colspan="4" class="text-center">Aucune option trouvée</td></tr>
                     <?php else: ?>
                         <?php foreach ($offres as $o): ?>
-                        <tr>
-                            <td>#<?= $o['id'] ?></td>
-                            <td><?= htmlspecialchars($o['description']) ?></td>
-                            <td>Abonnement #<?= $o['id_abonnement'] ?> - <?= ucfirst($o['type_abonnement'] ?? '?') ?></td>
-                            <td><?= htmlspecialchars($o['nom_client'] ?? '-') ?></td>
-                            <td class="actions">
-                                <a href="index.php?action=offres-detail&id=<?= $o['id'] ?>" class="btn-view"><i class="fa-solid fa-eye"></i></a>
-                                <a href="index.php?action=offres-modifier&id=<?= $o['id'] ?>" class="btn-edit"><i class="fa-solid fa-pen"></i></a>
-                                <a href="index.php?action=offres-supprimer&id=<?= $o['id'] ?>" class="btn-delete" onclick="return confirm('Supprimer cette option ?')"><i class="fa-solid fa-trash"></i></a>
-                            </td>
-                        </tr>
+                            <tr>
+                                <td class="id-badge">#<?= $o['id'] ?></td>
+                                <td class="description-cell"><?= htmlspecialchars($o['description']) ?></td>
+                                <td>
+                                    <?php if (!empty($o['types'])): ?>
+                                        <div class="types-container">
+                                        <?php 
+                                            $noms = explode(', ', $o['type_nom']);
+                                            foreach ($noms as $nom): 
+                                        ?>
+                                            <span class="type-badge type-<?= strtolower(trim($nom)) ?>">
+                                                <?= ucfirst(trim($nom)) ?>
+                                            </span>
+                                        <?php endforeach; ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <span class="non-lie">Non lié à un type</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="actions">
+                                    <a href="index.php?action=offres-detail&id=<?= $o['id'] ?>" class="btn-view" title="Voir">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                    <a href="index.php?action=offres-modifier&id=<?= $o['id'] ?>" class="btn-edit" title="Modifier">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </a>
+                                    <a href="index.php?action=offres-supprimer&id=<?= $o['id'] ?>" class="btn-delete" onclick="return confirm('Supprimer cette option ?')" title="Supprimer">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </a>
+                                <tr>
+                            </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </tbody>
@@ -73,19 +92,39 @@
 .alert-error { background: #f8d7da; color: #721c24; padding: 12px; border-radius: 8px; margin-bottom: 20px; }
 .table-header { display: flex; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
 .search-box { display: flex; align-items: center; gap: 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 15px; }
-.search-box input { background: none; border: none; outline: none; color: var(--txt); }
-.btn-add { background: var(--green); color: white; padding: 8px 20px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+.search-box input { background: none; border: none; outline: none; color: var(--txt); width: 250px; }
+.search-box i { color: var(--txt-dim); }
+.btn-add { background: var(--green); color: white; padding: 8px 20px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s; }
+.btn-add:hover { transform: translateY(-2px); filter: brightness(1.05); }
 .table-wrapper { overflow-x: auto; }
 .table-container { min-width: 700px; background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
 table { width: 100%; border-collapse: collapse; }
-th { padding: 12px; text-align: left; background: rgba(0,0,0,0.2); color: var(--txt-muted); font-size: 12px; }
+th { padding: 12px; text-align: left; background: rgba(0,0,0,0.2); color: var(--txt-muted); font-size: 12px; font-weight: 600; }
 td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--txt); }
+.id-badge { font-family: monospace; font-size: 12px; color: var(--txt-muted); }
+.description-cell { font-weight: 500; }
+.types-container { display: flex; flex-wrap: wrap; gap: 6px; }
+.type-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.type-mensuel { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdef5; }
+.type-annuel { background: #f3e5f5; color: #6a1b9a; border: 1px solid #e1bee7; }
+.type-ponctuel { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
+.non-lie { color: var(--txt-muted); font-style: italic; font-size: 12px; }
 .actions { display: flex; gap: 8px; }
-.btn-view, .btn-edit, .btn-delete { padding: 5px 10px; border-radius: 6px; text-decoration: none; font-size: 12px; }
+.btn-view, .btn-edit, .btn-delete { padding: 5px 10px; border-radius: 6px; text-decoration: none; font-size: 12px; transition: all 0.2s; }
 .btn-view { background: rgba(52,152,219,0.15); color: #3498db; }
+.btn-view:hover { background: #3498db; color: white; transform: translateY(-2px); }
 .btn-edit { background: rgba(243,156,18,0.15); color: #f39c12; }
+.btn-edit:hover { background: #f39c12; color: white; transform: translateY(-2px); }
 .btn-delete { background: rgba(231,76,60,0.15); color: #e74c3c; }
+.btn-delete:hover { background: #e74c3c; color: white; transform: translateY(-2px); }
 .text-center { text-align: center; padding: 40px; color: var(--txt-muted); }
+@media (max-width: 768px) {
+    .table-header { flex-direction: column; align-items: stretch; }
+    .search-box input { width: 100%; }
+    .btn-add { text-align: center; justify-content: center; }
+    .actions { flex-direction: column; gap: 5px; }
+    .btn-view, .btn-edit, .btn-delete { text-align: center; }
+}
 </style>
 
 <script>

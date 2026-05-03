@@ -1,68 +1,42 @@
 <?php
-require_once __DIR__ . '/../../config/database.php';
 
 class Utilisateur {
-    private $conn;
+    private $id;
+    private $nom;
+    private $email;
+    private $password;
+    private $role;
+    private $created_at;
 
-    public function __construct() {
-        $this->conn = Database::getConnection();
-    }
-
-    /**
-     * Authentifier un utilisateur
-     */
-    public function login($email, $password) {
-        $stmt = $this->conn->prepare("SELECT id, nom, email, role FROM utilisateurs WHERE email = ? AND password = ?");
-        $stmt->bind_param("ss", $email, $password);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        if ($result->num_rows === 1) {
-            return $result->fetch_assoc();
+    public function __construct($data = []) {
+        if (!empty($data)) {
+            $this->id = $data['id'] ?? null;
+            $this->nom = $data['nom'] ?? null;
+            $this->email = $data['email'] ?? null;
+            $this->password = $data['password'] ?? null;
+            $this->role = $data['role'] ?? null;
+            $this->created_at = $data['created_at'] ?? null;
         }
-        return false;
     }
 
-    /**
-     * Enregistrer un nouvel utilisateur
-     */
-    public function register($nom, $email, $password) {
-        // Vérifier si l'email existe déjà
-        $stmt = $this->conn->prepare("SELECT id FROM utilisateurs WHERE email = ?");
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        if ($result->num_rows > 0) {
-            return false; // Email déjà utilisé
-        }
-
-        // Insérer le nouvel utilisateur
-        $stmt = $this->conn->prepare("INSERT INTO utilisateurs (nom, email, password, role) VALUES (?, ?, ?, 'user')");
-        $stmt->bind_param("sss", $nom, $email, $password);
-
-        if ($stmt->execute()) {
-            return true;
-        }
-        return false;
+    public function __destruct() {
+        // Destructeur
     }
 
-    /**
-     * Récupérer un utilisateur par son ID
-     */
-    public function getById($id) {
-        $stmt = $this->conn->prepare("SELECT id, nom, email, role FROM utilisateurs WHERE id = ?");
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        return $result->fetch_assoc();
-    }
+    // Getters
+    public function getId() { return $this->id; }
+    public function getNom() { return $this->nom; }
+    public function getEmail() { return $this->email; }
+    public function getPassword() { return $this->password; }
+    public function getRole() { return $this->role; }
+    public function getCreatedAt() { return $this->created_at; }
 
-    /**
-     * Récupérer tous les utilisateurs
-     */
-    public function getAll() {
-        $result = $this->conn->query("SELECT id, nom, email, role, created_at FROM utilisateurs ORDER BY created_at DESC");
-        return $result->fetch_all(MYSQLI_ASSOC);
-    }
+    // Setters
+    public function setId($id) { $this->id = $id; }
+    public function setNom($nom) { $this->nom = $nom; }
+    public function setEmail($email) { $this->email = $email; }
+    public function setPassword($password) { $this->password = $password; }
+    public function setRole($role) { $this->role = $role; }
+    public function setCreatedAt($created_at) { $this->created_at = $created_at; }
 }
+?>
