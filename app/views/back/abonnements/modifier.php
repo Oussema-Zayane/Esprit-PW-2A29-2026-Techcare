@@ -53,6 +53,8 @@
                                     elseif (strtolower($type['nom_type']) === 'ponctuel') $icon = '🎟️';
                                 ?>
                                 <option value="<?= htmlspecialchars($type['nom_type']) ?>" 
+                                        data-prix="<?= $type['prix_base'] ?>"
+                                        data-duree="<?= $type['duree_jours'] ?>"
                                         <?= strtolower($abonnement['type_abonnement']) == strtolower($type['nom_type']) ? 'selected' : '' ?>>
                                     <?= $icon ?> <?= ucfirst($type['nom_type']) ?>
                                 </option>
@@ -456,20 +458,6 @@ document.getElementById('form-modifier').addEventListener('submit', function(e) 
     }
 });
 
-// Données des types depuis PHP
-const typesData = <?php 
-    $typesArray = [];
-    if (!empty($types)) {
-        foreach ($types as $type) {
-            $typesArray[htmlspecialchars($type['nom_type'])] = [
-                'prix_base'   => $type['prix_base'],
-                'duree_jours' => $type['duree_jours']
-            ];
-        }
-    }
-    echo json_encode($typesArray);
-?>;
-
 function calculerDateFin(dateDebut, dureeJours) {
     if (!dateDebut || !dureeJours) return '';
     const d = new Date(dateDebut);
@@ -479,34 +467,46 @@ function calculerDateFin(dateDebut, dureeJours) {
 
 // Auto-calcul du prix selon le type
 document.getElementById('type_abonnement').addEventListener('change', function() {
-    const selectedType = this.value;
+    const selectedOption = this.options[this.selectedIndex];
+    const selectedType = selectedOption.value;
     const prixInput = document.getElementById('prix');
     
-    if (selectedType && typesData[selectedType] && (!prixInput.value || prixInput.value == 0)) {
-        prixInput.value = typesData[selectedType].prix_base;
-        validateField(prixInput, 'error-prix', 'valid-prix', validatePrix, 'Le prix doit être supérieur à 0');
+    if (selectedType && (!prixInput.value || prixInput.value == 0)) {
+        const prixBase = selectedOption.getAttribute('data-prix');
+        if (prixBase) {
+            prixInput.value = parseFloat(prixBase).toFixed(2);
+            validateField(prixInput, 'error-prix', 'valid-prix', validatePrix, 'Le prix doit être supérieur à 0');
+        }
     }
 });
 
 // Auto-calcul date fin
 document.getElementById('type_abonnement').addEventListener('change', function() {
-    const selectedType = this.value;
+    const selectedOption = this.options[this.selectedIndex];
+    const selectedType = selectedOption.value;
     const dateDebut = document.getElementById('date_debut').value;
     const dateFin = document.getElementById('date_fin');
     
-    if (dateDebut && selectedType && typesData[selectedType]) {
-        dateFin.value = calculerDateFin(dateDebut, typesData[selectedType].duree_jours);
-        validateField(dateFin, 'error-date_fin', 'valid-date_fin', validateDateFin, 'La date de fin doit être après la date de début');
+    if (dateDebut && selectedType) {
+        const dureeJours = selectedOption.getAttribute('data-duree');
+        if (dureeJours) {
+            dateFin.value = calculerDateFin(dateDebut, dureeJours);
+            validateField(dateFin, 'error-date_fin', 'valid-date_fin', validateDateFin, 'La date de fin doit être après la date de début');
+        }
     }
 });
 
 document.getElementById('date_debut').addEventListener('change', function() {
-    const selectedType = document.getElementById('type_abonnement').value;
+    const typeSelect = document.getElementById('type_abonnement');
+    const selectedOption = typeSelect.options[typeSelect.selectedIndex];
     const dateFin = document.getElementById('date_fin');
     
-    if (this.value && selectedType && typesData[selectedType]) {
-        dateFin.value = calculerDateFin(this.value, typesData[selectedType].duree_jours);
-        validateField(dateFin, 'error-date_fin', 'valid-date_fin', validateDateFin, 'La date de fin doit être après la date de début');
+    if (this.value && selectedOption && selectedOption.value) {
+        const dureeJours = selectedOption.getAttribute('data-duree');
+        if (dureeJours) {
+            dateFin.value = calculerDateFin(this.value, dureeJours);
+            validateField(dateFin, 'error-date_fin', 'valid-date_fin', validateDateFin, 'La date de fin doit être après la date de début');
+        }
     }
 });
 

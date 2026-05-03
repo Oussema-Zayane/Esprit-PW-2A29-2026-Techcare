@@ -169,6 +169,9 @@ else {
             case 'recherche':
                 $controller->recherche();
                 break;
+            case 'api_recommend_options':
+                $controller->apiRecommanderOptions();
+                break;
             case 'logout':
                 $controller->logout();
                 break;

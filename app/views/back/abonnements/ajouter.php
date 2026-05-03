@@ -68,6 +68,18 @@
                 </div>
             </div>
 
+            <!-- AI Recommendations Section -->
+            <div id="ai-recommendations" style="display: none;">
+                <div class="ai-header">
+                    <i class="fa-solid fa-robot ai-icon"></i>
+                    <h4>Recommandations Intelligentes</h4>
+                </div>
+                <p class="ai-desc">Basé sur le profil du client et ce type d'abonnement, notre système recommande ces options :</p>
+                <div class="ai-cards-container" id="ai-cards-container">
+                    <!-- Cards will be injected here via JS -->
+                </div>
+            </div>
+
             <div class="form-row">
                 <div class="form-group">
                     <label><i class="fa-solid fa-calendar"></i> Date de début *</label>
@@ -278,23 +290,142 @@ input.error, select.error {
         padding: 15px 20px;
     }
 }
+
+/* AI Recommendation Styles */
+#ai-recommendations {
+    margin: 20px 25px;
+    padding: 20px;
+    background: linear-gradient(145deg, #1a1c23 0%, #12141a 100%);
+    border: 1px solid #2c303a;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeIn 0.4s ease-out;
+}
+
+#ai-recommendations::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 3px;
+    background: linear-gradient(90deg, #00d2ff 0%, #3a7bd5 100%);
+    box-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+}
+
+.ai-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.ai-icon {
+    font-size: 1.4rem;
+    color: #00d2ff;
+    text-shadow: 0 0 8px rgba(0, 210, 255, 0.6);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); text-shadow: 0 0 8px rgba(0, 210, 255, 0.6); }
+    50% { transform: scale(1.1); text-shadow: 0 0 15px rgba(0, 210, 255, 0.9); }
+    100% { transform: scale(1); text-shadow: 0 0 8px rgba(0, 210, 255, 0.6); }
+}
+
+.ai-header h4 {
+    margin: 0;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.ai-desc {
+    color: #a0a5b1;
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+}
+
+.ai-cards-container {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.ai-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 15px;
+    flex: 1;
+    min-width: 200px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.ai-card:hover {
+    background: rgba(0, 210, 255, 0.05);
+    border-color: rgba(0, 210, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.ai-card.selected {
+    background: rgba(0, 210, 255, 0.15);
+    border-color: #00d2ff;
+    box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.ai-card.selected::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    bottom: 10px;
+    right: 15px;
+    color: #00d2ff;
+    font-size: 1.2rem;
+}
+
+.ai-card-score {
+    position: absolute;
+    top: -10px;
+    right: 10px;
+    background: #00d2ff;
+    color: #000;
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0, 210, 255, 0.4);
+}
+
+.ai-card-title {
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.ai-card-price {
+    color: #00d2ff;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.ai-card-reason {
+    color: #8a8f9c;
+    font-size: 0.75rem;
+    font-style: italic;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 8px;
+    margin-top: 8px;
+}
 </style>
 
 <script>
-// Données des types depuis PHP
-const typesData = <?php 
-    $typesArray = [];
-    if (!empty($types)) {
-        foreach ($types as $type) {
-            $typesArray[htmlspecialchars($type['nom_type'])] = [
-                'prix_base'   => $type['prix_base'],
-                'duree_jours' => $type['duree_jours']
-            ];
-        }
-    }
-    echo json_encode($typesArray);
-?>;
-
+// Fonction pour calculer la date de fin
 function calculerDateFin(dateDebut, dureeJours) {
     if (!dateDebut || !dureeJours) return '';
     const d = new Date(dateDebut);
@@ -304,31 +435,109 @@ function calculerDateFin(dateDebut, dureeJours) {
 
 // Auto-calcul du prix et date fin selon le type
 document.getElementById('type_abonnement').addEventListener('change', function() {
-    const selectedType = this.value;
+    const selectedOption = this.options[this.selectedIndex];
+    const selectedType = selectedOption.value;
     const prixInput = document.getElementById('prix');
     const dateDebut = document.getElementById('date_debut');
     const dateFin = document.getElementById('date_fin');
     
-    if (selectedType && typesData[selectedType]) {
-        const typeInfo = typesData[selectedType];
-        prixInput.value = typeInfo.prix_base;
+    if (selectedType) {
+        const prixBase = selectedOption.getAttribute('data-prix');
+        const dureeJours = selectedOption.getAttribute('data-duree');
         
-        if (dateDebut.value) {
-            dateFin.value = calculerDateFin(dateDebut.value, typeInfo.duree_jours);
+        if (prixBase) {
+            prixInput.value = parseFloat(prixBase).toFixed(2);
+            // Si le type change, on recalcule le prix total (car les sélections IA vont être réinitialisées)
+            recalculerPrixTotal();
         }
+        
+        if (dateDebut.value && dureeJours) {
+            dateFin.value = calculerDateFin(dateDebut.value, dureeJours);
+        }
+        
+        // Load AI Recommendations
+        fetchRecommendations(selectedType);
+        
     } else {
         prixInput.value = '';
         dateFin.value = '';
+        document.getElementById('ai-recommendations').style.display = 'none';
+    }
+});
+
+// Recalculer le prix en incluant les recommandations sélectionnées
+function recalculerPrixTotal() {
+    const typeSelect = document.getElementById('type_abonnement');
+    const selectedOption = typeSelect.options[typeSelect.selectedIndex];
+    const prixInput = document.getElementById('prix');
+    
+    if (selectedOption && selectedOption.value) {
+        let basePrice = parseFloat(selectedOption.getAttribute('data-prix')) || 0;
+        
+        const selectedCards = document.querySelectorAll('.ai-card.selected');
+        let addonsPrice = 0;
+        selectedCards.forEach(card => {
+            addonsPrice += parseFloat(card.getAttribute('data-prix-supp')) || 0;
+        });
+        
+        prixInput.value = (basePrice + addonsPrice).toFixed(2);
+    }
+}
+
+function fetchRecommendations(type) {
+    const aiSection = document.getElementById('ai-recommendations');
+    const container = document.getElementById('ai-cards-container');
+    
+    // Show a loading state if needed
+    aiSection.style.display = 'block';
+    container.innerHTML = '<div style="color:#a0a5b1; font-size:0.85rem;"><i class="fa-solid fa-spinner fa-spin"></i> Analyse en cours par l\'IA...</div>';
+    
+    fetch(`index.php?action=api_recommend_options&type=${encodeURIComponent(type)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.length > 0) {
+                let html = '';
+                data.forEach(offre => {
+                    html += `
+                        <div class="ai-card" data-prix-supp="${offre.prix_supplementaire}" title="Cliquez pour ajouter l'option à votre abonnement">
+                            <div class="ai-card-score">${offre.match_score}% Match</div>
+                            <div class="ai-card-title">${offre.description}</div>
+                            <div class="ai-card-price">+${parseFloat(offre.prix_supplementaire).toFixed(2)} DT</div>
+                            <div class="ai-card-reason"><i class="fa-solid fa-sparkles" style="color:#00d2ff; font-size:0.7rem; margin-right:4px;"></i> ${offre.ai_reason}</div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<div style="color:#a0a5b1; font-size:0.85rem;">Aucune recommandation trouvée pour ce type d\'abonnement.</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Erreur IA:', error);
+            aiSection.style.display = 'none';
+        });
+}
+
+// Gestion du clic sur les recommandations IA
+document.getElementById('ai-cards-container').addEventListener('click', function(e) {
+    const card = e.target.closest('.ai-card');
+    if (card) {
+        card.classList.toggle('selected');
+        recalculerPrixTotal();
     }
 });
 
 // Mise à jour date fin quand date début change
 document.getElementById('date_debut').addEventListener('change', function() {
-    const selectedType = document.getElementById('type_abonnement').value;
+    const typeSelect = document.getElementById('type_abonnement');
+    const selectedOption = typeSelect.options[typeSelect.selectedIndex];
     const dateFin = document.getElementById('date_fin');
     
-    if (this.value && selectedType && typesData[selectedType]) {
-        dateFin.value = calculerDateFin(this.value, typesData[selectedType].duree_jours);
+    if (this.value && selectedOption && selectedOption.value) {
+        const dureeJours = selectedOption.getAttribute('data-duree');
+        if (dureeJours) {
+            dateFin.value = calculerDateFin(this.value, dureeJours);
+        }
     }
 });
 

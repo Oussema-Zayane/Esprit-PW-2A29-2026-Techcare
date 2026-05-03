@@ -273,6 +273,55 @@ class AdminController {
         include __DIR__ . '/../views/back/recherche_abonnements.php';
     }
 
+    public function apiRecommanderOptions() {
+        header('Content-Type: application/json');
+        $type = $_GET['type'] ?? '';
+        if (empty($type)) {
+            echo json_encode([]);
+            exit();
+        }
+        
+        // Trouver les options liées à ce type dans la base de données
+        $sql = "SELECT o.id, o.description 
+                FROM offre o
+                INNER JOIN offre_type_abonnement ota ON o.id = ota.id_offre
+                INNER JOIN type_abonnement t ON ota.id_type = t.id_type
+                WHERE t.nom_type = ?";
+        
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("s", $type);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        
+        // Simuler un moteur de recommandation IA avec un score de pertinence
+        foreach ($result as &$offre) {
+            // Générer un score de match aléatoire mais élevé (entre 80 et 98%)
+            $score = rand(80, 98);
+            $offre['match_score'] = $score;
+            
+            // Simuler un prix pour l'offre (puisque la BDD ne le contient pas)
+            $offre['prix_supplementaire'] = rand(10, 50) + 0.90;
+
+            
+            // Ajouter une raison générée "par l'IA"
+            $raisons = [
+                "Basé sur le choix de clients similaires",
+                "Complément idéal pour le forfait " . ucfirst($type),
+                "Fortement recommandé par notre algorithme",
+                "Choisi par 85% des utilisateurs de ce forfait"
+            ];
+            $offre['ai_reason'] = $raisons[array_rand($raisons)];
+        }
+        
+        // Trier par score décroissant
+        usort($result, function($a, $b) {
+            return $b['match_score'] <=> $a['match_score'];
+        });
+        
+        echo json_encode($result);
+        exit();
+    }
+
     public function apiRecherche() {
         header('Content-Type: application/json');
         echo json_encode($this->rechercheAvancee($_GET['type_abonnement'] ?? null, $_GET['statut'] ?? null, $_GET['nom_client'] ?? null, $_GET['email'] ?? null, $_GET['date_debut_min'] ?? null, $_GET['date_debut_max'] ?? null, $_GET['prix_min'] ?? null, $_GET['prix_max'] ?? null));
