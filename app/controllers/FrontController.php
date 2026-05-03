@@ -233,6 +233,19 @@ class FrontController {
 
     public function offres() {
         $types = $this->getAllTypes();
+        // Récupérer les offres liées pour chaque type
+        foreach ($types as &$type) {
+            $stmt = $this->conn->prepare("
+                SELECT o.description 
+                FROM offre o 
+                JOIN offre_type_abonnement ota ON o.id = ota.id_offre 
+                WHERE ota.id_type = ?
+            ");
+            $stmt->bind_param("i", $type['id_type']);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $type['offres'] = $result->fetch_all(MYSQLI_ASSOC);
+        }
         include __DIR__ . '/../views/front/abonnements/index.php';
     }
 }

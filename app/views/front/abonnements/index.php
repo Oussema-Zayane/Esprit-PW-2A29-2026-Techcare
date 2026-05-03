@@ -59,6 +59,12 @@
                                 <li><i class="fa-solid fa-check"></i> Durée: <?= $duree ?> jours</li>
                                 <li><i class="fa-solid fa-check"></i> Support inclus</li>
                             <?php endif; ?>
+                            
+                            <?php if (!empty($type['offres'])): ?>
+                                <?php foreach ($type['offres'] as $offre): ?>
+                                    <li class="extra-offer"><i class="fa-solid fa-plus" style="color: #00A86B;"></i> <?= trim(htmlspecialchars($offre['description'])) ?></li>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </ul>
                         <a href="index.php?page=souscrire&type=<?= $type['id_type'] ?>" class="btn-primary">
                             Souscrire <i class="fa-solid fa-arrow-right"></i>
