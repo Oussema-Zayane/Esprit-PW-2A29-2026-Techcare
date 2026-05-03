@@ -44,6 +44,21 @@
   --font: 'Inter', sans-serif;
 }
 
+[data-theme="light"] {
+  --bg:           #f8fafc;
+  --surface:      #ffffff;
+  --surface2:     #f1f5f9;
+  --surface3:     #e2e8f0;
+  --card:         #ffffff;
+  --border:       rgba(0, 0, 0, 0.08);
+  --txt:          #0f172a;
+  --txt-muted:    #475569;
+  --txt-dim:      #64748b;
+  --sh-sm:  0 1px 3px rgba(0,0,0,0.1);
+  --sh-md:  0 4px 12px rgba(0,0,0,0.08);
+  --sh-lg:  0 10px 25px rgba(0,0,0,0.05);
+}
+
 html { scroll-behavior: smooth; }
 
 body {

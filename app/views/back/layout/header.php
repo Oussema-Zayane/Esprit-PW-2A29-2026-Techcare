@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
+    <script src="assets/js/theme.js"></script>
     <style>
         * {
             margin: 0;
@@ -18,8 +19,10 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background: #f0f2f5;
+            background: var(--bg);
+            color: var(--txt);
             overflow-x: hidden;
+            transition: background 0.3s, color 0.3s;
         }
 
         /* SIDEBAR */
@@ -102,7 +105,8 @@
 
         /* TOPBAR */
         .topbar {
-            background: white;
+            background: var(--card);
+            border: 1px solid var(--border);
             border-radius: 12px;
             padding: 15px 25px;
             margin-bottom: 25px;
@@ -114,11 +118,11 @@
 
         .page-title h1 {
             font-size: 1.5rem;
-            color: #0A1F44;
+            color: var(--txt);
         }
 
         .page-title p {
-            color: #666;
+            color: var(--txt-muted);
             font-size: 0.85rem;
             margin-top: 5px;
         }
@@ -131,7 +135,7 @@
         }
 
         .user-info span {
-            color: #333;
+            color: var(--txt);
             font-weight: 500;
         }
 
@@ -166,7 +170,8 @@
             position: absolute;
             top: 55px;
             right: 0;
-            background: white;
+            background: var(--card);
+            border: 1px solid var(--border);
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             display: none;
@@ -181,13 +186,13 @@
 
         .dropdown-menu a {
             padding: 12px 20px;
-            color: #333;
+            color: var(--txt);
             text-decoration: none;
             display: flex;
             align-items: center;
             gap: 10px;
             transition: all 0.3s;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid var(--border);
         }
 
         .dropdown-menu a:last-child {
@@ -195,8 +200,8 @@
         }
 
         .dropdown-menu a:hover {
-            background: #f8f9fa;
-            color: #00A86B;
+            background: var(--surface2);
+            color: var(--green);
             padding-left: 25px;
         }
 
@@ -218,7 +223,8 @@
         }
 
         .stat-card {
-            background: white;
+            background: var(--card);
+            border: 1px solid var(--border);
             border-radius: 12px;
             padding: 20px;
             display: flex;
@@ -234,11 +240,11 @@
 
         .stat-info h3 {
             font-size: 1.8rem;
-            color: #0A1F44;
+            color: var(--txt);
         }
 
         .stat-info p {
-            color: #666;
+            color: var(--txt-muted);
             font-size: 0.85rem;
         }
 
@@ -256,7 +262,8 @@
 
         /* TABLEAU */
         .table-container {
-            background: white;
+            background: var(--card);
+            border: 1px solid var(--border);
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
@@ -264,7 +271,7 @@
 
         .table-header {
             padding: 20px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -294,7 +301,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            background: #f5f5f5;
+            background: var(--surface2);
             padding: 8px 15px;
             border-radius: 25px;
         }
@@ -304,6 +311,7 @@
             background: none;
             outline: none;
             width: 250px;
+            color: var(--txt);
         }
 
         table {
@@ -314,15 +322,16 @@
         th {
             text-align: left;
             padding: 15px 20px;
-            background: #f8f9fa;
-            color: #555;
+            background: var(--surface2);
+            color: var(--txt-muted);
             font-weight: 600;
             font-size: 0.85rem;
         }
 
         td {
             padding: 15px 20px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--border);
+            color: var(--txt);
         }
 
         .badge {
@@ -333,18 +342,21 @@
         }
 
         .badge-actif {
-            background: #d4edda;
-            color: #155724;
+            background: rgba(0, 168, 107, 0.15);
+            color: var(--green-lt);
+            border: 1px solid rgba(0, 168, 107, 0.25);
         }
 
         .badge-expiré {
-            background: #f8d7da;
-            color: #721c24;
+            background: rgba(231, 76, 60, 0.13);
+            color: #f87171;
+            border: 1px solid rgba(231, 76, 60, 0.22);
         }
 
         .badge-suspendu {
-            background: #fff3cd;
-            color: #856404;
+            background: rgba(243, 156, 18, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(243, 156, 18, 0.25);
         }
 
         .actions {

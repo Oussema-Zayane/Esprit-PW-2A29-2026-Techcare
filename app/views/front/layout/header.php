@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/front.css">
     <link rel="stylesheet" href="assets/css/crud.css">
+    <script src="assets/js/theme.js"></script>
     <style>
         * { font-family: 'Inter', sans-serif; }
     </style>
