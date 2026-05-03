@@ -23,10 +23,10 @@
         </div>
         
         <form id="formRecherche" class="search-form" action="index.php?action=recherche" method="get" novalidate>
-            <div class="form-row">
+            <div class="form-row single-column">
                 <div class="form-group">
                     <label><i class="fa-solid fa-tag"></i> Type d'abonnement</label>
-                    <select name="type_abonnement" id="type_abonnement">
+                    <select name="type_abonnement" id="type_abonnement" onchange="this.form.submit()">
                         <option value="">-- Tous les types --</option>
                         <?php if (!empty($types)): ?>
                             <?php foreach ($types as $type): ?>
@@ -42,34 +42,6 @@
                             <option value="" disabled>Aucun type disponible</option>
                         <?php endif; ?>
                     </select>
-                </div>
-                <div class="form-group">
-                    <label><i class="fa-solid fa-user"></i> Nom du client</label>
-                    <input type="text" name="nom_client" id="nom_client" placeholder="Rechercher par nom..." value="<?= htmlspecialchars($_GET['nom_client'] ?? '') ?>">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label><i class="fa-solid fa-envelope"></i> Email</label>
-                    <input type="text" name="email" id="email" placeholder="Rechercher par email..." value="<?= htmlspecialchars($_GET['email'] ?? '') ?>">
-                </div>
-                <div class="form-group">
-                    <label><i class="fa-solid fa-calendar"></i> Date début</label>
-                    <input type="date" name="date_debut" id="date_debut" value="<?= htmlspecialchars($_GET['date_debut'] ?? '') ?>">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label><i class="fa-solid fa-coins"></i> Prix (DT)</label>
-                    <input type="number" name="prix" id="prix" step="0.01" placeholder="Prix" value="<?= htmlspecialchars($_GET['prix'] ?? '') ?>">
-                    <small class="hint">Le prix se remplit automatiquement selon le type sélectionné</small>
-                </div>
-                <div class="form-group">
-                    <label><i class="fa-solid fa-calendar-week"></i> Date fin</label>
-                    <input type="date" name="date_fin" id="date_fin" value="<?= htmlspecialchars($_GET['date_fin'] ?? '') ?>">
-                    <small class="hint">La date de fin se calcule automatiquement</small>
                 </div>
             </div>
 
@@ -104,10 +76,6 @@
                 <span class="info-value" id="infoDuree">-</span>
             </div>
             <div class="info-item">
-                <span class="info-label">📅 Date fin estimée :</span>
-                <span class="info-value" id="infoDateFin">-</span>
-            </div>
-            <div class="info-item">
                 <span class="info-label">📝 Description :</span>
                 <span class="info-value" id="infoDescription">-</span>
             </div>
@@ -122,9 +90,7 @@
                 <p>
                     <?php 
                         $nbResultats = isset($abonnements) ? count($abonnements) : 0;
-                        $hasFilters = !empty($_GET['type_abonnement']) || !empty($_GET['nom_client']) || 
-                                      !empty($_GET['email']) || !empty($_GET['date_debut']) || 
-                                      !empty($_GET['prix']) || !empty($_GET['date_fin']);
+                        $hasFilters = !empty($_GET['type_abonnement']);
                     ?>
                     <?php if ($hasFilters): ?>
                         <span class="badge-count"><?= $nbResultats ?></span> résultat(s) pour votre recherche
@@ -273,6 +239,10 @@
     grid-template-columns: 1fr 1fr;
     gap: 15px;
     margin-bottom: 15px;
+}
+
+.form-row.single-column {
+    grid-template-columns: 1fr;
 }
 
 .form-group {
@@ -732,60 +702,24 @@ const typesData = <?php
     echo json_encode($typesArray);
 ?>;
 
-function calculerDateFin(dateDebut, dureeJours) {
-    if (!dateDebut) return '';
-    const date = new Date(dateDebut);
-    date.setDate(date.getDate() + parseInt(dureeJours));
-    return date.toISOString().split('T')[0];
-}
-
 function autoFillFields() {
     const typeSelect  = document.getElementById('type_abonnement');
     const selectedType = typeSelect.value;
-    const prixInput   = document.getElementById('prix');
-    const dateFinInput = document.getElementById('date_fin');
-    const dateDebut   = document.getElementById('date_debut');
     const typeInfoDiv = document.getElementById('typeInfo');
     
     if (selectedType && typesData[selectedType]) {
         const type       = typesData[selectedType];
-        const prixBase   = type.prix_base;
-        const dureeJours = type.duree_jours;
-        
-        prixInput.value = prixBase;
-        prixInput.style.borderColor = '#00A86B';
-        
-        if (!dateDebut.value) {
-            dateDebut.value = new Date().toISOString().split('T')[0];
-        }
-        
-        const dateFin = calculerDateFin(dateDebut.value, dureeJours);
-        if (dateFin) {
-            dateFinInput.value = dateFin;
-            dateFinInput.style.borderColor = '#00A86B';
-        }
         
         document.getElementById('infoType').textContent        = type.nom_type;
-        document.getElementById('infoPrixBase').textContent    = parseFloat(prixBase).toFixed(2) + ' DT';
-        document.getElementById('infoDuree').textContent       = dureeJours + ' jours';
-        document.getElementById('infoDateFin').textContent     = dateFin || '-';
+        document.getElementById('infoPrixBase').textContent    = parseFloat(type.prix_base).toFixed(2) + ' DT';
+        document.getElementById('infoDuree').textContent       = type.duree_jours + ' jours';
         document.getElementById('infoDescription').textContent = type.description || 'Aucune description';
+        
         typeInfoDiv.style.display = 'block';
     } else {
         typeInfoDiv.style.display  = 'none';
-        prixInput.style.borderColor = '';
-        dateFinInput.style.borderColor = '';
     }
 }
-
-document.getElementById('date_debut').addEventListener('change', function () {
-    const selectedType = document.getElementById('type_abonnement').value;
-    if (selectedType && typesData[selectedType] && this.value) {
-        const dateFin = calculerDateFin(this.value, typesData[selectedType].duree_jours);
-        document.getElementById('date_fin').value = dateFin;
-        document.getElementById('infoDateFin').textContent = dateFin;
-    }
-});
 
 document.getElementById('type_abonnement').addEventListener('change', autoFillFields);
 
