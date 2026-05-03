@@ -1,7 +1,17 @@
 // assets/js/theme.js
 (function() {
-    const currentTheme = localStorage.getItem('techcare_theme') || 'dark';
+    let currentTheme = localStorage.getItem('techcare_theme');
+    if (currentTheme !== 'light' && currentTheme !== 'dark') {
+        currentTheme = 'dark';
+    }
+    console.log('TechCare Theme Loader:', currentTheme);
     document.documentElement.setAttribute('data-theme', currentTheme);
+    
+    // Ensure body also gets the attribute when it's available
+    window.addEventListener('DOMContentLoaded', () => {
+        document.body.setAttribute('data-theme', currentTheme);
+        console.log('Body theme applied:', currentTheme);
+    });
 
     window.addEventListener('DOMContentLoaded', () => {
         
@@ -59,6 +69,7 @@
                 let newTheme = theme === 'light' ? 'dark' : 'light';
                 
                 document.documentElement.setAttribute('data-theme', newTheme);
+                document.body.setAttribute('data-theme', newTheme);
                 localStorage.setItem('techcare_theme', newTheme);
                 updateIcons(newTheme);
             });

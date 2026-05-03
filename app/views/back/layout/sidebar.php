@@ -46,7 +46,7 @@
             <span>Recherche Avancée</span>
         </a>
 
-        <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 20px 0;">
+        <hr style="border: none; border-top: 1px solid var(--border); margin: 20px 0;">
 
         <!-- Retour au site (Front Office) -->
         <a href="index.php?page=accueil" class="nav-item">

@@ -90,7 +90,8 @@
 }
 
 body {
-    background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+    background: var(--bg);
+    color: var(--txt);
     min-height: 100vh;
 }
 
@@ -104,7 +105,7 @@ body {
 .hero-section {
     text-align: center;
     padding: 60px 0 30px;
-    background: linear-gradient(135deg, #0A1F44 0%, #1a3a6e 100%);
+    background: linear-gradient(135deg, var(--blue) 0%, var(--blue-mid) 100%);
     margin-bottom: 40px;
     border-radius: 0 0 30px 30px;
 }
@@ -245,28 +246,24 @@ body {
 /* Bouton */
 .btn-primary {
     display: inline-block;
-    background: #00A86B;
+    background: var(--green);
     color: white;
     padding: 12px 20px;
     border-radius: 50px;
     text-decoration: none;
     font-weight: 600;
     transition: all 0.3s;
-    width: 100%;
     border: none;
     cursor: pointer;
-    text-align: center;
-    font-size: 0.95rem;
     margin-top: auto;
 }
 .btn-primary:hover {
-    background: #008f5a;
+    background: var(--green-dk);
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(0,168,107,0.3);
 }
 .btn-primary:active {
     transform: translateY(0);
-    color: black;
 }
 
 .no-offres {

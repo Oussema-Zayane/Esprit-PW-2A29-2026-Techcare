@@ -92,7 +92,7 @@ class FrontController {
             .hero-section {
                 text-align: center;
                 padding: 80px 20px;
-                background: linear-gradient(135deg, #0A1F44, #1a3a6e);
+                background: linear-gradient(135deg, var(--blue), var(--blue-mid));
                 border-radius: 20px;
                 color: white;
                 margin: 40px 0;
@@ -220,12 +220,12 @@ class FrontController {
             </form>
         </div>
         <style>
-            .contact-form { max-width:600px; margin:30px auto; background:white; padding:30px; border-radius:16px; }
+            .contact-form { max-width:600px; margin:30px auto; background:var(--card); border: 1px solid var(--border); padding:30px; border-radius:16px; color: var(--txt); }
             .form-group   { margin-bottom:20px; }
-            .form-group label { display:block; margin-bottom:8px; font-weight:bold; }
-            .form-group input, .form-group textarea { width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; }
+            .form-group label { display:block; margin-bottom:8px; font-weight:bold; color: var(--txt); }
+            .form-group input, .form-group textarea { width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; background: var(--surface2); color: var(--txt); }
             .alert { padding:15px; border-radius:8px; margin-bottom:20px; }
-            .alert.success { background:#d4edda; color:#155724; border:1px solid #c3e6cb; }
+            .alert.success { background:rgba(0,168,107,0.2); color:var(--green); border:1px solid rgba(0,168,107,0.3); }
         </style>
         <?php
         require_once __DIR__ . '/../views/front/layout/footer.php';

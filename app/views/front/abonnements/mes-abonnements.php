@@ -56,7 +56,7 @@
                                     <strong><?= ucfirst($abo['type_abonnement']) ?></strong>
                                 </td>
                                 <td>
-                                    <span style="color: #00A86B; font-weight: bold;">
+                                    <span style="color: var(--green); font-weight: bold;">
                                         <?= number_format($abo['prix'], 2) ?> DT
                                     </span>
                                 </td>
@@ -99,9 +99,9 @@
 <?php include __DIR__ . '/../layout/footer.php'; ?>
 
 <style>
-/* Style global pour la page mes abonnements - Texte BLANC */
+/* Style global pour la page mes abonnements */
 .container {
-    color: white;
+    color: var(--txt);
 }
 
 .page-header h1 {
@@ -114,8 +114,8 @@
 
 /* Tableau */
 .table-container {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
+    background: var(--card);
+    border: 1px solid var(--border);
     border-radius: 16px;
     overflow: hidden;
 }
@@ -130,17 +130,17 @@
 }
 
 .data-table th {
-    background: rgba(0, 168, 107, 0.3);
-    color: white;
+    background: var(--surface2);
+    color: var(--txt);
     padding: 12px 15px;
     text-align: left;
     font-weight: 600;
 }
 
 .data-table td {
-    color: white;
+    color: var(--txt);
     padding: 12px 15px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--border);
 }
 
 .data-table tr:hover td {

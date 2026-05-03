@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css?v=1.1">
     <script src="assets/js/theme.js"></script>
     <style>
         * {
@@ -32,8 +32,9 @@
             top: 0;
             width: 280px;
             height: 100vh;
-            background: linear-gradient(135deg, #0A1F44 0%, #0d2a5a 100%);
-            color: white;
+            background: var(--sidebar-bg);
+            color: var(--sidebar-txt);
+            border-right: 1px solid var(--border);
             box-shadow: 2px 0 10px rgba(0,0,0,0.1);
             transition: all 0.3s;
             z-index: 1000;
@@ -41,7 +42,7 @@
 
         .sidebar-header {
             padding: 25px 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid var(--border);
             text-align: center;
         }
 
@@ -72,7 +73,7 @@
             align-items: center;
             gap: 12px;
             padding: 12px 25px;
-            color: rgba(255,255,255,0.8);
+            color: var(--sidebar-txt-muted);
             text-decoration: none;
             transition: all 0.3s;
             margin: 5px 0;
@@ -80,8 +81,8 @@
         }
 
         .nav-item:hover {
-            background: rgba(255,255,255,0.1);
-            color: white;
+            background: var(--surface2);
+            color: var(--green);
             border-left-color: #00A86B;
         }
 

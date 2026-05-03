@@ -352,8 +352,8 @@ input.error, select.error {
 }
 
 .ai-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--surface2);
+    border: 1px solid var(--border);
     border-radius: 8px;
     padding: 15px;
     flex: 1;
@@ -401,7 +401,7 @@ input.error, select.error {
 }
 
 .ai-card-title {
-    color: #fff;
+    color: var(--txt);
     font-size: 0.95rem;
     font-weight: 600;
     margin-bottom: 5px;
@@ -415,10 +415,10 @@ input.error, select.error {
 }
 
 .ai-card-reason {
-    color: #8a8f9c;
+    color: var(--txt-muted);
     font-size: 0.75rem;
     font-style: italic;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 1px solid var(--border);
     padding-top: 8px;
     margin-top: 8px;
 }
