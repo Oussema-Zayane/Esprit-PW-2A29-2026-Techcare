@@ -66,7 +66,6 @@
         <table>
             <thead>
                 <tr>
-                    <th>ID</th>
                     <th>Client</th>
                     <th>Type</th>
                     <th>Prix</th>
@@ -77,7 +76,6 @@
             <tbody>
                 <?php foreach ($derniersAbonnements as $a): ?>
                 <tr>
-                    <td>#<?= $a['id'] ?></td>
                     <td><?= htmlspecialchars($a['nom_client']) ?></td>
                     <td><?= ucfirst($a['type_abonnement']) ?></td>
                     <td><?= $a['prix'] ?> DT</td>

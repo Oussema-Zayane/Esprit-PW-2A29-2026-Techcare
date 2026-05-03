@@ -65,7 +65,6 @@
             <table id="abonnementsTable">
                 <thead>
                     <tr>
-                        <th>ID</th>
                         <th>Client</th>
                         <th>Email</th>
                         <th>Type</th>
@@ -79,7 +78,7 @@
                 <tbody>
                     <?php if (empty($abonnements)): ?>
                         <tr class="empty-row">
-                            <td colspan="9" class="text-center">
+                            <td colspan="8" class="text-center">
                                 <i class="fa-solid fa-inbox" style="font-size: 48px; opacity: 0.5; display: block; margin-bottom: 10px;"></i>
                                 Aucun abonnement trouvé
                                 <br>
@@ -89,7 +88,6 @@
                     <?php else: ?>
                         <?php foreach ($abonnements as $a): ?>
                         <tr>
-                            <td data-label="ID">#<?= $a['id'] ?></td>
                             <td data-label="Client"><strong><?= htmlspecialchars($a['nom_client']) ?></strong></td>
                             <td data-label="Email"><?= htmlspecialchars($a['email'] ?? 'Non renseigné') ?></td>
                             <td data-label="Type">
@@ -511,7 +509,7 @@ function filterTable() {
             const tbody = document.querySelector('#abonnementsTable tbody');
             const tr = document.createElement('tr');
             tr.className = 'no-result';
-            tr.innerHTML = '<td colspan="9" class="text-center">Aucun résultat trouvé</td>';
+            tr.innerHTML = '<td colspan="8" class="text-center">Aucun résultat trouvé</td>';
             tbody.appendChild(tr);
         }
     } else if (noResultRow) {

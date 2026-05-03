@@ -107,7 +107,17 @@ class AdminController {
     }
 
     public function getAbonnementOptions($abonnement_id) {
-        $stmt = $this->conn->prepare("SELECT * FROM offre WHERE id_abonnement = ?");
+        $sql = "SELECT o.* 
+                FROM offre o
+                INNER JOIN offre_type_abonnement ota ON o.id = ota.id_offre
+                INNER JOIN type_abonnement t ON ota.id_type = t.id_type
+                INNER JOIN abonnements a ON t.nom_type = a.type_abonnement
+                WHERE a.id = ?";
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            error_log("Erreur prepare getAbonnementOptions: " . $this->conn->error);
+            return [];
+        }
         $stmt->bind_param("i", $abonnement_id);
         $stmt->execute();
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);

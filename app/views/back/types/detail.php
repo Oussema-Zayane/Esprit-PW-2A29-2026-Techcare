@@ -153,15 +153,9 @@
                                     <div class="offre-description"><?= htmlspecialchars($offre['description']) ?></div>
                                     <div class="offre-meta">
                                         <span class="offre-id">ID: #<?= $offre['id'] ?></span>
-                                        <?php if ($offre['id_abonnement']): ?>
-                                            <span class="offre-badge linked">
-                                                <i class="fa-solid fa-link"></i> Lié à abo #<?= $offre['id_abonnement'] ?>
-                                            </span>
-                                        <?php else: ?>
-                                            <span class="offre-badge unlinked">
-                                                <i class="fa-solid fa-unlink"></i> Non lié
-                                            </span>
-                                        <?php endif; ?>
+                                        <span class="offre-badge linked">
+                                            <i class="fa-solid fa-link"></i> Associée à ce type
+                                        </span>
                                     </div>
                                 </div>
                                 <div class="offre-actions">

@@ -59,7 +59,6 @@
             <table id="typesTable">
                 <thead>
                     <tr>
-                        <th>ID</th>
                         <th>Nom du type</th>
                         <th>Prix de base</th>
                         <th>Durée (jours)</th>
@@ -70,11 +69,10 @@
                 </thead>
                 <tbody>
                     <?php if (empty($types)): ?>
-                        <tr><td colspan="7" class="text-center">Aucun type trouvé</td><tr>
+                        <tr><td colspan="6" class="text-center">Aucun type trouvé</td><tr>
                     <?php else: ?>
                         <?php foreach ($types as $t): ?>
                             <tr>
-                                <td>#<?= $t['id_type'] ?? $t['id'] ?? '-' ?></td>
                                 <td><strong><?= htmlspecialchars($t['nom_type'] ?? '-') ?></strong></td>
                                 <td><?= number_format($t['prix_base'] ?? 0, 2) ?> DT</td>
                                 <td><?= $t['duree_jours'] ?? '-' ?> jours</td>

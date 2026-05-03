@@ -53,7 +53,7 @@ class TypeController {
     public function getOffresByTypeId($id_type) {
         $sql = "SELECT o.* 
                 FROM offre o
-                INNER JOIN type_abonnement_offre tof ON o.id = tof.id_offre
+                INNER JOIN offre_type_abonnement tof ON o.id = tof.id_offre
                 WHERE tof.id_type = ?";
         $stmt = $this->conn->prepare($sql);
         if (!$stmt) {
@@ -238,7 +238,7 @@ class TypeController {
                     $offresCount = 0;
                     foreach ($_POST['offres_selected'] as $offreId) {
                         $stmt = $this->conn->prepare("
-                            INSERT IGNORE INTO type_abonnement_offre (id_type, id_offre)
+                            INSERT IGNORE INTO offre_type_abonnement (id_type, id_offre)
                             VALUES (?, ?)
                         ");
                         if ($stmt) {
@@ -304,7 +304,7 @@ class TypeController {
             if ($result) {
                 // ═══ METTRE À JOUR LES OFFRES ASSOCIÉES ═══
                 // Supprimer toutes les associations existantes
-                $stmt = $this->conn->prepare("DELETE FROM type_abonnement_offre WHERE id_type = ?");
+                $stmt = $this->conn->prepare("DELETE FROM offre_type_abonnement WHERE id_type = ?");
                 $stmt->bind_param("i", $id);
                 $stmt->execute();
                 
@@ -313,7 +313,7 @@ class TypeController {
                     $offresCount = 0;
                     foreach ($_POST['offres_selected'] as $offreId) {
                         $stmt = $this->conn->prepare("
-                            INSERT INTO type_abonnement_offre (id_type, id_offre)
+                            INSERT INTO offre_type_abonnement (id_type, id_offre)
                             VALUES (?, ?)
                         ");
                         $stmt->bind_param("ii", $id, $offreId);

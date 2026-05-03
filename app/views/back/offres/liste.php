@@ -37,7 +37,6 @@
             <table id="offresTable">
                 <thead>
                     <tr>
-                        <th>ID</th>
                         <th>Description</th>
                         <th>Type d'abonnement</th>
                         <th>Actions</th>
@@ -45,11 +44,10 @@
                 </thead>
                 <tbody>
                     <?php if (empty($offres)): ?>
-                        <tr><td colspan="4" class="text-center">Aucune option trouvée</td></tr>
+                        <tr><td colspan="3" class="text-center">Aucune option trouvée</td></tr>
                     <?php else: ?>
                         <?php foreach ($offres as $o): ?>
                             <tr>
-                                <td class="id-badge">#<?= $o['id'] ?></td>
                                 <td class="description-cell"><?= htmlspecialchars($o['description']) ?></td>
                                 <td>
                                     <?php if (!empty($o['types'])): ?>
