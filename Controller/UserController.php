@@ -216,7 +216,7 @@ if ($action == "google_login") {
     $_SESSION['telephone'] = $user['telephone'] ?? '';
     $_SESSION['profile_picture'] = $user['profile_picture'] ?? 'default.png';
 
-    // Single Session Management
+    //     Single Session Management
     User::updateSessionId($user['id'], session_id());
 
     echo json_encode(['success' => true]);
@@ -268,13 +268,11 @@ if ($action == "register") {
         $errors[] = "email_invalide";
     }
     
-    // Validation téléphone (8 chiffres exactement)
     $telephoneClean = preg_replace('/\D/', '', $telephone);
     if (strlen($telephoneClean) != 8) {
         $errors[] = "telephone_invalide";
     }
     
-    // Validation mot de passe (minimum 8 caractères)
     if (strlen($password) < 8) {
         $errors[] = "password_court";
     }
@@ -333,7 +331,6 @@ if ($action == "forgot_password") {
         header("Location: ../View/front/auth.php?success=reset_sent");
     } else {
         // Pour des raisons de sécurité, on peut dire que l'email est envoyé même s'il n'existe pas
-        // Mais ici on va être explicite pour l'exercice
         header("Location: ../View/front/auth.php?error=email_not_found");
     }
     exit();
