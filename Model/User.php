@@ -142,4 +142,20 @@ class User {
         $stmt = $conn->prepare($sql);
         return $stmt->execute([$hashedPassword, $id]);
     }
+
+    public static function updateSessionId($id, $sessionId) {
+        $conn = Config::getConnexion();
+        $sql = "UPDATE personne SET session_id = ? WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        return $stmt->execute([$sessionId, $id]);
+    }
+
+    public static function getSessionId($id) {
+        $conn = Config::getConnexion();
+        $sql = "SELECT session_id FROM personne WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([$id]);
+        $res = $stmt->fetch();
+        return $res ? $res['session_id'] : null;
+    }
 }

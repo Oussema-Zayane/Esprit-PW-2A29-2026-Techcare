@@ -2,6 +2,17 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+// Single Session Management
+if (isset($_SESSION['user_id'])) {
+    require_once __DIR__ . '/../../Model/User.php';
+    $dbSessionId = User::getSessionId($_SESSION['user_id']);
+    if ($dbSessionId && $dbSessionId !== session_id()) {
+        session_destroy();
+        header("Location: ../front/auth.php?error=multiple_sessions");
+        exit();
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -281,6 +292,17 @@ if (session_status() === PHP_SESSION_NONE) {
     <div class="toast-container"></div>
 
     <script>
+    // Signal de session pour la déconnexion automatique entre onglets
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'techcare_logout' && e.newValue) {
+            window.location.href = '../front/auth.php?success=account_deleted';
+        }
+    });
+
+    function broadcastLogout() {
+        localStorage.setItem('techcare_logout', Date.now());
+    }
+
     let roleChart = null;
     
     function toggleMobileMenu() {

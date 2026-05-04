@@ -2,5 +2,5 @@
 session_start();
 session_destroy();
 
-header("Location: ../View/front/auth.html");
+header("Location: ../View/front/auth.php");
 ?>

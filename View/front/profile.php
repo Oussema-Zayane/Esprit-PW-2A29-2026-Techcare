@@ -2,7 +2,7 @@
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: auth.html");
+    header("Location: auth.php");
     exit();
 }
 
@@ -125,7 +125,7 @@ ob_start();
         <button onclick="confirmDelete()" class="btn-primary" style="background: rgba(231,76,60,0.1); color: var(--danger); border: 1px solid var(--danger); text-decoration: none; padding: 0.8rem 1.5rem; border-radius: var(--r-md); font-weight: 600; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
             <i class="fas fa-user-times"></i> Supprimer le compte
         </button>
-        <a href="../../Controller/logout.php" class="btn-primary" style="background: rgba(231,76,60,0.1); color: var(--txt-muted); border: 1px solid var(--border); text-decoration: none; padding: 0.8rem 1.5rem; border-radius: var(--r-md); font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+        <a href="../../Controller/logout.php" onclick="broadcastLogout()" class="btn-primary" style="background: rgba(231,76,60,0.1); color: var(--txt-muted); border: 1px solid var(--border); text-decoration: none; padding: 0.8rem 1.5rem; border-radius: var(--r-md); font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
             <i class="fas fa-sign-out-alt"></i> Se déconnecter
         </a>
     </div>

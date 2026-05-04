@@ -21,25 +21,30 @@ if ($action == "login") {
     $password = $_POST['password'] ?? '';
     $recaptchaResponse = $_POST['g-recaptcha-response'] ?? '';
     
+    if (isset($_SESSION['user_id'])) {
+        header("Location: ../View/front/auth.php");
+        exit();
+    }
+    
     $user = User::findByEmail($email);
     
     // Si l'utilisateur existe, on vérifie d'abord son statut et le lockout
     if ($user) {
         if (isset($user['status']) && $user['status'] === 'inactif') {
-            header("Location: ../View/front/auth.html?error=banned");
+            header("Location: ../View/front/auth.php?error=banned");
             exit();
         }
 
         // Vérification du lockout (is_locked vient de notre requête SQL NOW())
         if (isset($user['is_locked']) && $user['is_locked']) {
             $seconds = $user['seconds_left'] ?? 0;
-            header("Location: ../View/front/auth.html?error=locked&seconds=$seconds");
+            header("Location: ../View/front/auth.php?error=locked&seconds=$seconds");
             exit();
         }
 
         // Vérification de l'email
         if (isset($user['is_verified']) && $user['is_verified'] == 0) {
-            header("Location: ../View/front/auth.html?error=not_verified&email=" . urlencode($email));
+            header("Location: ../View/front/auth.php?error=not_verified&email=" . urlencode($email));
             exit();
         }
     }
@@ -49,7 +54,7 @@ if ($action == "login") {
     // Si l'utilisateur n'existe pas
     if (!$user) {
         $error = $isRecaptchaValid ? "login" : "recaptcha";
-        header("Location: ../View/front/auth.html?error=$error");
+        header("Location: ../View/front/auth.php?error=$error");
         exit();
     }
 
@@ -72,10 +77,10 @@ if ($action == "login") {
         
         if ($lockoutMinutes > 0) {
             $seconds = $lockoutMinutes * 60;
-            header("Location: ../View/front/auth.html?error=locked_now&seconds=$seconds");
+            header("Location: ../View/front/auth.php?error=locked_now&seconds=$seconds");
         } else {
             $error = !$isRecaptchaValid ? "recaptcha" : "login";
-            header("Location: ../View/front/auth.html?error=$error");
+            header("Location: ../View/front/auth.php?error=$error");
         }
         exit();
     }
@@ -91,6 +96,9 @@ if ($action == "login") {
     $_SESSION['telephone'] = $user['telephone'];
     $_SESSION['profile_picture'] = $user['profile_picture'] ?? 'default.png';
 
+    // Single Session Management
+    User::updateSessionId($user['id'], session_id());
+
     header("Location: ../View/front/profile.php");
     exit();
 }
@@ -99,6 +107,11 @@ if ($action == "face_login") {
     $descriptor = json_decode($_POST['descriptor'] ?? '[]', true);
     if (empty($descriptor)) {
         echo json_encode(['success' => false, 'error' => 'Descriptor manquant']);
+        exit();
+    }
+
+    if (isset($_SESSION['user_id'])) {
+        echo json_encode(['success' => false, 'error' => 'Une session est déjà ouverte']);
         exit();
     }
 
@@ -131,6 +144,9 @@ if ($action == "face_login") {
             $_SESSION['telephone'] = $user['telephone'] ?? '';
             $_SESSION['profile_picture'] = $user['profile_picture'] ?? 'default.png';
 
+            // Single Session Management
+            User::updateSessionId($user['id'], session_id());
+
             echo json_encode(['success' => true]);
             exit();
         }
@@ -144,6 +160,11 @@ if ($action == "google_login") {
     $idToken = $_POST['id_token'] ?? '';
     if (empty($idToken)) {
         echo json_encode(['success' => false, 'error' => 'Token manquant']);
+        exit();
+    }
+
+    if (isset($_SESSION['user_id'])) {
+        echo json_encode(['success' => false, 'error' => 'Une session est déjà ouverte']);
         exit();
     }
 
@@ -195,6 +216,9 @@ if ($action == "google_login") {
     $_SESSION['telephone'] = $user['telephone'] ?? '';
     $_SESSION['profile_picture'] = $user['profile_picture'] ?? 'default.png';
 
+    // Single Session Management
+    User::updateSessionId($user['id'], session_id());
+
     echo json_encode(['success' => true]);
     exit();
 }
@@ -221,7 +245,7 @@ if ($action == "update_face") {
 
 if ($action == "register") {
     if (!verifyRecaptcha($_POST['g-recaptcha-response'] ?? '')) {
-        header("Location: ../View/front/auth.html?error=recaptcha");
+        header("Location: ../View/front/auth.php?error=recaptcha");
         exit();
     }
     
@@ -264,7 +288,7 @@ if ($action == "register") {
     // Si des erreurs, rediriger avec l'erreur
     if (!empty($errors)) {
         $errorCode = $errors[0];
-        header("Location: ../View/front/auth.html?error=" . $errorCode);
+        header("Location: ../View/front/auth.php?error=" . $errorCode);
         exit();
     }
 
@@ -279,9 +303,9 @@ if ($action == "register") {
         // Envoyer l'email
         Mailer::sendVerificationEmail($email, $token);
         
-        header("Location: ../View/front/auth.html?success=register_verify");
+        header("Location: ../View/front/auth.php?success=register_verify");
     } else {
-        header("Location: ../View/front/auth.html?error=register");
+        header("Location: ../View/front/auth.php?error=register");
     }
     exit();
 }
@@ -289,9 +313,9 @@ if ($action == "register") {
 if ($action == "verify") {
     $token = $_GET['token'] ?? '';
     if (User::verifyUser($token)) {
-        header("Location: ../View/front/auth.html?success=verified");
+        header("Location: ../View/front/auth.php?success=verified");
     } else {
-        header("Location: ../View/front/auth.html?error=invalid_token");
+        header("Location: ../View/front/auth.php?error=invalid_token");
     }
     exit();
 }
@@ -306,11 +330,11 @@ if ($action == "forgot_password") {
         User::setResetToken($email, $token, $expires);
         
         Mailer::sendResetEmail($email, $token);
-        header("Location: ../View/front/auth.html?success=reset_sent");
+        header("Location: ../View/front/auth.php?success=reset_sent");
     } else {
         // Pour des raisons de sécurité, on peut dire que l'email est envoyé même s'il n'existe pas
         // Mais ici on va être explicite pour l'exercice
-        header("Location: ../View/front/auth.html?error=email_not_found");
+        header("Location: ../View/front/auth.php?error=email_not_found");
     }
     exit();
 }
@@ -323,16 +347,16 @@ if ($action == "reset_password") {
     if ($user) {
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
         User::updatePassword($user['id'], $hashedPassword);
-        header("Location: ../View/front/auth.html?success=password_reset");
+        header("Location: ../View/front/auth.php?success=password_reset");
     } else {
-        header("Location: ../View/front/auth.html?error=invalid_reset_token");
+        header("Location: ../View/front/auth.php?error=invalid_reset_token");
     }
     exit();
 }
 
 if ($action == "add") {
     if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
-        header("Location: ../View/front/auth.html");
+        header("Location: ../View/front/auth.php");
         exit();
     }
     
@@ -394,7 +418,7 @@ if ($action == "add") {
 
 if ($action == "update") {
     if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
-        header("Location: ../View/front/auth.html");
+        header("Location: ../View/front/auth.php");
         exit();
     }
 
@@ -443,7 +467,7 @@ if ($action == "update") {
 
 if ($action == "delete") {
     if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
-        header("Location: ../View/front/auth.html");
+        header("Location: ../View/front/auth.php");
         exit();
     }
 
@@ -460,7 +484,7 @@ if ($action == "delete") {
 
 if ($action == "toggle_status") {
     if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
-        header("Location: ../View/front/auth.html");
+        header("Location: ../View/front/auth.php");
         exit();
     }
 
@@ -478,7 +502,7 @@ if ($action == "toggle_status") {
 
 if ($action == "update_profile") {
     if (!isset($_SESSION['user_id'])) {
-        header("Location: ../View/front/auth.html");
+        header("Location: ../View/front/auth.php");
         exit();
     }
 
@@ -518,7 +542,7 @@ if ($action == "update_profile") {
 
 if ($action == "delete_profile") {
     if (!isset($_SESSION['user_id'])) {
-        header("Location: ../View/front/auth.html");
+        header("Location: ../View/front/auth.php");
         exit();
     }
 
@@ -527,7 +551,7 @@ if ($action == "delete_profile") {
     
     if ($result) {
         session_destroy();
-        header("Location: ../View/front/auth.html?success=account_deleted");
+        header("Location: ../View/front/auth.php?success=account_deleted");
     } else {
         header("Location: ../View/front/profile.php?error=delete_failed");
     }

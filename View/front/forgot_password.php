@@ -92,7 +92,7 @@
         </form>
         
         <div class="back-link">
-            <a href="auth.html"><i class="fas fa-arrow-left"></i> Retour à la connexion</a>
+            <a href="auth.php"><i class="fas fa-arrow-left"></i> Retour à la connexion</a>
         </div>
     </div>
 </body>
