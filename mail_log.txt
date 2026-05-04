@@ -1,0 +1,70 @@
+To: oussamazayane2005@gmail.com
+Subject: Réinitialisation de votre mot de passe TechCare
+Message: 
+        <html>
+        <head>
+            <title>Réinitialisation de mot de passe</title>
+        </head>
+        <body style='font-family: Arial, sans-serif; background-color: #0f172a; color: #f8fafc; padding: 20px;'>
+            <div style='max-width: 600px; margin: 0 auto; background-color: #1e293b; padding: 30px; border-radius: 12px; border: 1px solid #334155;'>
+                <h1 style='color: #00A86B;'>Réinitialisation de mot de passe</h1>
+                <p>Vous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le bouton ci-dessous pour en définir un nouveau :</p>
+                <div style='text-align: center; margin: 30px 0;'>
+                    <a href='http://localhost/Userv4/View/front/reset_password.php?token=1e426968c256eb6d39168a73f74652a6d3dd4f6641b07b1ead9b6d86ed08a240' style='background-color: #00A86B; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;'>Réinitialiser mon mot de passe</a>
+                </div>
+                <p>Ce lien expirera dans 1 heure.</p>
+                <p>Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email.</p>
+                <hr style='border: 0; border-top: 1px solid #334155; margin: 20px 0;'>
+                <p style='font-size: 12px; color: #94a3b8;'>Ceci est un message automatique, veuillez ne pas y répondre.</p>
+            </div>
+        </body>
+        </html>
+        
+-------------------
+To: oussamazayane2005@gmail.com
+Subject: Réinitialisation de votre mot de passe TechCare
+Message: 
+        <html>
+        <head>
+            <title>Réinitialisation de mot de passe</title>
+        </head>
+        <body style='font-family: Arial, sans-serif; background-color: #0f172a; color: #f8fafc; padding: 20px;'>
+            <div style='max-width: 600px; margin: 0 auto; background-color: #1e293b; padding: 30px; border-radius: 12px; border: 1px solid #334155;'>
+                <h1 style='color: #00A86B;'>Réinitialisation de mot de passe</h1>
+                <p>Vous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le bouton ci-dessous pour en définir un nouveau :</p>
+                <div style='text-align: center; margin: 30px 0;'>
+                    <a href='http://localhost/Userv4/View/front/reset_password.php?token=acb9818e41841cc70431aa9f29e241b58dc0c3e94c13dfcef921c4591ab24f91' style='background-color: #00A86B; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;'>Réinitialiser mon mot de passe</a>
+                </div>
+                <p>Ce lien expirera dans 1 heure.</p>
+                <p>Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email.</p>
+                <hr style='border: 0; border-top: 1px solid #334155; margin: 20px 0;'>
+                <p style='font-size: 12px; color: #94a3b8;'>Ceci est un message automatique, veuillez ne pas y répondre.</p>
+            </div>
+        </body>
+        </html>
+        
+-------------------
+To: zayane.oussema@esprit.tn
+Subject: Vérifiez votre compte TechCare
+Message: 
+        <html>
+        <head>
+            <title>Bienvenue chez TechCare</title>
+        </head>
+        <body style='font-family: Arial, sans-serif; background-color: #0f172a; color: #f8fafc; padding: 20px;'>
+            <div style='max-width: 600px; margin: 0 auto; background-color: #1e293b; padding: 30px; border-radius: 12px; border: 1px solid #334155;'>
+                <h1 style='color: #00A86B;'>Bienvenue !</h1>
+                <p>Merci de vous être inscrit sur TechCare. Pour activer votre compte, veuillez cliquer sur le bouton ci-dessous :</p>
+                <div style='text-align: center; margin: 30px 0;'>
+                    <a href='http://localhost/Userv4/View/front/verify.php?token=a695152516c88cd276bbbe4dbd70c7ea081bca89684d2f766e9a1498dbbb4557' style='background-color: #00A86B; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;'>Vérifier mon compte</a>
+                </div>
+                <p>Si le bouton ne fonctionne pas, copiez et collez ce lien dans votre navigateur :</p>
+                <p style='font-size: 12px; color: #94a3b8;'>http://localhost/Userv4/View/front/verify.php?token=a695152516c88cd276bbbe4dbd70c7ea081bca89684d2f766e9a1498dbbb4557</p>
+                <hr style='border: 0; border-top: 1px solid #334155; margin: 20px 0;'>
+                <p style='font-size: 12px; color: #94a3b8;'>Ceci est un message automatique, veuillez ne pas y répondre.</p>
+            </div>
+        </body>
+        </html>
+        
+-------------------
+[2026-04-25 18:22:21] Erreur Mailer: SMTP Error: Could not authenticate. | To: oussamazayane2005@gmail.com

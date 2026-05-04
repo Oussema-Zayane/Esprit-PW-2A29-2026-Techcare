@@ -122,7 +122,10 @@ ob_start();
     </div>
     
     <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-        <a href="../../Controller/logout.php" class="btn-primary" style="background: rgba(231,76,60,0.1); color: var(--danger); border: 1px solid var(--danger); text-decoration: none; padding: 0.8rem 1.5rem; border-radius: var(--r-md); font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+        <button onclick="confirmDelete()" class="btn-primary" style="background: rgba(231,76,60,0.1); color: var(--danger); border: 1px solid var(--danger); text-decoration: none; padding: 0.8rem 1.5rem; border-radius: var(--r-md); font-weight: 600; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <i class="fas fa-user-times"></i> Supprimer le compte
+        </button>
+        <a href="../../Controller/logout.php" class="btn-primary" style="background: rgba(231,76,60,0.1); color: var(--txt-muted); border: 1px solid var(--border); text-decoration: none; padding: 0.8rem 1.5rem; border-radius: var(--r-md); font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
             <i class="fas fa-sign-out-alt"></i> Se déconnecter
         </a>
     </div>
@@ -219,6 +222,12 @@ ob_start();
     }
 
     btnClose.addEventListener('click', closeModal);
+
+    function confirmDelete() {
+        if (confirm("Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.")) {
+            window.location.href = "../../Controller/UserController.php?action=delete_profile";
+        }
+    }
 </script>
 
 <?php

@@ -298,23 +298,61 @@
             margin-top: 1.2rem;
             padding: 0.8rem 1rem;
             border-radius: var(--r-md);
-            text-align: center;
+            text-align: left;
             font-size: 0.85rem;
             display: none;
+            animation: fadeIn 0.3s ease;
         }
 
         .message.success {
-            background: rgba(0,168,107,0.15);
-            color: var(--green-lt);
-            border: 1px solid rgba(0,168,107,0.3);
+            background: rgba(0,168,107,0.1);
+            color: #00A86B;
+            border: 1px solid rgba(0,168,107,0.2);
             display: block;
         }
 
         .message.error {
-            background: rgba(231,76,60,0.12);
+            background: rgba(231,76,60,0.1);
             color: #e74c3c;
-            border: 1px solid rgba(231,76,60,0.25);
+            border: 1px solid rgba(231,76,60,0.2);
             display: block;
+        }
+
+        .premium-alert {
+            background: #fff5f5;
+            border: 1px solid #feb2b2;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+            color: #c53030;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .premium-alert i {
+            margin-top: 0.2rem;
+            font-size: 1.1rem;
+        }
+
+        .premium-alert-content {
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .greeting-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--txt);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        .greeting-subtitle {
+            color: var(--txt-muted);
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
         }
 
         .auth-footer {
@@ -417,18 +455,24 @@
 
         <!-- FORMULAIRE LOGIN -->
         <div id="login-form" class="auth-form active">
-            <div class="form-title">
-                <i class="fas fa-sign-in-alt"></i>
-                Bienvenue
+            <div id="login-header-dynamic">
+                <div class="form-title">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Bienvenue
+                </div>
             </div>
+            <div id="login-alert-container"></div>
             <form action="../../Controller/UserController.php?action=login" method="POST" onsubmit="return validateLogin()">
                 <div class="input-group">
                     <label><i class="fas fa-envelope"></i> Email</label>
                     <input type="email" name="email" id="login-email" placeholder="exemple@email.com" required>
                 </div>
-                <div class="input-group">
+                <div class="input-group" style="margin-bottom: 0.5rem;">
                     <label><i class="fas fa-lock"></i> Mot de passe</label>
                     <input type="password" name="password" id="login-password" placeholder="Votre mot de passe" required>
+                </div>
+                <div style="text-align: right; margin-bottom: 1.2rem;">
+                    <a href="forgot_password.php" style="font-size: 0.8rem; color: var(--txt-muted); text-decoration: none; transition: var(--t);" onmouseover="this.style.color='var(--green)'" onmouseout="this.style.color='var(--txt-muted)'">Mot de passe oublié ?</a>
                 </div>
                 <!-- Google reCAPTCHA -->
                 <div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" style="margin-bottom: 1rem; display: flex; justify-content: center;"></div>
@@ -766,10 +810,7 @@
         document.getElementById('reg-nom').addEventListener('input', updateRegisterButton);
         document.getElementById('reg-prenom').addEventListener('input', updateRegisterButton);
         
-        // Initialisation
-        updateRegisterButton();
-        
-        // ========== FONCTIONS PRINCIPALES ==========
+        // Initialisation        // ========== FONCTIONS PRINCIPALES ==========
         function switchTab(tab) {
             const tabs = document.querySelectorAll('.tab-btn');
             tabs.forEach(btn => btn.classList.remove('active'));
@@ -790,23 +831,22 @@
             }
         }
         
+        function showMessage(type, text, containerId = 'login-message') {
+            const div = document.getElementById(containerId);
+            div.className = `message ${type}`;
+            div.innerHTML = text;
+            div.style.display = 'block';
+        }
+
         function validateLogin() {
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
             const messageDiv = document.getElementById('login-message');
             
             if (!email || !password) {
-                messageDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Veuillez remplir tous les champs';
-                messageDiv.className = 'message error';
+                showMessage('error', '<i class="fas fa-exclamation-triangle"></i> Veuillez remplir tous les champs', 'login-message');
                 return false;
             }
-            
-            if (!email.includes('@')) {
-                messageDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Email invalide';
-                messageDiv.className = 'message error';
-                return false;
-            }
-            
             return true;
         }
         
@@ -817,174 +857,109 @@
             const telephone = document.getElementById('reg-telephone').value;
             const password = passwordInput.value;
             const confirm = confirmInput.value;
-            const messageDiv = document.getElementById('register-message');
             
-            // Vérifier que tous les champs sont remplis
             if (!nom || !prenom || !email || !telephone || !password || !confirm) {
-                messageDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Veuillez remplir tous les champs';
-                messageDiv.className = 'message error';
+                showMessage('error', '<i class="fas fa-exclamation-triangle"></i> Veuillez remplir tous les champs', 'register-message');
                 return false;
             }
             
-            // Vérifier l'email
-            if (!email.includes('@')) {
-                messageDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Email invalide';
-                messageDiv.className = 'message error';
-                return false;
-            }
-            
-            // Vérifier le téléphone (8 chiffres)
-            const numbersOnly = telephone.replace(/\D/g, '');
-            if (numbersOnly.length !== 8) {
-                messageDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Le numéro de téléphone doit contenir exactement 8 chiffres';
-                messageDiv.className = 'message error';
-                return false;
-            }
-            
-            // Vérifier la longueur du mot de passe
-            if (password.length < 8) {
-                messageDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Le mot de passe doit contenir au moins 8 caractères';
-                messageDiv.className = 'message error';
-                return false;
-            }
-            
-            // Vérifier que les mots de passe correspondent
             if (password !== confirm) {
-                messageDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Les mots de passe ne correspondent pas';
-                messageDiv.className = 'message error';
+                showMessage('error', '<i class="fas fa-exclamation-triangle"></i> Les mots de passe ne correspondent pas', 'register-message');
                 return false;
             }
             
             return true;
         }
-        
-        // Messages depuis l'URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const error = urlParams.get('error');
-        const success = urlParams.get('success');
-        
-        if (error === 'login') {
-            const messageDiv = document.getElementById('login-message');
-            messageDiv.innerHTML = '<i class="fas fa-times-circle"></i> Email ou mot de passe incorrect';
-            messageDiv.className = 'message error';
-        }
-        
-        if (error === 'recaptcha') {
-            const loginMsg = document.getElementById('login-message');
-            const regMsg = document.getElementById('register-message');
-            loginMsg.innerHTML = '<i class="fas fa-robot"></i> Veuillez vérifier que vous n\'êtes pas un robot.';
-            loginMsg.className = 'message error';
-            regMsg.innerHTML = '<i class="fas fa-robot"></i> Veuillez vérifier que vous n\'êtes pas un robot.';
-            regMsg.className = 'message error';
-        }
-        
-        if (error === 'password') {
-            const messageDiv = document.getElementById('register-message');
-            messageDiv.innerHTML = '<i class="fas fa-times-circle"></i> Le mot de passe doit contenir au moins 8 caractères';
-            messageDiv.className = 'message error';
-            switchTab('register');
-        }
-        
-        if (error === 'email_exists') {
-            const messageDiv = document.getElementById('register-message');
-            messageDiv.innerHTML = '<i class="fas fa-times-circle"></i> Cet email est déjà utilisé';
-            messageDiv.className = 'message error';
-            switchTab('register');
-        }
-        
-        if (error === 'banned') {
-            alert("Votre compte a été bloqué. Veuillez contacter l'administration par mail.");
-            const messageDiv = document.getElementById('login-message');
-            messageDiv.innerHTML = '<i class="fas fa-ban"></i> Votre compte a été bloqué. Veuillez contacter l\'administration par mail.';
-            messageDiv.className = 'message error';
-            switchTab('login');
-        }
 
-        const seconds = urlParams.get('seconds');
+        // Gestion des paramètres URL au chargement
+        window.addEventListener('load', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const error = urlParams.get('error');
+            const success = urlParams.get('success');
+            const seconds = urlParams.get('seconds');
+            const email = urlParams.get('email');
 
-        if (error === 'locked' || error === 'locked_now') {
-            alert("Compte temporairement bloqué en raison de trop nombreuses tentatives échouées. Veuillez réessayer plus tard.");
-            var messageDiv = document.getElementById('login-message');
-            messageDiv.className = 'message error';
-            switchTab('login');
-            
-            if (seconds && !isNaN(parseInt(seconds))) {
-                var timeLeft = parseInt(seconds);
-                var updateMessage = function() {
-                    var mins = Math.floor(timeLeft / 60);
-                    var secs = timeLeft % 60;
-                    var timeStr = mins + ":" + (secs < 10 ? "0" : "") + secs;
-                    messageDiv.innerHTML = '<i class="fas fa-lock"></i> Compte bloqué. Réessayez dans <span style="color: #ff4d4d; font-weight: bold; font-size: 1.2em;">' + timeStr + '</span>';
-                };
-                
-                updateMessage();
-                var timer = setInterval(function() {
-                    timeLeft--;
-                    if (timeLeft <= 0) {
-                        clearInterval(timer);
-                        messageDiv.innerHTML = '<i class="fas fa-unlock"></i> Vous pouvez maintenant réessayer de vous connecter.';
-                        messageDiv.className = 'message success';
+            if (error) {
+                if (error === 'locked' || error === 'locked_now' || error === 'banned') {
+                    const header = document.getElementById('login-header-dynamic');
+                    const alertContainer = document.getElementById('login-alert-container');
+                    
+                    header.innerHTML = `
+                        <h1 class="greeting-title">Bon retour 👋</h1>
+                        <p class="greeting-subtitle">Connectez-vous à votre espace TechCare</p>
+                    `;
+
+                    let alertHtml = '';
+                    if (error === 'banned') {
+                        alertHtml = `
+                            <div class="premium-alert">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <div class="premium-alert-content">
+                                    Votre compte est définitivement désactivé. Veuillez contacter le support pour plus d'informations.
+                                </div>
+                            </div>
+                        `;
                     } else {
-                        updateMessage();
+                        // Calculer la date de réactivation
+                        const now = new Date();
+                        const timeLeft = parseInt(seconds) || 0;
+                        const reactivationDate = new Date(now.getTime() + (timeLeft * 1000));
+                        const options = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+                        const formattedDate = reactivationDate.toLocaleDateString('fr-FR', options);
+
+                        alertHtml = `
+                            <div class="premium-alert">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <div class="premium-alert-content">
+                                    Votre compte est temporairement désactivé. Réactivation prévue le ${formattedDate.replace(',', ' à')}
+                                </div>
+                            </div>
+                        `;
                     }
-                }, 1000);
-            } else {
-                messageDiv.innerHTML = '<i class="fas fa-lock"></i> Compte temporairement bloqué. Veuillez réessayer plus tard.';
+                    alertContainer.innerHTML = alertHtml;
+                } else {
+                    let text = "Une erreur est survenue.";
+                    let container = 'login-message';
+                    
+                    if (error === 'login') text = "Email ou mot de passe incorrect.";
+                    if (error === 'recaptcha') text = "Veuillez valider le reCAPTCHA.";
+                    if (error === 'not_verified') text = `Votre compte n'est pas encore vérifié. <a href="../../Controller/UserController.php?action=resend_verify&email=${email}" style="color: var(--green); font-weight: bold;">Renvoyer l'email</a>`;
+                    if (error === 'invalid_token') text = "Lien de vérification invalide ou expiré.";
+                    if (error === 'email_exists') { text = "Cet email est déjà utilisé."; container = 'register-message'; switchTab('register'); }
+                    if (error === 'password_court') { text = "Le mot de passe est trop court."; container = 'register-message'; switchTab('register'); }
+                    if (error === 'telephone_invalide') { text = "Numéro de téléphone invalide."; container = 'register-message'; switchTab('register'); }
+                    
+                    showMessage('error', text, container);
+                }
             }
-        }
-        
-        if (error === 'register') {
-            const messageDiv = document.getElementById('register-message');
-            messageDiv.innerHTML = '<i class="fas fa-times-circle"></i> Erreur lors de l\'inscription';
-            messageDiv.className = 'message error';
-            switchTab('register');
-        }
-        
-        
-        if (error === 'telephone_invalide') {
-            const messageDiv = document.getElementById('register-message');
-            messageDiv.innerHTML = '<i class="fas fa-times-circle"></i> Le numéro de téléphone doit contenir exactement 8 chiffres';
-            messageDiv.className = 'message error';
-            switchTab('register');
-        }
 
-        if (error === 'email_invalide') {
-            const messageDiv = document.getElementById('register-message');
-            messageDiv.innerHTML = '<i class="fas fa-times-circle"></i> Email invalide';
-            messageDiv.className = 'message error';
-            switchTab('register');
-        }
+            if (success) {
+                let text = "";
+                let container = 'login-message';
+                
+                if (success === 'register_verify') { text = "Inscription réussie ! Veuillez vérifier votre boîte mail pour activer votre compte."; container = 'register-message'; switchTab('register'); }
+                if (success === 'verified') text = "Votre compte a été activé avec succès ! Vous pouvez maintenant vous connecter.";
+                if (success === 'reset_sent') text = "Email de réinitialisation envoyé ! Vérifiez votre boîte mail.";
+                if (success === 'password_reset') text = "Votre mot de passe a été réinitialisé avec succès.";
+                if (success === 'account_deleted') text = "Votre compte a été supprimé avec succès.";
+                
+                showMessage('success', text, container);
+            }
 
-        if (error === 'nom_prenom_requis') {
-            const messageDiv = document.getElementById('register-message');
-            messageDiv.innerHTML = '<i class="fas fa-times-circle"></i> Le nom et le prénom sont requis';
-            messageDiv.className = 'message error';
-            switchTab('register');
-        }
+            // Nettoyer l'URL
+            if (window.history.replaceState && (error || success)) {
+                const url = new URL(window.location.href);
+                url.search = '';
+                window.history.replaceState({}, document.title, url.toString());
+            }
+        });
 
-        // Nettoyer l'URL pour éviter que l'erreur ne reste affichée au rafraîchissement
-        if (window.history.replaceState) {
-            const url = new URL(window.location.href);
-            url.search = '';
-            window.history.replaceState({}, document.title, url.toString());
-        }
-        
-        if (success === 'register') {
-            const messageDiv = document.getElementById('register-message');
-            messageDiv.innerHTML = '<i class="fas fa-check-circle"></i> Compte créé avec succès ! Vous pouvez vous connecter';
-            messageDiv.className = 'message success';
-            switchTab('register');
-            setTimeout(() => {
-                switchTab('login');
-            }, 2000);
-        }
         // ========== GOOGLE LOGIN HANDLER ==========
         function handleGoogleLogin(response) {
             const idToken = response.credential;
             const messageDiv = document.getElementById('login-message');
             
-            messageDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authentification avec Google...';
-            messageDiv.className = 'message success'; // Blue-ish info style
+            showMessage('success', '<i class="fas fa-spinner fa-spin"></i> Authentification avec Google...');
             
             fetch('../../Controller/UserController.php?action=google_login', {
                 method: 'POST',
@@ -996,14 +971,12 @@
                 if (data.success) {
                     window.location.href = 'profile.php';
                 } else {
-                    messageDiv.innerHTML = '<i class="fas fa-times-circle"></i> ' + (data.error || 'Erreur Google');
-                    messageDiv.className = 'message error';
+                    showMessage('error', '<i class="fas fa-times-circle"></i> ' + (data.error || 'Erreur Google'));
                 }
             })
             .catch(err => {
                 console.error(err);
-                messageDiv.innerHTML = '<i class="fas fa-times-circle"></i> Erreur de connexion au serveur';
-                messageDiv.className = 'message error';
+                showMessage('error', '<i class="fas fa-times-circle"></i> Erreur de connexion au serveur');
             });
         }
 

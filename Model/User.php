@@ -106,4 +106,40 @@ class User {
         $stmt = $conn->prepare($sql);
         return $stmt->execute([$descriptor, $id]);
     }
+
+    public static function updateVerificationToken($id, $token) {
+        $conn = Config::getConnexion();
+        $sql = "UPDATE personne SET verification_token = ? WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        return $stmt->execute([$token, $id]);
+    }
+
+    public static function verifyUser($token) {
+        $conn = Config::getConnexion();
+        $sql = "UPDATE personne SET is_verified = 1, verification_token = NULL WHERE verification_token = ?";
+        $stmt = $conn->prepare($sql);
+        return $stmt->execute([$token]);
+    }
+
+    public static function setResetToken($email, $token, $expires) {
+        $conn = Config::getConnexion();
+        $sql = "UPDATE personne SET reset_token = ?, reset_token_expires = ? WHERE email = ?";
+        $stmt = $conn->prepare($sql);
+        return $stmt->execute([$token, $expires, $email]);
+    }
+
+    public static function findByResetToken($token) {
+        $conn = Config::getConnexion();
+        $sql = "SELECT * FROM personne WHERE reset_token = ? AND reset_token_expires > NOW()";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([$token]);
+        return $stmt->fetch();
+    }
+
+    public static function updatePassword($id, $hashedPassword) {
+        $conn = Config::getConnexion();
+        $sql = "UPDATE personne SET password = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        return $stmt->execute([$hashedPassword, $id]);
+    }
 }

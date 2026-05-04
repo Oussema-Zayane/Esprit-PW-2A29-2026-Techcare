@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . "/../config.php";
 require_once __DIR__ . "/../Model/User.php";
+require_once __DIR__ . "/Mailer.php";
 
 session_start();
 
@@ -33,6 +34,12 @@ if ($action == "login") {
         if (isset($user['is_locked']) && $user['is_locked']) {
             $seconds = $user['seconds_left'] ?? 0;
             header("Location: ../View/front/auth.html?error=locked&seconds=$seconds");
+            exit();
+        }
+
+        // Vérification de l'email
+        if (isset($user['is_verified']) && $user['is_verified'] == 0) {
+            header("Location: ../View/front/auth.html?error=not_verified&email=" . urlencode($email));
             exit();
         }
     }
@@ -265,9 +272,60 @@ if ($action == "register") {
     $result = User::register($nom, $prenom, $email, $telephoneClean, $hashedPassword, 'user');
     
     if ($result) {
-        header("Location: ../View/front/auth.html?success=register");
+        $newUser = User::findByEmail($email);
+        $token = bin2hex(random_bytes(32));
+        User::updateVerificationToken($newUser['id'], $token);
+        
+        // Envoyer l'email
+        Mailer::sendVerificationEmail($email, $token);
+        
+        header("Location: ../View/front/auth.html?success=register_verify");
     } else {
         header("Location: ../View/front/auth.html?error=register");
+    }
+    exit();
+}
+
+if ($action == "verify") {
+    $token = $_GET['token'] ?? '';
+    if (User::verifyUser($token)) {
+        header("Location: ../View/front/auth.html?success=verified");
+    } else {
+        header("Location: ../View/front/auth.html?error=invalid_token");
+    }
+    exit();
+}
+
+if ($action == "forgot_password") {
+    $email = trim($_POST['email'] ?? '');
+    $user = User::findByEmail($email);
+    
+    if ($user) {
+        $token = bin2hex(random_bytes(32));
+        $expires = date('Y-m-d H:i:s', strtotime('+1 hour'));
+        User::setResetToken($email, $token, $expires);
+        
+        Mailer::sendResetEmail($email, $token);
+        header("Location: ../View/front/auth.html?success=reset_sent");
+    } else {
+        // Pour des raisons de sécurité, on peut dire que l'email est envoyé même s'il n'existe pas
+        // Mais ici on va être explicite pour l'exercice
+        header("Location: ../View/front/auth.html?error=email_not_found");
+    }
+    exit();
+}
+
+if ($action == "reset_password") {
+    $token = $_POST['token'] ?? '';
+    $password = $_POST['password'] ?? '';
+    
+    $user = User::findByResetToken($token);
+    if ($user) {
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+        User::updatePassword($user['id'], $hashedPassword);
+        header("Location: ../View/front/auth.html?success=password_reset");
+    } else {
+        header("Location: ../View/front/auth.html?error=invalid_reset_token");
     }
     exit();
 }
@@ -454,6 +512,24 @@ if ($action == "update_profile") {
         header("Location: ../View/front/profile.php?success=profile_updated");
     } else {
         header("Location: ../View/front/profile.php?error=update_failed");
+    }
+    exit();
+}
+
+if ($action == "delete_profile") {
+    if (!isset($_SESSION['user_id'])) {
+        header("Location: ../View/front/auth.html");
+        exit();
+    }
+
+    $id = $_SESSION['user_id'];
+    $result = User::deleteUser($id);
+    
+    if ($result) {
+        session_destroy();
+        header("Location: ../View/front/auth.html?success=account_deleted");
+    } else {
+        header("Location: ../View/front/profile.php?error=delete_failed");
     }
     exit();
 }
