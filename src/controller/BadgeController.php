@@ -48,21 +48,12 @@ class BadgeController {
             $seuilPoints = intval($_POST['seuilPoints'] ?? 0);
             $generateIA = isset($_POST['generate_ia']) && $_POST['generate_ia'] == '1';
             
-            // Contrôle de saisie PHP
             $errors = [];
-            if (empty($nom)) {
-                $errors['nom'] = "Le nom du badge est obligatoire";
-            } elseif (strlen($nom) < 3) {
-                $errors['nom'] = "Le nom doit contenir au moins 3 caractères";
-            }
-            if (empty($description)) {
-                $errors['description'] = "La description est obligatoire";
-            } elseif (strlen($description) < 10) {
-                $errors['description'] = "La description doit contenir au moins 10 caractères";
-            }
-            if ($seuilPoints <= 0) {
-                $errors['seuilPoints'] = "Le seuil de points doit être un nombre positif";
-            }
+            if (empty($nom)) $errors['nom'] = "Le nom du badge est obligatoire";
+            elseif (strlen($nom) < 3) $errors['nom'] = "Le nom doit contenir au moins 3 caractères";
+            if (empty($description)) $errors['description'] = "La description est obligatoire";
+            elseif (strlen($description) < 10) $errors['description'] = "La description doit contenir au moins 10 caractères";
+            if ($seuilPoints <= 0) $errors['seuilPoints'] = "Le seuil de points doit être un nombre positif";
             
             if (!empty($errors)) {
                 $_SESSION['errors'] = $errors;
@@ -71,32 +62,22 @@ class BadgeController {
                 exit;
             }
             
-            // Génération d'image par IA
             $imageIa = null;
             if ($generateIA) {
                 $_SESSION['ia_status'] = "Génération de l'image en cours...";
-                
                 $imageIa = $this->model->generateImageWithAI($description, $nom);
-                
                 if ($imageIa) {
                     $_SESSION['ia_status'] = "Image générée avec succès !";
                 } else {
-                    $_SESSION['ia_status'] = "Échec de la génération d'image, utilisation de l'icône par défaut";
+                    $_SESSION['ia_status'] = "Échec de la génération d'image";
                 }
             }
             
-            // Enregistrement du badge
             if ($this->model->create($nom, $description, $icon, $seuilPoints, $imageIa)) {
                 $_SESSION['success'] = "Badge '" . $nom . "' ajouté avec succès !";
-                if ($imageIa) {
-                    $_SESSION['success'] .= " Image IA générée.";
-                }
+                if ($imageIa) $_SESSION['success'] .= " Image IA générée.";
                 unset($_SESSION['ia_status']);
                 header('Location: index.php?controller=badge&action=index');
-                exit;
-            } else {
-                $_SESSION['error'] = "Erreur lors de l'ajout du badge";
-                header('Location: index.php?controller=badge&action=create');
                 exit;
             }
         }
@@ -163,7 +144,7 @@ class BadgeController {
     }
     
     // =====================================================
-    // API
+    // API (JSON)
     // =====================================================
     
     public function getAll() {
@@ -172,12 +153,25 @@ class BadgeController {
         exit;
     }
     
-    // Jointure Fidélité + Badges
     public function showFideliteWithBadges() {
-        $data = $this->model->getFidelitesWithBadges();
         header('Content-Type: application/json');
+        $data = $this->model->getFidelitesWithBadges();
         echo json_encode($data);
         exit;
+    }
+    
+    // =====================================================
+    // PAGE - Programme Fidélité (anciennement jointure)
+    // =====================================================
+    
+    public function fideliteBadges() {
+        $fidelites = $this->model->getFidelitesWithBadges();
+        $pageTitle = "Programme Fidélité";
+        $activeTab = "fideliteBadges";
+        ob_start();
+        require_once __DIR__ . '/../View/backoffice/fidelite_badges_jointure.php';
+        $content = ob_get_clean();
+        require_once __DIR__ . '/../View/layout/app.php';
     }
 }
 ?>
