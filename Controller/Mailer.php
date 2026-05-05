@@ -18,7 +18,7 @@ class Mailer {
 
     public static function sendVerificationEmail($email, $token) {
         $subject = "✨ Activez votre compte TechCare";
-        $verifyLink = "http://" . $_SERVER['HTTP_HOST'] . "/Userv4/View/front/verify.php?token=" . $token;
+        $verifyLink = "http://" . $_SERVER['HTTP_HOST'] . "/User/View/front/verify.php?token=" . $token;
         
         $body = "
         <div style='font-family: \"Inter\", -apple-system, sans-serif; background-color: #f8fafc; padding: 40px 20px; color: #1e293b;'>
@@ -55,7 +55,7 @@ class Mailer {
 
     public static function sendResetEmail($email, $token) {
         $subject = "Reset Password - TechCare";
-        $resetLink = "http://" . $_SERVER['HTTP_HOST'] . "/Userv4/View/front/reset_password.php?token=" . $token;
+        $resetLink = "http://" . $_SERVER['HTTP_HOST'] . "/User/View/front/reset_password.php?token=" . $token;
         
         $body = "
         <div style='font-family: Arial, sans-serif; background-color: #0f172a; color: #f8fafc; padding: 20px;'>

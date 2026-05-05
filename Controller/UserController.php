@@ -2,6 +2,7 @@
 require_once __DIR__ . "/../config.php";
 require_once __DIR__ . "/../Model/User.php";
 require_once __DIR__ . "/Mailer.php";
+require_once __DIR__ . "/../libs/GoogleAuthenticator.php";
 
 session_start();
 
@@ -85,8 +86,15 @@ if ($action == "login") {
         exit();
     }
 
-    // Succès : Tout est valide
+    // Succès : Mot de passe valide
     User::resetFailedAttempts($user['id']);
+
+    // Vérifier si la 2FA est activée
+    if (isset($user['two_factor_enabled']) && $user['two_factor_enabled']) {
+        $_SESSION['temp_2fa_user_id'] = $user['id'];
+        header("Location: ../View/front/verify_2fa.php");
+        exit();
+    }
 
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['email'] = $user['email'];
@@ -95,6 +103,7 @@ if ($action == "login") {
     $_SESSION['role'] = $user['role'];
     $_SESSION['telephone'] = $user['telephone'];
     $_SESSION['profile_picture'] = $user['profile_picture'] ?? 'default.png';
+    $_SESSION['two_factor_enabled'] = $user['two_factor_enabled'] ?? 0;
 
     // Single Session Management
     User::updateSessionId($user['id'], session_id());
@@ -216,7 +225,7 @@ if ($action == "google_login") {
     $_SESSION['telephone'] = $user['telephone'] ?? '';
     $_SESSION['profile_picture'] = $user['profile_picture'] ?? 'default.png';
 
-    //     Single Session Management
+    // Single Session Management
     User::updateSessionId($user['id'], session_id());
 
     echo json_encode(['success' => true]);
@@ -268,11 +277,13 @@ if ($action == "register") {
         $errors[] = "email_invalide";
     }
     
+    // Validation téléphone (8 chiffres exactement)
     $telephoneClean = preg_replace('/\D/', '', $telephone);
     if (strlen($telephoneClean) != 8) {
         $errors[] = "telephone_invalide";
     }
     
+    // Validation mot de passe (minimum 8 caractères)
     if (strlen($password) < 8) {
         $errors[] = "password_court";
     }
@@ -331,6 +342,7 @@ if ($action == "forgot_password") {
         header("Location: ../View/front/auth.php?success=reset_sent");
     } else {
         // Pour des raisons de sécurité, on peut dire que l'email est envoyé même s'il n'existe pas
+        // Mais ici on va être explicite pour l'exercice
         header("Location: ../View/front/auth.php?error=email_not_found");
     }
     exit();
@@ -552,6 +564,213 @@ if ($action == "delete_profile") {
     } else {
         header("Location: ../View/front/profile.php?error=delete_failed");
     }
+    exit();
+}
+if ($action == "setup_2fa") {
+    header('Content-Type: application/json');
+    try {
+        if (!isset($_SESSION['user_id'])) {
+            throw new Exception('Non connecté');
+        }
+        
+        $ga = new GoogleAuthenticator();
+        $secret = $ga->createSecret();
+        
+        if (!User::update2FASecret($_SESSION['user_id'], $secret)) {
+            throw new Exception('Erreur lors de la mise à jour du secret dans la base de données. Avez-vous lancé migrate_2fa.php ?');
+        }
+        
+        $qrCodeUrl = $ga->getQRCodeGoogleUrl($_SESSION['email'], $secret, 'TechCare');
+        
+        ob_clean();
+        echo json_encode([
+            'success' => true,
+            'secret' => $secret,
+            'qrCodeUrl' => $qrCodeUrl
+        ]);
+    } catch (Exception $e) {
+        ob_clean();
+        echo json_encode([
+            'success' => false,
+            'error' => $e->getMessage()
+        ]);
+    }
+    exit();
+}
+
+if ($action == "confirm_2fa") {
+    if (!isset($_SESSION['user_id'])) {
+        echo json_encode(['success' => false, 'error' => 'Non connecté']);
+        exit();
+    }
+    
+    $code = $_POST['code'] ?? '';
+    $user = User::findByEmail($_SESSION['email']);
+    $ga = new GoogleAuthenticator();
+    
+    if ($ga->verifyCode($user['google2fa_secret'], $code)) {
+        User::toggle2FA($user['id'], true);
+        ob_clean();
+        echo json_encode(['success' => true]);
+    } else {
+        ob_clean();
+        echo json_encode(['success' => false, 'error' => 'Code invalide']);
+    }
+    exit();
+}
+
+if ($action == "verify_2fa") {
+    if (!isset($_SESSION['temp_2fa_user_id'])) {
+        header("Location: ../View/front/auth.php");
+        exit();
+    }
+    
+    $code = $_POST['code'] ?? '';
+    $conn = Config::getConnexion();
+    $stmt = $conn->prepare("SELECT * FROM personne WHERE id = ?");
+    $stmt->execute([$_SESSION['temp_2fa_user_id']]);
+    $user = $stmt->fetch();
+    
+    $ga = new GoogleAuthenticator();
+    if ($ga->verifyCode($user['google2fa_secret'], $code)) {
+        // Authentification complète
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['email'] = $user['email'];
+        $_SESSION['nom'] = $user['nom'];
+        $_SESSION['prenom'] = $user['prenom'];
+        $_SESSION['role'] = $user['role'];
+        $_SESSION['telephone'] = $user['telephone'];
+        $_SESSION['profile_picture'] = $user['profile_picture'] ?? 'default.png';
+        $_SESSION['two_factor_enabled'] = 1;
+        
+        unset($_SESSION['temp_2fa_user_id']);
+        User::updateSessionId($user['id'], session_id());
+        
+        header("Location: ../View/front/profile.php");
+    } else {
+        header("Location: ../View/front/verify_2fa.php?error=invalid");
+    }
+    exit();
+}
+
+if ($action == "disable_2fa") {
+    if (!isset($_SESSION['user_id'])) {
+        echo json_encode(['success' => false, 'error' => 'Non connecté']);
+        exit();
+    }
+    User::toggle2FA($_SESSION['user_id'], false);
+    ob_clean();
+    echo json_encode(['success' => true]);
+    exit();
+}
+
+// CONFIGURATION LINKEDIN
+define('LINKEDIN_CLIENT_ID', '77ve66imj0v44r');
+define('LINKEDIN_CLIENT_SECRET', 'WPL_AP1.xlJTiTEygnNAOX72.eLFG5A==');
+define('LINKEDIN_REDIRECT_URI', 'http://localhost/User/Controller/UserController.php?action=linkedin_callback');
+
+if ($action == "linkedin_login") {
+    $url = "https://www.linkedin.com/oauth/v2/authorization?" . http_build_query([
+        'response_type' => 'code',
+        'client_id' => LINKEDIN_CLIENT_ID,
+        'redirect_uri' => LINKEDIN_REDIRECT_URI,
+        'state' => bin2hex(random_bytes(16)),
+        'scope' => 'openid profile email', // OpenID Connect (Recommandé)
+    ]);
+    header("Location: $url");
+    exit();
+}
+
+if ($action == "linkedin_callback") {
+    $code = $_GET['code'] ?? '';
+    if (empty($code)) {
+        header("Location: ../View/front/auth.php?error=linkedin_denied");
+        exit();
+    }
+
+    // 1. Échanger le code contre un access token
+    $tokenUrl = "https://www.linkedin.com/oauth/v2/accessToken";
+    $postData = [
+        'grant_type' => 'authorization_code',
+        'code' => $code,
+        'redirect_uri' => LINKEDIN_REDIRECT_URI,
+        'client_id' => LINKEDIN_CLIENT_ID,
+        'client_secret' => LINKEDIN_CLIENT_SECRET,
+    ];
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $tokenUrl);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postData));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $response = curl_exec($ch);
+    $data = json_decode($response, true);
+    curl_close($ch);
+
+    if (!isset($data['access_token'])) {
+        header("Location: ../View/front/auth.php?error=linkedin_token_failed");
+        exit();
+    }
+
+    $accessToken = $data['access_token'];
+
+    // 2. Récupérer les infos de l'utilisateur (OpenID Connect)
+    $userInfoUrl = "https://api.linkedin.com/v2/userinfo";
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $userInfoUrl);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: Bearer ' . $accessToken]);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $userResponse = curl_exec($ch);
+    $userData = json_decode($userResponse, true);
+    curl_close($ch);
+
+    if (!isset($userData['sub'])) {
+        header("Location: ../View/front/auth.php?error=linkedin_profile_failed");
+        exit();
+    }
+
+    $linkedinId = $userData['sub'];
+    $email = $userData['email'];
+    $nom = $userData['family_name'] ?? 'Utilisateur';
+    $prenom = $userData['given_name'] ?? 'LinkedIn';
+
+    $user = User::findByLinkedinId($linkedinId);
+    if (!$user) {
+        $user = User::findByEmail($email);
+        if ($user) {
+            // Lier le compte LinkedIn au compte existant
+            $conn = Config::getConnexion();
+            $stmt = $conn->prepare("UPDATE personne SET linkedin_id = ? WHERE id = ?");
+            $stmt->execute([$linkedinId, $user['id']]);
+        } else {
+            // Créer un nouveau compte
+            $randomPass = password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT);
+            User::register($nom, $prenom, $email, '', $randomPass, 'user');
+            $user = User::findByEmail($email);
+            $conn = Config::getConnexion();
+            $stmt = $conn->prepare("UPDATE personne SET linkedin_id = ? WHERE id = ?");
+            $stmt->execute([$linkedinId, $user['id']]);
+        }
+    }
+
+    if ($user['status'] === 'inactif') {
+        header("Location: ../View/front/auth.php?error=banned");
+        exit();
+    }
+
+    // Login final
+    $_SESSION['user_id'] = $user['id'];
+    $_SESSION['email'] = $user['email'];
+    $_SESSION['nom'] = $user['nom'];
+    $_SESSION['prenom'] = $user['prenom'];
+    $_SESSION['role'] = $user['role'];
+    $_SESSION['telephone'] = $user['telephone'] ?? '';
+    $_SESSION['profile_picture'] = $user['profile_picture'] ?? 'default.png';
+    $_SESSION['two_factor_enabled'] = $user['two_factor_enabled'] ?? 0;
+
+    User::updateSessionId($user['id'], session_id());
+
+    header("Location: ../View/front/profile.php");
     exit();
 }
 ?>

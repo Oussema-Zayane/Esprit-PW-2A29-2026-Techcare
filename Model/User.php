@@ -22,6 +22,14 @@ class User {
         return $stmt->fetch();
     }
 
+    public static function findByLinkedinId($linkedinId) {
+        $conn = Config::getConnexion();
+        $sql = "SELECT * FROM personne WHERE linkedin_id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([$linkedinId]);
+        return $stmt->fetch();
+    }
+
     public static function register($nom, $prenom, $email, $telephone, $password, $role, $googleId = null) {
         $conn = Config::getConnexion();
         $sql = "INSERT INTO personne (nom, prenom, email, telephone, password, role, google_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -157,5 +165,19 @@ class User {
         $stmt->execute([$id]);
         $res = $stmt->fetch();
         return $res ? $res['session_id'] : null;
+    }
+
+    public static function update2FASecret($id, $secret) {
+        $conn = Config::getConnexion();
+        $sql = "UPDATE personne SET google2fa_secret = ? WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        return $stmt->execute([$secret, $id]);
+    }
+
+    public static function toggle2FA($id, $enabled) {
+        $conn = Config::getConnexion();
+        $sql = "UPDATE personne SET two_factor_enabled = ? WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        return $stmt->execute([$enabled ? 1 : 0, $id]);
     }
 }

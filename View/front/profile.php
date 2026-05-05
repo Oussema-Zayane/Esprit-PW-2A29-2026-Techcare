@@ -112,6 +112,25 @@ ob_start();
             <i class="fas fa-camera"></i> Enregistrer mon visage
         </button>
         <div id="face-status" style="margin-top: 1rem; font-size: 0.85rem; text-align: center; color: var(--txt-muted);"></div>
+
+        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border);">
+            <h4 style="color: var(--txt); margin-bottom: 1rem;">Double Authentification (2FA)</h4>
+            <?php if (isset($_SESSION['two_factor_enabled']) && $_SESSION['two_factor_enabled']): ?>
+                <div style="background: rgba(0,168,107,0.1); padding: 1rem; border-radius: 8px; color: var(--green); margin-bottom: 1rem; font-size: 0.9rem;">
+                    <i class="fas fa-check-circle"></i> La 2FA est actuellement **activée**.
+                </div>
+                <button onclick="disable2FA()" class="btn-primary" style="background: rgba(231,76,60,0.1); color: var(--danger); border: 1px solid var(--danger); width: 100%; padding: 0.8rem;">
+                    Désactiver la 2FA
+                </button>
+            <?php else: ?>
+                <p style="color: var(--txt-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+                    Ajoutez une couche de sécurité supplémentaire en utilisant Google Authenticator.
+                </p>
+                <button onclick="setup2FA()" class="btn-primary" style="width: 100%; padding: 0.8rem;">
+                    Activer la 2FA
+                </button>
+            <?php endif; ?>
+        </div>
     </div>
 
     <div class="section-header" style="margin-top: 2.5rem;">
@@ -141,6 +160,29 @@ ob_start();
         </div>
         <p id="modal-status" style="margin-top: 1rem; font-size: 0.9rem; color: var(--txt-muted);">Initialisation de la caméra...</p>
         <button id="btn-close-modal" style="margin-top: 1.5rem; padding: 0.6rem 1.2rem; background: var(--border); border: none; border-radius: var(--r-md); color: var(--txt); cursor: pointer;">Annuler</button>
+    </div>
+</div>
+
+<!-- Modal pour la 2FA -->
+<div id="2fa-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; align-items: center; justify-content: center; flex-direction: column;">
+    <div style="background: var(--surface); padding: 2rem; border-radius: var(--r-lg); position: relative; max-width: 400px; text-align: center; width: 90%;">
+        <h3 style="margin-bottom: 1rem; color: white;">Configurer la 2FA</h3>
+        <p style="color: var(--txt-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Scannez ce QR code avec Google Authenticator :</p>
+        
+        <div style="background: white; padding: 1rem; border-radius: 12px; display: inline-block; margin-bottom: 1rem;">
+            <img id="qr-code-img" src="" alt="QR Code" style="display: block; width: 200px; height: 200px;">
+        </div>
+        
+        <p style="color: var(--txt-muted); font-size: 0.8rem; margin-bottom: 1.5rem;">Ou entrez manuellement ce code : <br><strong id="2fa-secret" style="color: var(--green); letter-spacing: 1px;"></strong></p>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <input type="text" id="2fa-confirm-code" placeholder="Entrez le code à 6 chiffres" maxlength="6" style="width: 100%; padding: 0.8rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: white; text-align: center; font-size: 1.2rem; letter-spacing: 2px;">
+        </div>
+        
+        <div style="display: flex; gap: 1rem;">
+            <button onclick="close2FAModal()" style="flex: 1; padding: 0.8rem; background: var(--border); border: none; border-radius: 8px; color: white; cursor: pointer;">Annuler</button>
+            <button onclick="confirm2FA()" style="flex: 1; padding: 0.8rem; background: var(--green); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">Confirmer</button>
+        </div>
     </div>
 </div>
 
@@ -226,6 +268,78 @@ ob_start();
     function confirmDelete() {
         if (confirm("Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.")) {
             window.location.href = "../../Controller/UserController.php?action=delete_profile";
+        }
+    }
+
+    async function setup2FA() {
+        try {
+            const response = await fetch('../../Controller/UserController.php?action=setup_2fa');
+            const text = await response.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                console.error("Réponse non-JSON du serveur:", text);
+                alert("Erreur serveur (réponse invalide). Vérifiez la console console.");
+                return;
+            }
+            
+            if (data.success) {
+                document.getElementById('qr-code-img').src = data.qrCodeUrl;
+                document.getElementById('2fa-secret').innerText = data.secret;
+                document.getElementById('2fa-modal').style.display = 'flex';
+            } else {
+                alert("Erreur: " + data.error);
+            }
+        } catch (err) {
+            console.error("Erreur Fetch:", err);
+            alert("Erreur de connexion au serveur.");
+        }
+    }
+
+    function close2FAModal() {
+        document.getElementById('2fa-modal').style.display = 'none';
+    }
+
+    async function confirm2FA() {
+        try {
+            const code = document.getElementById('2fa-confirm-code').value;
+            if (code.length !== 6) {
+                alert("Veuillez entrer un code à 6 chiffres.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('code', code);
+
+            const response = await fetch('../../Controller/UserController.php?action=confirm_2fa', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            if (data.success) {
+                alert("2FA activée avec succès !");
+                location.reload();
+            } else {
+                alert("Code invalide. Veuillez réessayer.");
+            }
+        } catch (err) {
+            alert("Erreur lors de la confirmation.");
+        }
+    }
+
+    async function disable2FA() {
+        if (confirm("Voulez-vous vraiment désactiver la 2FA ? Votre compte sera moins sécurisé.")) {
+            try {
+                const response = await fetch('../../Controller/UserController.php?action=disable_2fa');
+                const data = await response.json();
+                if (data.success) {
+                    alert("2FA désactivée.");
+                    location.reload();
+                }
+            } catch (err) {
+                alert("Erreur lors de la désactivation.");
+            }
         }
     }
 </script>

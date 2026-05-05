@@ -538,6 +538,10 @@ $isLoggedIn = isset($_SESSION['user_id']);
                     <button type="button" class="btn-face" onclick="startFaceLogin()">
                         <i class="fas fa-user-astronaut"></i> Connexion Faciale
                     </button>
+
+                    <button type="button" class="btn-linkedin" onclick="startLinkedInLogin()" style="width: 100%; padding: 0.75rem; background: #0077b5; color: white; border: none; border-radius: var(--r-md); font: 600 0.9rem var(--font); cursor: pointer; transition: var(--t); display: flex; align-items: center; justify-content: center; gap: 0.6rem;">
+                        <i class="fab fa-linkedin"></i> Se connecter avec LinkedIn
+                    </button>
                 </div>
             </div>
 
@@ -1081,6 +1085,10 @@ $isLoggedIn = isset($_SESSION['user_id']);
             }
             video.srcObject = null;
             cameraModal.style.display = 'none';
+        }
+
+        function startLinkedInLogin() {
+            window.location.href = "../../Controller/UserController.php?action=linkedin_login";
         }
 
         btnClose.addEventListener('click', closeModal);
