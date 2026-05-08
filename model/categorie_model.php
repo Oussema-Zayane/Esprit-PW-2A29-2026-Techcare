@@ -1,0 +1,86 @@
+<?php
+// ╔══════════════════════════════════════════════╗
+// ║  CATEGORIE MODEL – CRUD table catégorie     ║
+// ╚══════════════════════════════════════════════╝
+
+require_once __DIR__ . '/../config/config.php';
+
+class CategorieModel {
+    private PDO $pdo;
+
+    public function __construct() {
+        $this->pdo = new PDO(DB_DSN, DB_USER, DB_PASS, DB_OPTIONS);
+    }
+
+    // ── READ : Récupérer toutes les catégories ─────────
+    public function getCategories(): array {
+        $stmt = $this->pdo->query("SELECT * FROM categorie ORDER BY nom ASC");
+        return $stmt->fetchAll();
+    }
+
+    // ── READ : Récupérer une catégorie par ID ──────────
+    public function getCategorieById(int $id): ?array {
+        $stmt = $this->pdo->prepare("SELECT * FROM categorie WHERE id = ?");
+        $stmt->execute([$id]);
+        $result = $stmt->fetch();
+        return $result ?: null;
+    }
+
+    // ── CREATE : Ajouter une catégorie ──────────────────
+    public function addCategorie(array $data): array {
+        $sql = "INSERT INTO categorie (nom, description, image)
+                VALUES (:nom, :description, :image)";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            ':nom'         => trim($data['nom']),
+            ':description' => trim($data['description'] ?? ''),
+            ':image'       => trim($data['image'] ?? ''),
+        ]);
+
+        $newId = (int)$this->pdo->lastInsertId();
+        return $this->getCategorieById($newId);
+    }
+
+    // ── UPDATE : Modifier une catégorie ────────────────
+    public function updateCategorie(int $id, array $data): ?array {
+        $sql = "UPDATE categorie
+                SET nom = :nom, description = :description, image = :image
+                WHERE id = :id";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            ':nom'         => trim($data['nom']),
+            ':description' => trim($data['description'] ?? ''),
+            ':image'       => trim($data['image'] ?? ''),
+            ':id'          => $id,
+        ]);
+
+        return $this->getCategorieById($id);
+    }
+
+    // ── DELETE : Supprimer une catégorie (et tous ses produits) ────────────────
+    public function deleteCategorie(int $id): bool {
+        try {
+            // Commencer une transaction
+            $this->pdo->beginTransaction();
+            
+            // 1. Supprimer tous les produits de cette catégorie
+            $stmtProducts = $this->pdo->prepare("DELETE FROM produit WHERE categorie_id = ?");
+            $stmtProducts->execute([$id]);
+            
+            // 2. Supprimer la catégorie elle-même
+            $stmt = $this->pdo->prepare("DELETE FROM categorie WHERE id = ?");
+            $stmt->execute([$id]);
+            
+            // Valider la transaction
+            $this->pdo->commit();
+            
+            return $stmt->rowCount() > 0;
+        } catch (Exception $e) {
+            // Annuler la transaction en cas d'erreur
+            $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+}

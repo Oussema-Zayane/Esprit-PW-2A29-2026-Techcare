@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Catégories - TechCare</title>
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --green: #00A86B;
+            --green-lt: #00cf85;
+            --green-dk: #007a4e;
+            --blue: #0A1F44;
+            --blue-mid: #112a5e;
+            --blue-lt: #1a3a7a;
+            --surface2: #1a2535;
+            --surface3: #1f2f45;
+            --card: #141d2e;
+            --border: rgba(255, 255, 255, 0.07);
+            --txt: #f0f4ff;
+            --txt-muted: #8b9ab5;
+            --danger: #e74c3c;
+            --danger-dk: #c0392b;
+            --warning: #f39c12;
+            --sh-grn: 0 4px 16px rgba(0, 168, 107, 0.35);
+            --sidebar-w: 255px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0b0f1a 0%, #111827 100%);
+            color: var(--txt);
+            min-height: 100vh;
+        }
+
+        .admin-wrapper {
+            display: flex;
+        }
+
+        .admin-main {
+            flex: 1;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0;
+            padding: 1rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--green), var(--green-lt), #00e5ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: var(--txt);
+        }
+
+        .form-container {
+            background: rgba(20, 29, 46, 0.6);
+            border: 1px solid var(--border);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            margin-left: 0;
+            margin-right: 1rem;
+            backdrop-filter: blur(10px);
+        }
+
+        #categorieForm {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        #categorieForm>.form-group:last-child {
+            grid-column: 1 / -1;
+        }
+
+        #categorieForm>div:last-child {
+            grid-column: 1 / -1;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--txt-muted);
+            font-size: 0.9rem;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            color: var(--txt);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--green);
+            background: rgba(0, 168, 107, 0.04);
+            box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.1), var(--sh-grn);
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: var(--txt-muted);
+        }
+
+        .error {
+            color: var(--danger);
+            font-size: 0.8rem;
+            margin-top: 4px;
+            display: block;
+            font-weight: 500;
+        }
+
+        button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 22px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        button[type="submit"] {
+            background: linear-gradient(135deg, var(--green), var(--green-dk));
+            color: white;
+            box-shadow: var(--sh-grn);
+        }
+
+        button[type="submit"]:hover {
+            filter: brightness(1.15);
+            transform: translateY(-2px);
+        }
+
+        button[type="submit"]:active {
+            transform: translateY(0);
+        }
+
+        button[type="reset"] {
+            background: transparent;
+            color: var(--txt-muted);
+            border: 1px solid var(--border);
+        }
+
+        button[type="reset"]:hover {
+            border-color: var(--txt-muted);
+            color: var(--txt);
+        }
+
+        button.delete {
+            background: linear-gradient(135deg, var(--danger), var(--danger-dk));
+            color: white;
+        }
+
+        button.delete:hover {
+            filter: brightness(1.12);
+        }
+
+        button.btn-edit {
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #3b82f6;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+        }
+
+        button.btn-edit:hover {
+            background: rgba(59, 130, 246, 0.25);
+        }
+
+        #cancelBtn {
+            background: transparent;
+            color: var(--txt-muted);
+            border: 1px solid var(--border);
+        }
+
+        #cancelBtn:hover {
+            border-color: var(--txt-muted);
+            color: var(--txt);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(20, 29, 46, 0.4);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th {
+            background: rgba(20, 29, 46, 0.8);
+            color: var(--txt);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            color: var(--txt);
+        }
+
+        tr:hover {
+            background: rgba(0, 168, 107, 0.05);
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            border: 1px solid;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert.success {
+            background: rgba(16, 185, 129, 0.12);
+            color: #10b981;
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .alert.error {
+            background: rgba(239, 68, 68, 0.12);
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(6px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(26, 37, 53, 0.95);
+            border: 1px solid var(--border);
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
+            animation: popIn 0.25s ease;
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.85);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--txt);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .btn-cancel {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--txt-muted);
+        }
+
+        .btn-cancel:hover {
+            border-color: var(--txt-muted);
+            color: var(--txt);
+        }
+
+        #deleteModal {
+            display: none;
+        }
+
+        #deleteModal.open {
+            display: flex;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ═══════════════════════════════
+       VUE : GESTION CATÉGORIES (BACK)
+  ═══════════════════════════════ -->
+    <div class="admin-wrapper" style="display:flex;">
+
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <i class="fas fa-bolt"></i>
+                <span>Tech<em>Care</em> <small>Admin</small></span>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="sidebar-item" onclick="window.location.href='backoffice.html'">
+                    <i class="fas fa-chart-pie"></i> Dashboard
+                </button>
+                <button class="sidebar-item" onclick="window.location.href='backoffice.html?tab=add-product'">
+                    <i class="fas fa-plus-circle"></i> Ajouter Produit
+                </button>
+                <button class="sidebar-item" onclick="window.location.href='backoffice.html?tab=catalogue'">
+                    <i class="fas fa-list-ul"></i> Catalogue
+                </button>
+                <button class="sidebar-item active" onclick="window.location.href='categorie.html'">
+                    <i class="fas fa-folder"></i> Catégories
+                </button>
+                <hr style="border:0;border-top:1px solid rgba(255,255,255,.1);margin:.5rem 0;" />
+                <button class="sidebar-item" onclick="alert('En développement')">
+                    <i class="fas fa-user"></i> Users
+                </button>
+                <button class="sidebar-item" onclick="alert('En développement')">
+                    <i class="fas fa-brain"></i> Diagnostic
+                </button>
+                <button class="sidebar-item" onclick="alert('En développement')">
+                    <i class="fas fa-gamepad"></i> Gamification
+                </button>
+                <button class="sidebar-item" onclick="alert('En développement')">
+                    <i class="fas fa-id-card"></i> Abonnement
+                </button>
+            </nav>
+            <button class="sidebar-front-link" onclick="window.location.href='frontoffice.html'"
+                style="border:none;background:transparent;cursor:pointer;color:var(--txt-muted);">
+                <i class="fas fa-arrow-left"></i> Retour Boutique
+            </button>
+        </aside>
+
+        <div class="admin-main" style="flex:1;">
+
+            <div class="container">
+                <h1><i class="fas fa-folder"></i> Gestion des Catégories</h1>
+
+                <!-- Affichage des messages -->
+                <div id="alertContainer"></div>
+
+                <!-- Formulaire d'ajout/modification -->
+                <div class="form-container">
+                    <h2 id="formTitle"><i class="fas fa-plus-circle"></i> Ajouter une catégorie</h2>
+                    <form id="categorieForm">
+                        <input type="hidden" id="categorieId">
+
+                        <div class="form-group">
+                            <label for="nom">Nom de la catégorie *</label>
+                            <input type="text" id="nom" name="nom" placeholder="Ex: Électronique, Informatique...">
+                            <span class="error" id="nomError"></span>
+                        </div>
+
+                        <div style="grid-column: 1 / -1;" class="form-group">
+                            <label for="description">Description</label>
+                            <textarea id="description" name="description"
+                                placeholder="Description de la catégorie (optionnel)"></textarea>
+                            <span class="error" id="descriptionError"></span>
+                        </div>
+
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="image">Icône/Image de la catégorie</label>
+                            <div style="display: flex; gap: 12px; align-items: flex-start;">
+                                <input type="file" id="image" name="image" accept="image/*" style="flex: 1;">
+                                <button type="button" onclick="clearImagePreview()"
+                                    style="padding: 11px 20px; background: transparent; border: 1px solid var(--border); color: var(--txt-muted);">
+                                    <i class="fas fa-trash"></i> Effacer
+                                </button>
+                            </div>
+                            <div id="image-preview" style="margin-top: 15px; display: none;">
+                                <img id="image-preview-img" src="" alt="Aperçu"
+                                    style="max-width: 150px; max-height: 150px; border-radius: 8px; object-fit: contain; border: 1px solid var(--border); padding: 8px;">
+                                <p id="image-name"
+                                    style="font-size: 0.85rem; color: var(--txt-muted); margin-top: 8px;"></p>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; grid-column: 1 / -1;">
+                            <button type="submit" id="submitBtn">
+                                <i class="fas fa-plus"></i> Ajouter
+                            </button>
+                            <button type="reset" onclick="resetErrors()">
+                                <i class="fas fa-redo"></i> Réinitialiser
+                            </button>
+                            <button type="button" id="cancelBtn" onclick="cancelEdit()" style="display: none;">
+                                <i class="fas fa-times"></i> Annuler
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Tableau des catégories -->
+                <div class="table-container">
+                    <h2><i class="fas fa-list"></i> Liste des catégories</h2>
+                    <table id="categoriesTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Icône</th>
+                                <th>Nom</th>
+                                <th>Description</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--txt-muted);">Chargement...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Modal de confirmation suppression -->
+            <div id="deleteModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header"><i class="fas fa-exclamation-triangle"
+                            style="color: var(--danger); margin-right: 10px;"></i>Confirmer la suppression</div>
+                    <p style="color: var(--txt-muted); margin-bottom: 20px;">Êtes-vous sûr de vouloir supprimer cette
+                        catégorie ?</p>
+                    <div class="modal-buttons">
+                        <button class="btn-cancel" onclick="closeDeleteModal()">
+                            <i class="fas fa-times"></i> Annuler
+                        </button>
+                        <button class="delete" onclick="confirmeDelete()">
+                            <i class="fas fa-trash"></i> Supprimer
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                const API_URL = '../controller/categorie_controller.php';
+                let currentDeleteId = null;
+
+                // ════════════════════════════════════════════════════════════
+                // VALIDATION EN JAVASCRIPT
+                // ════════════════════════════════════════════════════════════
+
+                function validateNom(value) {
+                    const nomError = document.getElementById('nomError');
+
+                    if (!value || value.trim() === '') {
+                        nomError.textContent = 'Le nom est obligatoire.';
+                        return false;
+                    }
+
+                    if (value.trim().length < 2) {
+                        nomError.textContent = 'Le nom doit contenir au moins 2 caractères.';
+                        return false;
+                    }
+
+                    if (value.trim().length > 100) {
+                        nomError.textContent = 'Le nom ne peut pas dépasser 100 caractères.';
+                        return false;
+                    }
+
+                    if (!/^[a-zA-Z0-9\s\-àâäæçéèêëïîôùûüœß]+$/i.test(value)) {
+                        nomError.textContent = 'Le nom contient des caractères non autorisés.';
+                        return false;
+                    }
+
+                    nomError.textContent = '';
+                    return true;
+                }
+
+                function validateDescription(value) {
+                    const descriptionError = document.getElementById('descriptionError');
+
+                    if (value && value.trim().length > 500) {
+                        descriptionError.textContent = 'La description ne peut pas dépasser 500 caractères.';
+                        return false;
+                    }
+
+                    descriptionError.textContent = '';
+                    return true;
+                }
+
+                function validateForm() {
+                    const nom = document.getElementById('nom').value;
+                    const description = document.getElementById('description').value;
+
+                    const isNomValid = validateNom(nom);
+                    const isDescriptionValid = validateDescription(description);
+
+                    return isNomValid && isDescriptionValid;
+                }
+
+                // Validation en temps réel
+                document.getElementById('nom').addEventListener('blur', function () {
+                    validateNom(this.value);
+                });
+
+                document.getElementById('description').addEventListener('blur', function () {
+                    validateDescription(this.value);
+                });
+
+                // Gestion de la prévisualisation d'image
+                document.getElementById('image').addEventListener('change', function (e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function (evt) {
+                            const preview = document.getElementById('image-preview');
+                            const previewImg = document.getElementById('image-preview-img');
+                            const imageName = document.getElementById('image-name');
+
+                            previewImg.src = evt.target.result;
+                            imageName.textContent = file.name;
+                            preview.style.display = 'block';
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+
+                // ════════════════════════════════════════════════════════════
+                // GESTION DU FORMULAIRE
+                // ════════════════════════════════════════════════════════════
+
+                document.getElementById('categorieForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+
+                    if (!validateForm()) {
+                        showAlert('Veuillez corriger les erreurs du formulaire.', 'error');
+                        return;
+                    }
+
+                    const id = document.getElementById('categorieId').value;
+                    const nom = document.getElementById('nom').value;
+                    const description = document.getElementById('description').value;
+                    const imageFile = document.getElementById('image').files[0];
+
+                    const method = id ? 'PUT' : 'POST';
+                    const url = id ? `${API_URL}?id=${id}` : API_URL;
+
+                    try {
+                        let response;
+
+                        if (imageFile) {
+                            // Utiliser FormData si une image est présente
+                            const formData = new FormData();
+                            formData.append('nom', nom.trim());
+                            formData.append('description', description.trim());
+                            formData.append('image', imageFile);
+
+                            response = await fetch(url, {
+                                method: method,
+                                body: formData
+                            });
+                        } else {
+                            // Sinon utiliser JSON
+                            response = await fetch(url, {
+                                method: method,
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    nom: nom.trim(),
+                                    description: description.trim()
+                                })
+                            });
+                        }
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            showAlert(data.message, 'success');
+                            resetForm();
+                            loadCategories();
+                        } else {
+                            showAlert(data.message || 'Erreur lors de l\'opération.', 'error');
+                        }
+                    } catch (error) {
+                        showAlert('Erreur réseau: ' + error.message, 'error');
+                    }
+                });
+
+                // ════════════════════════════════════════════════════════════
+                // AFFICHAGE DES CATÉGORIES
+                // ════════════════════════════════════════════════════════════
+
+                async function loadCategories() {
+                    try {
+                        const response = await fetch(API_URL);
+                        const data = await response.json();
+
+                        const tableBody = document.getElementById('tableBody');
+                        tableBody.innerHTML = '';
+
+                        if (data.success && data.data.length > 0) {
+                            data.data.forEach(categorie => {
+                                const row = document.createElement('tr');
+                                const imageUrl = categorie.image ? `../uploads/categories/${categorie.image}` : 'https://placehold.co/60x60/141d2e/00A86B?text=%E2%9C%93';
+                                row.innerHTML = `
+                            <td>${categorie.id}</td>
+                            <td style="text-align: center;">
+                                <img src="${imageUrl}" alt="${escapeHtml(categorie.nom)}" style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border);" onerror="this.src='https://placehold.co/50x50/141d2e/00A86B?text=%E2%9C%93'">
+                            </td>
+                            <td><strong>${escapeHtml(categorie.nom)}</strong></td>
+                            <td style="color: var(--txt-muted);">${escapeHtml(categorie.description || '—')}</td>
+                            <td>
+                                <div class="actions">
+                                    <button class="btn-edit" onclick="editCategorie(${categorie.id})">
+                                        <i class="fas fa-edit"></i> Modifier
+                                    </button>
+                                    <button class="delete" onclick="openDeleteModal(${categorie.id})" style="padding: 8px 16px; font-size: 0.85rem;">
+                                        <i class="fas fa-trash"></i> Supprimer
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                                tableBody.appendChild(row);
+                            });
+                        } else {
+                            tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--txt-muted);">Aucune catégorie trouvée.</td></tr>';
+                        }
+                    } catch (error) {
+                        showAlert('Erreur lors du chargement: ' + error.message, 'error');
+                    }
+                }
+
+                // ════════════════════════════════════════════════════════════
+                // ÉDITION
+                // ════════════════════════════════════════════════════════════
+
+                async function editCategorie(id) {
+                    try {
+                        const response = await fetch(`${API_URL}?id=${id}`);
+                        const data = await response.json();
+
+                        if (data.success && data.data) {
+                            const categorie = data.data;
+                            document.getElementById('categorieId').value = categorie.id;
+                            document.getElementById('nom').value = categorie.nom;
+                            document.getElementById('description').value = categorie.description || '';
+                            document.getElementById('formTitle').innerHTML = '<i class="fas fa-edit"></i> Modifier la catégorie';
+                            document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save"></i> Modifier';
+                            document.getElementById('cancelBtn').style.display = 'inline-flex';
+                            resetErrors();
+
+                            // Afficher l'image existante si elle existe
+                            if (categorie.image) {
+                                const preview = document.getElementById('image-preview');
+                                const previewImg = document.getElementById('image-preview-img');
+                                const imageName = document.getElementById('image-name');
+
+                                previewImg.src = `../uploads/categories/${categorie.image}`;
+                                imageName.textContent = categorie.image;
+                                preview.style.display = 'block';
+                            } else {
+                                clearImagePreview();
+                            }
+
+                            // Scroll vers le formulaire
+                            document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
+                        } else {
+                            showAlert('Impossible de charger la catégorie.', 'error');
+                        }
+                    } catch (error) {
+                        showAlert('Erreur: ' + error.message, 'error');
+                    }
+                }
+
+                // ════════════════════════════════════════════════════════════
+                // SUPPRESSION
+                // ════════════════════════════════════════════════════════════
+
+                function openDeleteModal(id) {
+                    currentDeleteId = id;
+                    document.getElementById('deleteModal').classList.add('open');
+                }
+
+                function closeDeleteModal() {
+                    document.getElementById('deleteModal').classList.remove('open');
+                    currentDeleteId = null;
+                }
+
+                async function confirmeDelete() {
+                    if (!currentDeleteId) return;
+
+                    try {
+                        const response = await fetch(`${API_URL}?id=${currentDeleteId}`, {
+                            method: 'DELETE'
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            showAlert(data.message, 'success');
+                            closeDeleteModal();
+                            loadCategories();
+                        } else {
+                            showAlert(data.message || 'Erreur lors de la suppression.', 'error');
+                        }
+                    } catch (error) {
+                        showAlert('Erreur: ' + error.message, 'error');
+                    }
+                }
+
+                // ════════════════════════════════════════════════════════════
+                // UTILITAIRES
+                // ════════════════════════════════════════════════════════════
+
+                function resetForm() {
+                    document.getElementById('categorieForm').reset();
+                    document.getElementById('categorieId').value = '';
+                    document.getElementById('formTitle').innerHTML = '<i class="fas fa-plus-circle"></i> Ajouter une catégorie';
+                    document.getElementById('submitBtn').innerHTML = '<i class="fas fa-plus"></i> Ajouter';
+                    document.getElementById('cancelBtn').style.display = 'none';
+                    resetErrors();
+                    clearImagePreview();
+                }
+
+                function resetErrors() {
+                    document.getElementById('nomError').textContent = '';
+                    document.getElementById('descriptionError').textContent = '';
+                }
+
+                function clearImagePreview() {
+                    document.getElementById('image').value = '';
+                    document.getElementById('image-preview').style.display = 'none';
+                    document.getElementById('image-preview-img').src = '';
+                    document.getElementById('image-name').textContent = '';
+                }
+
+                function cancelEdit() {
+                    resetForm();
+                }
+
+                function showAlert(message, type) {
+                    const alertContainer = document.getElementById('alertContainer');
+                    const alert = document.createElement('div');
+                    alert.className = `alert ${type}`;
+                    const icon = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+                    alert.innerHTML = `<i class="${icon}"></i> ${message}`;
+                    alertContainer.appendChild(alert);
+
+                    setTimeout(() => {
+                        alert.remove();
+                    }, 5000);
+                }
+
+                function escapeHtml(text) {
+                    const div = document.createElement('div');
+                    div.textContent = text;
+                    return div.innerHTML;
+                }
+
+                // Fermer le modal en cliquant en dehors
+                window.onclick = function (event) {
+                    const modal = document.getElementById('deleteModal');
+                    if (event.target === modal) {
+                        closeDeleteModal();
+                    }
+                };
+
+                // Charger les catégories au chargement
+                loadCategories();
+            </script>
+
+        </div> <!-- Fin admin-main -->
+    </div> <!-- Fin admin-wrapper -->
+</body>
+
+</html>

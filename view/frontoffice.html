@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="TechCare – Votre boutique tech en Tunisie." />
+  <title>TechCare - Front Office</title>
+
+  <link rel="stylesheet" href="../style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    .nav-link.nav-gamif    { border-color: #f59e0b; color: #f59e0b; }
+    .nav-link.nav-gamif:hover { background: #f59e0b; color: #fff; }
+    .nav-link.nav-diag     { border-color: #06b6d4; color: #06b6d4; }
+    .nav-link.nav-diag:hover { background: #06b6d4; color: #fff; }
+    .nav-link.nav-abo      { border-color: #10b981; color: #10b981; }
+    .nav-link.nav-abo:hover { background: #10b981; color: #fff; }
+
+    .page-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.65); backdrop-filter: blur(6px);
+      z-index: 1000; align-items: center; justify-content: center;
+    }
+    .page-overlay.open { display: flex; }
+    .page-modal {
+      background: #1a1a2e; border: 1px solid rgba(255,255,255,.1);
+      border-radius: 1.25rem; width: 90%; max-width: 520px;
+      padding: 2.5rem 2rem; position: relative; text-align: center;
+      animation: popIn .25s ease;
+    }
+    @keyframes popIn { from { transform: scale(.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .page-modal .modal-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .page-modal h2 { font-size: 1.4rem; margin-bottom: .5rem; color:#fff; }
+    .page-modal p  { color: rgba(255,255,255,.55); font-size:.95rem; line-height:1.6; }
+    .page-modal .close-modal {
+      position: absolute; top:1rem; right:1rem;
+      background: rgba(255,255,255,.08); border: none;
+      color:#fff; width:32px; height:32px; border-radius:50%;
+      cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center;
+      transition: background .2s;
+    }
+    .page-modal .close-modal:hover { background: rgba(255,255,255,.18); }
+
+    .toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: .5rem; }
+    .toast {
+      padding: .75rem 1.25rem; border-radius: .75rem;
+      font-size: .9rem; font-weight: 500; color: #fff;
+      display: flex; align-items: center; gap: .6rem;
+      animation: slideUp .3s ease; box-shadow: 0 4px 20px rgba(0,0,0,.4);
+    }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .toast-success { background: #10b981; }
+    .toast-warn    { background: #f59e0b; }
+    .toast-error   { background: #ef4444; }
+    .toast-hide    { opacity: 0; transition: opacity .4s; }
+
+    .badge-neuf     { background: #10b981; color:#fff; padding:.2rem .6rem; border-radius:.4rem; font-size:.75rem; font-weight:600; }
+    .badge-occasion { background: #f59e0b; color:#fff; padding:.2rem .6rem; border-radius:.4rem; font-size:.75rem; font-weight:600; }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════
+       VUE 1 : BOUTIQUE (FRONT)
+  ═══════════════════════════════ -->
+  <div id="front-view" class="front-body" style="display:block;">
+
+    <nav class="navbar" role="navigation">
+      <a class="navbar-brand" href="#boutique" onclick="navigate('front')">
+        <i class="fas fa-bolt"></i>
+        <span>Tech<span class="brand-accent">Care</span></span>
+      </a>
+      <div class="navbar-menu">
+        <button class="nav-link active" id="btn-boutique" onclick="navigate('front')">
+          <i class="fas fa-store"></i> Boutique
+        </button>
+        <button class="nav-link nav-gamif" onclick="openPage('gamification')">
+          <i class="fas fa-gamepad"></i> Gamification
+        </button>
+        <button class="nav-link nav-diag" onclick="openPage('diagnostic')">
+          <i class="fas fa-brain"></i> Diagnostic
+        </button>
+        <button class="nav-link nav-abo" onclick="openPage('abonnement')">
+          <i class="fas fa-id-card"></i> Abonnement
+        </button>
+        <button class="nav-link" onclick="window.location.href='backoffice.html'">
+          <i class="fas fa-shield-halved"></i> Administration
+        </button>
+      </div>
+    </nav>
+
+    <section class="hero-section">
+      <div class="hero-wrapper">
+        <div class="hero-title-group">
+          <h1>Nos Produits</h1>
+          <p>Découvrez notre sélection de technologie</p>
+        </div>
+
+        <div class="hero-filters">
+          <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input type="search" id="searchInput" placeholder="Rechercher un produit…" />
+            <button class="clear-search" id="clearSearch">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <div class="filter-actions">
+            <div class="sort-dropdown">
+              <select id="sortSelect">
+                <option value="recent">📅 Plus récent</option>
+                <option value="price-asc">📈 Prix croissant</option>
+                <option value="price-desc">📉 Prix décroissant</option>
+                <option value="name-asc">A → Z</option>
+                <option value="name-desc">Z → A</option>
+                <option value="stock">📦 Stock</option>
+                <option value="popular">🔥 Populaires</option>
+              </select>
+            </div>
+            <span class="result-badge"><span id="resultCount">0</span> produits</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <main class="products-section">
+
+      <!-- Popular Products Section -->
+      <div id="popularSection" class="popular-section" style="display:none;">
+        <div class="section-header">
+          <h2 class="section-title">🔥 Produits populaires</h2>
+          <p class="section-subtitle">Les produits les plus vendus et consultés</p>
+        </div>
+        <div class="products-grid popular-grid" id="popularGrid">
+          <p class="empty-state" style="grid-column:1/-1;text-align:center;">Chargement…</p>
+        </div>
+        <div class="section-divider"></div>
+      </div>
+
+      <!-- Products Grid -->
+      <div class="products-grid" id="productGrid">
+        <p class="empty-state" style="grid-column:1/-1;text-align:center;">Chargement…</p>
+      </div>
+
+      <!-- No Results Message -->
+      <div id="noResults" class="no-results hidden">
+        <div class="no-results-content">
+          <i class="fas fa-search"></i>
+          <h3>Aucun produit trouvé</h3>
+          <p>Essayez de modifier vos critères de recherche ou de tri</p>
+          <button class="btn-reset" id="resetButton">Réinitialiser</button>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <div class="footer-brand"><i class="fas fa-bolt"></i> TechCare</div>
+        <p>© 2025 TechCare – Tous droits réservés.</p>
+      </div>
+    </footer>
+  </div>
+
+
+
+  <!-- ── Modales ──────────────────────────────────────── -->
+  <div class="page-overlay" id="overlay-gamification">
+    <div class="page-modal">
+      <button class="close-modal" onclick="closePage('gamification')"><i class="fas fa-times"></i></button>
+      <div class="modal-icon">🎮</div>
+      <h2>Gamification</h2>
+      <p>Système de points, badges et récompenses.<br/>En cours de développement.</p>
+    </div>
+  </div>
+  <div class="page-overlay" id="overlay-diagnostic">
+    <div class="page-modal">
+      <button class="close-modal" onclick="closePage('diagnostic')"><i class="fas fa-times"></i></button>
+      <div class="modal-icon">🧠</div>
+      <h2>Diagnostic Intelligent</h2>
+      <p>Analyse IA du catalogue et recommandations.<br/>En cours de développement.</p>
+    </div>
+  </div>
+  <div class="page-overlay" id="overlay-abonnement">
+    <div class="page-modal">
+      <button class="close-modal" onclick="closePage('abonnement')"><i class="fas fa-times"></i></button>
+      <div class="modal-icon">💳</div>
+      <h2>Gestion d'Abonnement</h2>
+      <p>Plans, renouvellements et factures.<br/>En cours de développement.</p>
+    </div>
+  </div>
+
+  <!-- ── Panier (Cart Drawer) ──────────────────────────────────────── -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <div class="cart-drawer" id="cartDrawer">
+    <div class="cart-header">
+      <h3><i class="fas fa-shopping-cart"></i> Panier</h3>
+      <button onclick="closeCart()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty">
+        <i class="fas fa-shopping-cart"></i>
+        <p>Votre panier est vide</p>
+      </div>
+    </div>
+    <div class="cart-footer">
+      <div class="cart-total">
+        <span>Total:</span>
+        <span id="cartTotal">0.00 DT</span>
+      </div>
+      <button class="btn-primary" style="width:100%;">Passer la commande</button>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <script>
+    const API_URL = '../controller/controller.php';
+
+    const api = {
+      async getAll() {
+        const res = await fetch(API_URL);
+        const json = await res.json();
+        return json.data || [];
+      },
+      async getPopular() {
+        const res = await fetch(`${API_URL}?action=popular`);
+        const json = await res.json();
+        return json.data || [];
+      },
+      async getSorted(sortBy) {
+        const res = await fetch(`${API_URL}?action=sorted&sort=${sortBy}`);
+        const json = await res.json();
+        return json.data || [];
+      },
+      async add(data) {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        return await res.json();
+      },
+      async buy(id, quantity = 1) {
+        const res = await fetch(`${API_URL}?id=${id}&action=buy`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ quantity })
+        });
+        return await res.json();
+      },
+      async incrementView(id) {
+        const res = await fetch(`${API_URL}?id=${id}&action=view`, {
+          method: 'POST'
+        });
+        return await res.json();
+      },
+      async update(id, data) {
+        const res = await fetch(`${API_URL}?id=${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        return await res.json();
+      },
+      async remove(id) {
+        const res = await fetch(`${API_URL}?id=${id}`, { method: 'DELETE' });
+        return await res.json();
+      }
+    };
+
+    const view = {
+      renderFront(products) {
+        const grid = document.getElementById('productGrid');
+        const noResults = document.getElementById('noResults');
+        const resultCount = document.getElementById('resultCount');
+        
+        if (!grid) return;
+        
+        resultCount.textContent = products.length;
+        
+        if (!products.length) {
+          grid.classList.add('hidden');
+          noResults.classList.remove('hidden');
+          return;
+        }
+        
+        grid.classList.remove('hidden');
+        noResults.classList.add('hidden');
+        
+        grid.innerHTML = products.map((p, idx) => {
+          const stockStatus = this.getStockStatus(p.stock);
+          const isOutOfStock = p.stock <= 0;
+          return `
+          <div class="product-card" style="animation: cardIn 0.4s ease ${idx * 0.03}s both;" data-product-id="${p.id}">
+            <div class="card-img-wrap">
+              ${isOutOfStock ? '<div class="stock-overlay">Rupture</div>' : stockStatus.badge ? `<div class="stock-badge ${stockStatus.class}">${stockStatus.badge}</div>` : ''}
+              <img src="${p.image}" alt="${p.nom}" loading="lazy" referrerpolicy="no-referrer" 
+                onerror="this.onerror=null;this.src='https://placehold.co/300x200/141d2e/00A86B?text=${encodeURIComponent(p.nom)}'">
+            </div>
+            <div class="card-body">
+              <span class="product-category">${p.categorie_nom || ''}</span>
+              <div class="card-name">${p.nom || ''}</div>
+              <div class="product-brand">${p.marque || ''}</div>
+              <div class="product-description">${p.description || ''}</div>
+              <div class="card-stats">
+                <span class="stat"><i class="fas fa-eye"></i> ${p.views || 0}</span>
+                <span class="stat"><i class="fas fa-shopping-bag"></i> ${p.ventes || 0}</span>
+              </div>
+              <div class="card-footer">
+                <div class="card-price">${parseFloat(p.prix).toFixed(0)} DT</div>
+                <button class="btn-cart-mini ${isOutOfStock ? 'disabled' : ''}" 
+                  data-product-id="${p.id}" 
+                  data-product-name="${p.nom}" 
+                  data-product-price="${p.prix}" 
+                  data-product-image="${p.image}" 
+                  data-product-stock="${p.stock}"
+                  ${isOutOfStock ? 'disabled' : ''}>
+                  <i class="fas fa-shopping-cart"></i> ${isOutOfStock ? 'Indisponible' : 'Ajouter'}
+                </button>
+              </div>
+            </div>
+          </div>
+        `}).join('');
+        
+        // Ajouter les écouteurs d'événements après le rendu
+        grid.querySelectorAll('.btn-cart-mini').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const id = parseInt(btn.dataset.productId);
+            const name = btn.dataset.productName;
+            const price = parseFloat(btn.dataset.productPrice);
+            const image = btn.dataset.productImage;
+            const stock = parseInt(btn.dataset.productStock);
+            appController.addToCart(id, name, price, image, stock);
+          });
+        });
+      },
+
+      renderPopular(products) {
+        const grid = document.getElementById('popularGrid');
+        const section = document.getElementById('popularSection');
+        
+        if (!grid || !section) return;
+        
+        if (!products.length) {
+          section.style.display = 'none';
+          return;
+        }
+        
+        section.style.display = 'block';
+        grid.innerHTML = products.slice(0, 6).map((p, idx) => {
+          const stockStatus = this.getStockStatus(p.stock);
+          const isOutOfStock = p.stock <= 0;
+          return `
+          <div class="product-card" style="animation: cardIn 0.4s ease ${idx * 0.03}s both;" data-product-id="${p.id}">
+            <div class="card-img-wrap">
+              <div class="popular-badge">⭐ Populaire</div>
+              ${isOutOfStock ? '<div class="stock-overlay">Rupture</div>' : stockStatus.badge ? `<div class="stock-badge ${stockStatus.class}">${stockStatus.badge}</div>` : ''}
+              <img src="${p.image}" alt="${p.nom}" loading="lazy" referrerpolicy="no-referrer" 
+                onerror="this.onerror=null;this.src='https://placehold.co/300x200/141d2e/00A86B?text=${encodeURIComponent(p.nom)}'">
+            </div>
+            <div class="card-body">
+              <span class="product-category">${p.categorie_nom || ''}</span>
+              <div class="card-name">${p.nom || ''}</div>
+              <div class="product-brand">${p.marque || ''}</div>
+              <div class="product-description">${p.description || ''}</div>
+              <div class="card-stats">
+                <span class="stat"><i class="fas fa-eye"></i> ${p.views || 0}</span>
+                <span class="stat"><i class="fas fa-shopping-bag"></i> ${p.ventes || 0}</span>
+              </div>
+              <div class="card-footer">
+                <div class="card-price">${parseFloat(p.prix).toFixed(0)} DT</div>
+                <button class="btn-cart-mini ${isOutOfStock ? 'disabled' : ''}" 
+                  data-product-id="${p.id}" 
+                  data-product-name="${p.nom}" 
+                  data-product-price="${p.prix}" 
+                  data-product-image="${p.image}" 
+                  data-product-stock="${p.stock}"
+                  ${isOutOfStock ? 'disabled' : ''}>
+                  <i class="fas fa-shopping-cart"></i> ${isOutOfStock ? 'Indisponible' : 'Ajouter'}
+                </button>
+              </div>
+            </div>
+          </div>
+        `}).join('');
+        
+        // Ajouter les écouteurs d'événements
+        grid.querySelectorAll('.btn-cart-mini').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const id = parseInt(btn.dataset.productId);
+            const name = btn.dataset.productName;
+            const price = parseFloat(btn.dataset.productPrice);
+            const image = btn.dataset.productImage;
+            const stock = parseInt(btn.dataset.productStock);
+            appController.addToCart(id, name, price, image, stock);
+          });
+        });
+      },
+
+      getStockStatus(stock) {
+        if (stock <= 0) {
+          return { badge: '❌ Indisponible', class: 'stock-critical' };
+        } else if (stock <= 3) {
+          return { badge: '⚠️ Stock faible', class: 'stock-warning' };
+        }
+        return { badge: null, class: '' };
+      },
+
+      showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        const icons = { success: 'check-circle', warn: 'exclamation-triangle', error: 'circle-xmark' };
+        toast.innerHTML = `<i class="fas fa-${icons[type] || 'check-circle'}"></i> ${message}`;
+        container.appendChild(toast);
+        setTimeout(() => toast.classList.add('toast-hide'), 3000);
+        setTimeout(() => toast.remove(), 3500);
+      }
+    };
+
+    const appController = {
+      allProducts: [],
+      filteredProducts: [],
+      cart: [],
+
+      async init() {
+        try {
+          this.allProducts = await api.getAll();
+          this.filteredProducts = [...this.allProducts];
+          const popularProducts = await api.getPopular();
+          this.loadCart();
+          view.renderPopular(popularProducts);
+          view.renderFront(this.filteredProducts);
+          this.setupEventListeners();
+        } catch (err) {
+          console.error('Erreur:', err);
+          view.showToast('Impossible de charger les produits', 'error');
+        }
+      },
+
+      loadCart() {
+        const saved = localStorage.getItem('techcare-cart');
+        this.cart = saved ? JSON.parse(saved) : [];
+        this.updateCartUI();
+      },
+
+      saveCart() {
+        localStorage.setItem('techcare-cart', JSON.stringify(this.cart));
+        this.updateCartUI();
+      },
+
+      addToCart(productId, productName, productPrice, productImage, stock) {
+        if (stock <= 0) {
+          view.showToast('Ce produit est en rupture de stock', 'error');
+          return;
+        }
+
+        const existingItem = this.cart.find(item => item.id === productId);
+        
+        if (existingItem) {
+          existingItem.quantity += 1;
+        } else {
+          this.cart.push({
+            id: productId,
+            name: productName,
+            price: parseFloat(productPrice),
+            image: productImage,
+            quantity: 1
+          });
+        }
+
+        this.saveCart();
+        view.showToast(`"${productName}" ajouté au panier`, 'success');
+        
+        // Simuler l'achat et enregistrer les statistiques
+        (async () => {
+          try {
+            await api.buy(productId, 1);
+            await api.incrementView(productId);
+          } catch (err) {
+            console.log('Stats enregistrées (mode déconnecté)');
+          }
+        })();
+        
+        openCart();
+      },
+
+      removeFromCart(productId) {
+        this.cart = this.cart.filter(item => item.id !== productId);
+        this.saveCart();
+      },
+
+      updateQuantity(productId, newQuantity) {
+        const item = this.cart.find(item => item.id === productId);
+        if (item) {
+          if (newQuantity <= 0) {
+            this.removeFromCart(productId);
+          } else {
+            item.quantity = newQuantity;
+            this.saveCart();
+          }
+        }
+      },
+
+      updateCartUI() {
+        const cartItemsContainer = document.getElementById('cartItems');
+        const cartTotal = document.getElementById('cartTotal');
+        const cartOverlay = document.getElementById('cartOverlay');
+
+        if (!cartItemsContainer) return;
+
+        if (this.cart.length === 0) {
+          cartItemsContainer.innerHTML = `
+            <div class="cart-empty">
+              <i class="fas fa-shopping-cart"></i>
+              <p>Votre panier est vide</p>
+            </div>
+          `;
+          return;
+        }
+
+        let total = 0;
+        cartItemsContainer.innerHTML = this.cart.map(item => {
+          const itemTotal = item.price * item.quantity;
+          total += itemTotal;
+          return `
+            <div class="cart-item">
+              <img src="${item.image}" alt="${item.name}" class="cart-item-img" 
+                onerror="this.onerror=null;this.src='https://placehold.co/52x52/141d2e/00A86B'">
+              <div class="cart-item-info">
+                <div class="cart-item-name">${item.name}</div>
+                <div class="cart-item-price">${parseFloat(item.price).toFixed(2)} DT</div>
+              </div>
+              <div class="cart-item-qty">
+                <button onclick="appController.updateQuantity(${item.id}, ${item.quantity - 1})">−</button>
+                <span>${item.quantity}</span>
+                <button onclick="appController.updateQuantity(${item.id}, ${item.quantity + 1})">+</button>
+              </div>
+              <button class="cart-item-remove" onclick="appController.removeFromCart(${item.id})">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          `;
+        }).join('');
+
+        if (cartTotal) {
+          cartTotal.textContent = total.toFixed(2) + ' DT';
+        }
+      },
+
+      setupEventListeners() {
+        const searchInput = document.getElementById('searchInput');
+        const sortSelect = document.getElementById('sortSelect');
+        const clearSearch = document.getElementById('clearSearch');
+        const resetButton = document.getElementById('resetButton');
+
+        if (searchInput) {
+          searchInput.addEventListener('input', (e) => {
+            this.handleSearch(e.target.value);
+          });
+        }
+
+        if (clearSearch) {
+          clearSearch.addEventListener('click', () => {
+            searchInput.value = '';
+            clearSearch.classList.remove('active');
+            this.handleSearch('');
+          });
+        }
+
+        if (sortSelect) {
+          sortSelect.addEventListener('change', (e) => {
+            this.handleSort(e.target.value);
+          });
+        }
+
+        if (resetButton) {
+          resetButton.addEventListener('click', () => {
+            this.resetFilters();
+          });
+        }
+      },
+
+      handleSearch(query) {
+        const searchTerm = query.toLowerCase().trim();
+        const clearSearch = document.getElementById('clearSearch');
+
+        if (searchTerm === '') {
+          this.filteredProducts = [...this.allProducts];
+          if (clearSearch) clearSearch.classList.remove('active');
+        } else {
+          if (clearSearch) clearSearch.classList.add('active');
+          this.filteredProducts = this.allProducts.filter(product => {
+            const nom = (product.nom || '').toLowerCase();
+            const categorie = (product.categorie_nom || '').toLowerCase();
+            const marque = (product.marque || '').toLowerCase();
+            const description = (product.description || '').toLowerCase();
+
+            return nom.includes(searchTerm) || 
+                   categorie.includes(searchTerm) || 
+                   marque.includes(searchTerm) ||
+                   description.includes(searchTerm);
+          });
+        }
+
+        const sortSelect = document.getElementById('sortSelect');
+        const currentSort = sortSelect ? sortSelect.value : 'recent';
+        this.handleSort(currentSort);
+      },
+
+      handleSort(sortType) {
+        const products = [...this.filteredProducts];
+
+        switch (sortType) {
+          case 'price-asc':
+            products.sort((a, b) => parseFloat(a.prix) - parseFloat(b.prix));
+            break;
+          case 'price-desc':
+            products.sort((a, b) => parseFloat(b.prix) - parseFloat(a.prix));
+            break;
+          case 'name-asc':
+            products.sort((a, b) => (a.nom || '').localeCompare(b.nom || '', 'fr'));
+            break;
+          case 'name-desc':
+            products.sort((a, b) => (b.nom || '').localeCompare(a.nom || '', 'fr'));
+            break;
+          case 'stock':
+            products.sort((a, b) => parseInt(b.stock || 0) - parseInt(a.stock || 0));
+            break;
+          case 'popular':
+            products.sort((a, b) => {
+              const scoreA = (a.ventes || 0) * 2 + (a.views || 0);
+              const scoreB = (b.ventes || 0) * 2 + (b.views || 0);
+              return scoreB - scoreA;
+            });
+            break;
+          case 'recent':
+          default:
+            products.sort((a, b) => new Date(b.date_ajout) - new Date(a.date_ajout));
+        }
+
+        this.filteredProducts = products;
+        view.renderFront(this.filteredProducts);
+      },
+
+      resetFilters() {
+        const searchInput = document.getElementById('searchInput');
+        const sortSelect = document.getElementById('sortSelect');
+        const clearSearch = document.getElementById('clearSearch');
+
+        if (searchInput) searchInput.value = '';
+        if (sortSelect) sortSelect.value = 'recent';
+        if (clearSearch) clearSearch.classList.remove('active');
+
+        this.filteredProducts = [...this.allProducts];
+        view.renderFront(this.filteredProducts);
+      },
+
+      navigate(viewName) {
+        const front = document.getElementById('front-view');
+        
+        front.style.display = 'block';
+        
+        if (viewName === 'front') {
+          this.init();
+        }
+      }
+    };
+
+
+
+    function navigate(v) { appController.navigate(v); }
+    function openPage(name) { document.getElementById('overlay-' + name).classList.add('open'); }
+    function closePage(name) { document.getElementById('overlay-' + name).classList.remove('open'); }
+    function openCart() { 
+      const cartDrawer = document.getElementById('cartDrawer');
+      const cartOverlay = document.getElementById('cartOverlay');
+      if (cartDrawer) cartDrawer.classList.add('open');
+      if (cartOverlay) cartOverlay.classList.add('open');
+    }
+    function closeCart() { 
+      const cartDrawer = document.getElementById('cartDrawer');
+      const cartOverlay = document.getElementById('cartOverlay');
+      if (cartDrawer) cartDrawer.classList.remove('open');
+      if (cartOverlay) cartOverlay.classList.remove('open');
+    }
+
+    document.getElementById('cartOverlay')?.addEventListener('click', closeCart);
+
+    document.querySelectorAll('.page-overlay').forEach(overlay => {
+      overlay.addEventListener('click', e => {
+        if (e.target === overlay) overlay.classList.remove('open');
+      });
+    });
+
+    window.addEventListener('load', () => {
+      appController.navigate('front');
+    });
+  </script>
+
+</body>
+</html>

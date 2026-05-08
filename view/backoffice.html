@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="TechCare – Administration" />
+  <title>TechCare - Back Office</title>
+
+  <link rel="stylesheet" href="../style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    .page-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.65); backdrop-filter: blur(6px);
+      z-index: 1000; align-items: center; justify-content: center;
+    }
+    .page-overlay.open { display: flex; }
+    .page-modal {
+      background: #1a1a2e; border: 1px solid rgba(255,255,255,.1);
+      border-radius: 1.25rem; width: 90%; max-width: 520px;
+      padding: 2.5rem 2rem; position: relative; text-align: center;
+      animation: popIn .25s ease;
+    }
+    @keyframes popIn { from { transform: scale(.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .page-modal .modal-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .page-modal h2 { font-size: 1.4rem; margin-bottom: .5rem; color:#fff; }
+    .page-modal p  { color: rgba(255,255,255,.55); font-size:.95rem; line-height:1.6; }
+    .page-modal .close-modal {
+      position: absolute; top:1rem; right:1rem;
+      background: rgba(255,255,255,.08); border: none;
+      color:#fff; width:32px; height:32px; border-radius:50%;
+      cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center;
+      transition: background .2s;
+    }
+    .page-modal .close-modal:hover { background: rgba(255,255,255,.18); }
+
+    .toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: .5rem; }
+    .toast {
+      padding: .75rem 1.25rem; border-radius: .75rem;
+      font-size: .9rem; font-weight: 500; color: #fff;
+      display: flex; align-items: center; gap: .6rem;
+      animation: slideUp .3s ease; box-shadow: 0 4px 20px rgba(0,0,0,.4);
+    }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .toast-success { background: #10b981; }
+    .toast-warn    { background: #f59e0b; }
+    .toast-error   { background: #ef4444; }
+    .toast-hide    { opacity: 0; transition: opacity .4s; }
+
+    .badge-neuf     { background: #10b981; color:#fff; padding:.2rem .6rem; border-radius:.4rem; font-size:.75rem; font-weight:600; }
+    .badge-occasion { background: #f59e0b; color:#fff; padding:.2rem .6rem; border-radius:.4rem; font-size:.75rem; font-weight:600; }
+
+    .admin-tab-content textarea,
+    .admin-tab-content select {
+      width:100%; padding:.75rem;
+      border-radius:.5rem;
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.15);
+      color:#fff; font-family:inherit;
+    }
+    .admin-tab-content select option { background:#1a1a2e; }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════
+       VUE : ADMINISTRATION (BACK)
+  ═══════════════════════════════ -->
+  <div class="admin-wrapper" style="display:flex;">
+
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <i class="fas fa-bolt"></i>
+        <span>Tech<em>Care</em> <small>Admin</small></span>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="sidebar-item active" id="nav-dashboard" onclick="appController.showTab('dashboard')">
+          <i class="fas fa-chart-pie"></i> Dashboard
+        </button>
+        <button class="sidebar-item" id="nav-add-product" onclick="appController.showTab('add-product')">
+          <i class="fas fa-plus-circle"></i> Ajouter Produit
+        </button>
+        <button class="sidebar-item" id="nav-catalogue" onclick="appController.showTab('catalogue')">
+          <i class="fas fa-list-ul"></i> Catalogue
+        </button>
+        <button class="sidebar-item" id="nav-categorie" onclick="window.location.href='categorie.html'">
+          <i class="fas fa-folder"></i> Catégories
+        </button>
+        <hr style="border:0;border-top:1px solid rgba(255,255,255,.1);margin:.5rem 0;" />
+        <button class="sidebar-item" onclick="openPage('user')">
+          <i class="fas fa-user"></i> Users
+        </button>
+        <button class="sidebar-item" onclick="openPage('diagnostic')">
+          <i class="fas fa-brain"></i> Diagnostic
+        </button>
+        <button class="sidebar-item" onclick="openPage('gamification')">
+          <i class="fas fa-gamepad"></i> Gamification
+        </button>
+        <button class="sidebar-item" onclick="openPage('abonnement')">
+          <i class="fas fa-id-card"></i> Abonnement
+        </button>
+      </nav>
+      <button class="sidebar-front-link" onclick="window.location.href='frontoffice.html'"
+        style="border:none;background:transparent;cursor:pointer;color:var(--txt-2);">
+        <i class="fas fa-arrow-left"></i> Retour Boutique
+      </button>
+    </aside>
+
+    <div class="admin-main" style="flex:1;padding:2rem;">
+      <header class="admin-topbar" style="margin-bottom:2rem;display:flex;justify-content:space-between;align-items:center;">
+        <h1 class="topbar-title" id="admin-title">Dashboard Administration</h1>
+        <div class="topbar-right">
+          <span class="topbar-user"><i class="fas fa-user-circle"></i> Admin</span>
+        </div>
+      </header>
+
+      <section id="admin-tabs-container">
+
+        <!-- ── Tab Dashboard ── -->
+        <div id="tab-dashboard" class="admin-tab-content">
+          <div class="stats-grid">
+            <div class="stat-card c-green">
+              <div class="stat-icon"><i class="fas fa-box-open"></i></div>
+              <div class="stat-info">
+                <span class="stat-value" id="count-products">–</span>
+                <span class="stat-label">Produits Total</span>
+              </div>
+            </div>
+            <div class="stat-card c-blue">
+              <div class="stat-icon"><i class="fas fa-tag"></i></div>
+              <div class="stat-info">
+                <span class="stat-value" id="avg-price">–</span>
+                <span class="stat-label">Prix Moyen (DT)</span>
+              </div>
+            </div>
+            <div class="stat-card c-purple">
+              <div class="stat-icon"><i class="fas fa-warehouse"></i></div>
+              <div class="stat-info">
+                <span class="stat-value" id="total-stock">–</span>
+                <span class="stat-label">Stock Total</span>
+              </div>
+            </div>
+            <div class="stat-card c-red">
+              <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+              <div class="stat-info">
+                <span class="stat-value" id="out-of-stock">–</span>
+                <span class="stat-label">En Rupture</span>
+              </div>
+            </div>
+            <div class="stat-card c-orange">
+              <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
+              <div class="stat-info">
+                <span class="stat-value" id="stock-value">–</span>
+                <span class="stat-label">Valeur du Stock (DT)</span>
+              </div>
+            </div>
+            <div class="stat-card c-teal">
+              <div class="stat-icon"><i class="fas fa-recycle"></i></div>
+              <div class="stat-info">
+                <span class="stat-value" id="used-products">–</span>
+                <span class="stat-label">Occasion</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="admin-card" style="margin-top: 2rem;">
+            <div class="card-head">
+              <h3><i class="fas fa-chart-pie"></i> Répartition du Stock par État (Neuf / Occasion)</h3>
+            </div>
+            <div style="padding: 1.5rem; height: 350px;">
+              <canvas id="stockChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Tab Ajouter Produit ── -->
+        <div id="tab-add-product" class="admin-tab-content" style="display:none;">
+          <div class="admin-card">
+            <div class="card-head"><h3><i class="fas fa-plus"></i> Formulaire d'ajout</h3></div>
+            <form id="add-product-form" style="padding:1.5rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+
+              <div class="form-group">
+                <label for="p-nom">Nom du produit *</label>
+                <input type="text" id="p-nom" placeholder="Ex: iPhone 16 Pro" autocomplete="off" />
+              </div>
+
+              <div class="form-group">
+                <label for="p-marque">Marque</label>
+                <input type="text" id="p-marque" placeholder="Ex: Apple, Samsung…" autocomplete="off" />
+              </div>
+
+              <div class="form-group">
+                <label for="p-prix">Prix (DT) *</label>
+                <input type="text" id="p-prix" placeholder="0.00" />
+              </div>
+
+              <div class="form-group">
+                <label for="p-stock">Stock</label>
+                <input type="text" id="p-stock" value="10" placeholder="10" />
+              </div>
+
+              <div class="form-group">
+                <label for="p-categorie">Catégorie</label>
+                <select id="p-categorie">
+                  <option value="">-- Sélectionner une catégorie --</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="p-etat">État</label>
+                <select id="p-etat">
+                  <option value="neuf">✅ Neuf</option>
+                  <option value="occasion">🔄 Occasion</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="grid-column:span 2;">
+                <label for="p-image">Image du produit *</label>
+                <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                  <input type="file" id="p-image" style="flex: 1;" />
+                  <button type="button" class="btn-outline" onclick="clearImagePreview('p')" style="padding: 0.5rem 1rem; white-space: nowrap;">
+                    <i class="fas fa-trash"></i> Effacer
+                  </button>
+                </div>
+                <div id="p-image-preview" style="margin-top: 1rem; text-align: center; display: none;">
+                  <img id="p-image-preview-img" src="" alt="Aperçu" style="max-width: 100%; max-height: 300px; border-radius: 0.5rem; object-fit: contain;" />
+                  <p id="p-image-name" style="font-size: 0.85rem; color: rgba(255,255,255,.6); margin-top: 0.5rem;"></p>
+                </div>
+              </div>
+
+              <div class="form-group" style="grid-column:span 2;">
+                <label for="p-description">Description</label>
+                <textarea id="p-description" rows="3" placeholder="Décrivez le produit…" style="resize:vertical;"></textarea>
+              </div>
+
+              <div class="form-actions" style="grid-column:span 2;margin-top:.5rem;">
+                <button type="submit" class="btn-primary" id="form-submit-btn">
+                  <i class="fas fa-plus"></i> Ajouter au catalogue
+                </button>
+                <button type="button" class="btn-outline" onclick="document.getElementById('add-product-form').reset(); document.getElementById('p-image-preview').style.display='none';">
+                  <i class="fas fa-rotate-left"></i> Réinitialiser
+                </button>
+                <button type="button" class="btn-outline" onclick="window.location.href='categorie.html'" style="background:rgba(59, 130, 246, 0.2);border-color:#3b82f6;color:#3b82f6;">
+                  <i class="fas fa-folder"></i> Gérer catégories
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- ── Tab Modifier Produit ── -->
+        <div id="tab-edit-product" class="admin-tab-content" style="display:none;">
+          <div class="admin-card">
+            <div class="card-head">
+              <h3><i class="fas fa-pen"></i> Modifier le produit</h3>
+              <button class="btn-outline" style="padding:0.4rem 0.8rem; font-size:0.85rem;" onclick="appController.showTab('catalogue')">
+                <i class="fas fa-times"></i> Annuler
+              </button>
+            </div>
+            <form id="edit-product-form" style="padding:1.5rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+              <input type="hidden" id="e-id" />
+              <div class="form-group">
+                <label for="e-nom">Nom du produit *</label>
+                <input type="text" id="e-nom" autocomplete="off" />
+              </div>
+              <div class="form-group">
+                <label for="e-marque">Marque</label>
+                <input type="text" id="e-marque" autocomplete="off" />
+              </div>
+              <div class="form-group">
+                <label for="e-prix">Prix (DT) *</label>
+                <input type="text" id="e-prix" />
+              </div>
+              <div class="form-group">
+                <label for="e-stock">Stock</label>
+                <input type="text" id="e-stock" />
+              </div>
+              <div class="form-group">
+                <label for="e-categorie">Catégorie</label>
+                <select id="e-categorie">
+                  <option value="">-- Sélectionner une catégorie --</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="e-etat">État</label>
+                <select id="e-etat">
+                  <option value="neuf">✅ Neuf</option>
+                  <option value="occasion">🔄 Occasion</option>
+                </select>
+              </div>
+              <div class="form-group" style="grid-column:span 2;">
+                <label for="e-image">Image du produit *</label>
+                <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                  <input type="file" id="e-image" style="flex: 1;" />
+                  <button type="button" class="btn-outline" onclick="clearImagePreview('e')" style="padding: 0.5rem 1rem; white-space: nowrap;">
+                    <i class="fas fa-trash"></i> Effacer
+                  </button>
+                </div>
+                <div id="e-image-preview" style="margin-top: 1rem; text-align: center; display: none;">
+                  <img id="e-image-preview-img" src="" alt="Aperçu" style="max-width: 100%; max-height: 300px; border-radius: 0.5rem; object-fit: contain;" />
+                  <p id="e-image-name" style="font-size: 0.85rem; color: rgba(255,255,255,.6); margin-top: 0.5rem;"></p>
+                </div>
+              </div>
+              <div class="form-group" style="grid-column:span 2;">
+                <label for="e-description">Description</label>
+                <textarea id="e-description" rows="3" style="resize:vertical;"></textarea>
+              </div>
+              <div class="form-actions" style="grid-column:span 2;margin-top:.5rem;">
+                <button type="submit" class="btn-primary" id="form-edit-btn">
+                  <i class="fas fa-save"></i> Enregistrer les modifications
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- ── Tab Catalogue ── -->
+        <div id="tab-catalogue" class="admin-tab-content" style="display:none;">
+          <div class="admin-card">
+            <div class="card-head">
+              <h3><i class="fas fa-list"></i> Liste des produits</h3>
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="appController.exportPDF()">
+                  <i class="fas fa-file-pdf"></i> Exporter PDF
+                </button>
+                <button class="btn-sm-green" onclick="appController.showTab('add-product')">
+                  <i class="fas fa-plus"></i> Ajouter
+                </button>
+              </div>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Image</th>
+                    <th>Nom</th>
+                    <th>Marque</th>
+                    <th>État</th>
+                    <th>Stock</th>
+                    <th>Prix</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-product-list">
+                  <tr><td colspan="9" style="text-align:center;">Chargement…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </div>
+
+  <!-- ── Modales ──────────────────────────────────────── -->
+  <div class="page-overlay" id="overlay-user">
+    <div class="page-modal">
+      <button class="close-modal" onclick="closePage('user')"><i class="fas fa-times"></i></button>
+      <div class="modal-icon">👤</div>
+      <h2>Gestion des Utilisateurs</h2>
+      <p>Module de gestion des comptes, profils et rôles utilisateurs.<br/>En cours de développement.</p>
+    </div>
+  </div>
+  <div class="page-overlay" id="overlay-gamification">
+    <div class="page-modal">
+      <button class="close-modal" onclick="closePage('gamification')"><i class="fas fa-times"></i></button>
+      <div class="modal-icon">🎮</div>
+      <h2>Gamification</h2>
+      <p>Système de points, badges et récompenses.<br/>En cours de développement.</p>
+    </div>
+  </div>
+  <div class="page-overlay" id="overlay-diagnostic">
+    <div class="page-modal">
+      <button class="close-modal" onclick="closePage('diagnostic')"><i class="fas fa-times"></i></button>
+      <div class="modal-icon">🧠</div>
+      <h2>Diagnostic Intelligent</h2>
+      <p>Analyse IA du catalogue et recommandations.<br/>En cours de développement.</p>
+    </div>
+  </div>
+  <div class="page-overlay" id="overlay-abonnement">
+    <div class="page-modal">
+      <button class="close-modal" onclick="closePage('abonnement')"><i class="fas fa-times"></i></button>
+      <div class="modal-icon">💳</div>
+      <h2>Gestion d'Abonnement</h2>
+      <p>Plans, renouvellements et factures.<br/>En cours de développement.</p>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <script>
+    const API_URL = '../controller/controller.php';
+    const CATEGORIE_API = '../controller/categorie_controller.php';
+    const UPLOAD_API = '../controller/upload.php';
+
+    const api = {
+      async getAll() {
+        const res = await fetch(API_URL);
+        const json = await res.json();
+        return json.data || [];
+      },
+      async getCategories() {
+        const res = await fetch(CATEGORIE_API);
+        const json = await res.json();
+        return json.data || [];
+      },
+      async add(data) {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        return await res.json();
+      },
+      async update(id, data) {
+        const res = await fetch(`${API_URL}?id=${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        return await res.json();
+      },
+      async remove(id) {
+        const res = await fetch(`${API_URL}?id=${id}`, { method: 'DELETE' });
+        return await res.json();
+      }
+    };
+
+    const view = {
+      renderAdmin(products) {
+        const tbody = document.getElementById('admin-product-list');
+        if (!tbody) return;
+        if (!products.length) {
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:2rem;">Aucun produit dans la base de données.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = products.map((p, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td><img src="${p.image}" alt="${p.nom}" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='https://placehold.co/48x48/141d2e/00A86B?text=?'" style="width:48px;height:48px;object-fit:cover;border-radius:.5rem;"></td>
+            <td><strong>${p.nom}</strong></td>
+            <td>${p.marque || '–'}</td>
+            <td><span class="badge-${p.etat || 'neuf'}">${p.etat === 'occasion' ? '🔄 Occasion' : '✅ Neuf'}</span></td>
+            <td>${p.stock}</td>
+            <td>${parseFloat(p.prix).toFixed(2)} DT</td>
+            <td style="display: flex; gap: 0.5rem; align-items: center; justify-content: flex-start;">
+              <button class="btn-outline btn-sm" style="border-color:#3b82f6; color:#3b82f6; background:transparent; padding:0.25rem 0.5rem; border-radius:0.4rem; cursor:pointer;" onclick="appController.handleEdit('${encodeURIComponent(JSON.stringify(p))}')" title="Modifier">
+                <i class="fas fa-pen"></i>
+              </button>
+              <button class="btn-danger btn-sm" style="background:#ef4444; color:#fff; border:none; padding:0.25rem 0.5rem; border-radius:0.4rem; cursor:pointer;" onclick="appController.handleDelete(${p.id})" title="Supprimer">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `).join('');
+      },
+
+      renderStats(products) {
+        const countEl = document.getElementById('count-products');
+        const avgEl   = document.getElementById('avg-price');
+        const stEl    = document.getElementById('total-stock');
+        const outEl   = document.getElementById('out-of-stock');
+        const valEl   = document.getElementById('stock-value');
+        const usedEl  = document.getElementById('used-products');
+
+        if (countEl) countEl.textContent = products.length;
+        if (avgEl) {
+          avgEl.textContent = products.length
+            ? (products.reduce((s, p) => s + parseFloat(p.prix), 0) / products.length).toFixed(2)
+            : '0';
+        }
+        if (stEl) {
+          stEl.textContent = products.reduce((s, p) => s + parseInt(p.stock || 0), 0);
+        }
+        if (outEl) {
+          outEl.textContent = products.filter(p => parseInt(p.stock || 0) <= 0).length;
+        }
+        if (valEl) {
+          const totalVal = products.reduce((s, p) => s + (parseFloat(p.prix) * parseInt(p.stock || 0)), 0);
+          valEl.textContent = totalVal.toFixed(2);
+        }
+        if (usedEl) {
+          usedEl.textContent = products.filter(p => p.etat === 'occasion').length;
+        }
+
+        this.renderChart(products);
+      },
+
+      chartInstance: null,
+
+      renderChart(products) {
+        const ctx = document.getElementById('stockChart');
+        if (!ctx) return;
+
+        // Group stock by etat
+        const categories = {};
+        products.forEach(p => {
+          const etatValue = p.etat === 'occasion' ? 'Occasion' : 'Neuf';
+          categories[etatValue] = (categories[etatValue] || 0) + parseInt(p.stock || 0);
+        });
+
+        const labels = Object.keys(categories);
+        const data = Object.values(categories);
+
+        if (this.chartInstance) {
+          this.chartInstance.destroy();
+        }
+
+        this.chartInstance = new Chart(ctx, {
+          type: 'pie',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Quantité en Stock',
+              data: data,
+              backgroundColor: [
+                'rgba(0, 168, 107, 0.7)',
+                'rgba(59, 130, 246, 0.7)',
+                'rgba(168, 85, 247, 0.7)',
+                'rgba(249, 115, 22, 0.7)',
+                'rgba(20, 184, 166, 0.7)',
+                'rgba(239, 68, 68, 0.7)',
+                'rgba(234, 179, 8, 0.7)'
+              ],
+              borderColor: '#141d2e',
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'right',
+                labels: { color: '#f0f4ff', font: { family: 'Inter' }, padding: 15 }
+              }
+            }
+          }
+        });
+      },
+
+      renderAll(products) {
+        this.renderAdmin(products);
+        this.renderStats(products);
+      },
+
+      getFormData() {
+        return {
+          nom:          document.getElementById('p-nom').value,
+          marque:       document.getElementById('p-marque').value,
+          prix:         document.getElementById('p-prix').value,
+          stock:        document.getElementById('p-stock').value,
+          categorie_id: document.getElementById('p-categorie').value || null,
+          etat:         document.getElementById('p-etat').value,
+          image:        '',
+          description:  document.getElementById('p-description').value
+        };
+      },
+
+      resetForm() {
+        const f = document.getElementById('add-product-form');
+        if (f) f.reset();
+        document.getElementById('p-image-preview').style.display = 'none';
+      },
+
+      showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        const icons = { success: 'check-circle', warn: 'exclamation-triangle', error: 'circle-xmark' };
+        toast.innerHTML = `<i class="fas fa-${icons[type] || 'check-circle'}"></i> ${message}`;
+        container.appendChild(toast);
+        setTimeout(() => toast.classList.add('toast-hide'), 3000);
+        setTimeout(() => toast.remove(), 3500);
+      },
+
+      async loadCategories() {
+        try {
+          const categories = await api.getCategories();
+          const addSelect = document.getElementById('p-categorie');
+          const editSelect = document.getElementById('e-categorie');
+          
+          if (addSelect) {
+            addSelect.innerHTML = '<option value="">-- Sélectionner une catégorie --</option>';
+            categories.forEach(cat => {
+              const option = document.createElement('option');
+              option.value = cat.id;
+              option.textContent = cat.nom;
+              addSelect.appendChild(option);
+            });
+          }
+          
+          if (editSelect) {
+            editSelect.innerHTML = '<option value="">-- Sélectionner une catégorie --</option>';
+            categories.forEach(cat => {
+              const option = document.createElement('option');
+              option.value = cat.id;
+              option.textContent = cat.nom;
+              editSelect.appendChild(option);
+            });
+          }
+        } catch (err) {
+          console.error('Erreur chargement catégories :', err);
+        }
+      }
+    };
+
+    // ── Validation JavaScript ────────────────────────
+    const validator = {
+      validateNom(nom) {
+        if (!nom || nom.trim() === '') {
+          return { valid: false, message: 'Le nom du produit est obligatoire' };
+        }
+        if (nom.length > 255) {
+          return { valid: false, message: 'Le nom ne doit pas dépasser 255 caractères' };
+        }
+        return { valid: true };
+      },
+
+      validatePrix(prix) {
+        if (!prix || prix.trim() === '') {
+          return { valid: false, message: 'Le prix est obligatoire' };
+        }
+        const prixNum = parseFloat(prix);
+        if (isNaN(prixNum)) {
+          return { valid: false, message: 'Le prix doit être un nombre valide' };
+        }
+        if (prixNum < 0.01) {
+          return { valid: false, message: 'Le prix doit être supérieur à 0.00' };
+        }
+        return { valid: true };
+      },
+
+      validateStock(stock) {
+        if (!stock || stock.trim() === '') {
+          return { valid: true, value: 0 };
+        }
+        const stockNum = parseInt(stock);
+        if (isNaN(stockNum)) {
+          return { valid: false, message: 'Le stock doit être un nombre entier' };
+        }
+        if (stockNum < 0) {
+          return { valid: false, message: 'Le stock ne peut pas être négatif' };
+        }
+        return { valid: true, value: stockNum };
+      },
+
+      validateImage(fileInput, showError = true) {
+        if (!fileInput.files || fileInput.files.length === 0) {
+          if (showError) {
+            return { valid: false, message: 'Veuillez sélectionner une image' };
+          }
+          return { valid: true };
+        }
+
+        const file = fileInput.files[0];
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        
+        if (!allowedTypes.includes(file.type)) {
+          return { valid: false, message: 'Seules les images (JPEG, PNG, GIF, WebP) sont autorisées' };
+        }
+        
+        const maxSize = 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+          return { valid: false, message: 'L\'image ne doit pas dépasser 5MB' };
+        }
+        
+        return { valid: true };
+      },
+
+      validateFormAjout() {
+        const nom = document.getElementById('p-nom').value;
+        const prix = document.getElementById('p-prix').value;
+        const stock = document.getElementById('p-stock').value;
+        const imageInput = document.getElementById('p-image');
+
+        const nomCheck = this.validateNom(nom);
+        if (!nomCheck.valid) return nomCheck;
+
+        const prixCheck = this.validatePrix(prix);
+        if (!prixCheck.valid) return prixCheck;
+
+        const stockCheck = this.validateStock(stock);
+        if (!stockCheck.valid) return stockCheck;
+
+        const imageCheck = this.validateImage(imageInput, true);
+        if (!imageCheck.valid) return imageCheck;
+
+        return { valid: true };
+      },
+
+      validateFormEdition() {
+        const nom = document.getElementById('e-nom').value;
+        const prix = document.getElementById('e-prix').value;
+        const stock = document.getElementById('e-stock').value;
+        const imageInput = document.getElementById('e-image');
+
+        const nomCheck = this.validateNom(nom);
+        if (!nomCheck.valid) return nomCheck;
+
+        const prixCheck = this.validatePrix(prix);
+        if (!prixCheck.valid) return prixCheck;
+
+        const stockCheck = this.validateStock(stock);
+        if (!stockCheck.valid) return stockCheck;
+
+        const imageCheck = this.validateImage(imageInput, false);
+        if (!imageCheck.valid) return imageCheck;
+
+        return { valid: true };
+      }
+    };
+
+    const appController = {
+      async init() {
+        try {
+          await view.loadCategories();
+          const products = await api.getAll();
+          view.renderAll(products);
+        } catch (err) {
+          console.error('Erreur chargement :', err);
+          view.showToast('Impossible de charger les produits depuis la BDD.', 'error');
+        }
+      },
+
+      showTab(tabId) {
+        document.querySelectorAll('.admin-tab-content').forEach(t => t.style.display = 'none');
+        const target = document.getElementById('tab-' + tabId);
+        if (target) target.style.display = 'block';
+        document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
+        const btn = document.getElementById('nav-' + tabId);
+        if (btn) btn.classList.add('active');
+        
+        const titles = {
+          'dashboard':   'Dashboard Administration',
+          'add-product': 'Ajouter un Produit',
+          'catalogue':   'Catalogue Produits',
+          'edit-product':'Modifier le produit'
+        };
+        const titleEl = document.getElementById('admin-title');
+        if (titleEl) titleEl.textContent = titles[tabId] || 'Administration';
+      },
+
+      handleEdit(productJson) {
+        const p = JSON.parse(decodeURIComponent(productJson));
+        document.getElementById('e-id').value = p.id;
+        document.getElementById('e-nom').value = p.nom;
+        document.getElementById('e-marque').value = p.marque || '';
+        document.getElementById('e-prix').value = p.prix;
+        document.getElementById('e-stock').value = p.stock || 0;
+        document.getElementById('e-categorie').value = p.categorie_id || '';
+        document.getElementById('e-etat').value = p.etat || 'neuf';
+        document.getElementById('e-image').value = '';
+        document.getElementById('e-description').value = p.description || '';
+        
+        const ePreviewContainer = document.getElementById('e-image-preview');
+        const ePreviewImg = document.getElementById('e-image-preview-img');
+        const eImageName = document.getElementById('e-image-name');
+        if (p.image && ePreviewContainer && ePreviewImg) {
+          ePreviewImg.src = p.image;
+          eImageName.textContent = '(Image actuelle)';
+          ePreviewContainer.style.display = 'block';
+        }
+        
+        this.showTab('edit-product');
+      },
+
+      async handleUpdate(e) {
+        e.preventDefault();
+        console.log('handleUpdate appelé');
+        
+        const validation = validator.validateFormEdition();
+        console.log('Validation:', validation);
+        if (!validation.valid) {
+          view.showToast(validation.message, 'error');
+          return;
+        }
+
+        const id = document.getElementById('e-id').value;
+        const nom = document.getElementById('e-nom').value.trim();
+        const prix = document.getElementById('e-prix').value.trim();
+        const stock = document.getElementById('e-stock').value.trim() || '0';
+        const marque = document.getElementById('e-marque').value.trim();
+        const description = document.getElementById('e-description').value.trim();
+        const categorie_id = document.getElementById('e-categorie').value;
+        const etat = document.getElementById('e-etat').value;
+        const imageInput = document.getElementById('e-image');
+        const ePreviewImg = document.getElementById('e-image-preview-img');
+
+        try {
+          let imagePath = ePreviewImg.src;
+          
+          if (imageInput.files && imageInput.files[0]) {
+            view.showToast('Téléchargement de l\'image...', 'warn');
+            imagePath = await uploadImage(imageInput);
+          }
+
+          const data = {
+            nom: nom,
+            marque: marque,
+            prix: prix,
+            stock: stock,
+            categorie_id: categorie_id || null,
+            etat: etat,
+            image: imagePath,
+            description: description
+          };
+
+          const result = await api.update(id, data);
+          if (result.success) {
+            view.showToast('Produit modifié avec succès !', 'success');
+            await this.init();
+            this.showTab('catalogue');
+          } else {
+            view.showToast(result.message || 'Erreur lors de la modification.', 'error');
+          }
+        } catch (err) {
+          view.showToast('Erreur : ' + (err.message || 'Erreur de connexion au serveur'), 'error');
+          console.error(err);
+        }
+      },
+
+      async handleAdd(e) {
+        e.preventDefault();
+        console.log('handleAdd appelé');
+        
+        const validation = validator.validateFormAjout();
+        console.log('Validation:', validation);
+        if (!validation.valid) {
+          view.showToast(validation.message, 'error');
+          return;
+        }
+
+        const nom = document.getElementById('p-nom').value.trim();
+        const prix = document.getElementById('p-prix').value.trim();
+        const stock = document.getElementById('p-stock').value.trim() || '0';
+        const marque = document.getElementById('p-marque').value.trim();
+        const description = document.getElementById('p-description').value.trim();
+        const categorie_id = document.getElementById('p-categorie').value;
+        const etat = document.getElementById('p-etat').value;
+        const imageInput = document.getElementById('p-image');
+
+        try {
+          view.showToast('Téléchargement de l\'image...', 'warn');
+          const imagePath = await uploadImage(imageInput);
+          
+          const data = {
+            nom: nom,
+            marque: marque,
+            prix: prix,
+            stock: stock,
+            categorie_id: categorie_id || null,
+            etat: etat,
+            image: imagePath,
+            description: description
+          };
+          
+          const result = await api.add(data);
+          if (result.success) {
+            view.showToast(`Produit "${data.nom}" ajouté avec succès !`, 'success');
+            view.resetForm();
+            await this.init();
+            this.showTab('catalogue');
+          } else {
+            view.showToast(result.message || 'Erreur lors de l\'ajout.', 'error');
+          }
+        } catch (err) {
+          view.showToast('Erreur : ' + (err.message || 'Erreur de connexion au serveur'), 'error');
+          console.error(err);
+        }
+      },
+
+      async handleDelete(id) {
+        if (!confirm('Supprimer ce produit de la base de données ? Action irréversible.')) return;
+        try {
+          const result = await api.remove(id);
+          if (result.success) {
+            view.showToast('Produit supprimé de la base de données.', 'success');
+            await this.init();
+          } else {
+            view.showToast(result.message || 'Produit introuvable.', 'error');
+          }
+        } catch (err) {
+          view.showToast('Erreur de connexion au serveur.', 'error');
+          console.error(err);
+        }
+      },
+
+      exportPDF() {
+        const table = document.querySelector('.data-table');
+        if (!table) return;
+
+        const clonedTable = table.cloneNode(true);
+        
+        // Remove 'Actions' column from cloned table
+        const ths = clonedTable.querySelectorAll('th');
+        if (ths.length > 0) ths[ths.length - 1].remove();
+        
+        const trs = clonedTable.querySelectorAll('tbody tr');
+        trs.forEach(tr => {
+          const tds = tr.querySelectorAll('td');
+          if (tds.length > 0) tds[tds.length - 1].remove();
+        });
+
+        const container = document.createElement('div');
+        container.style.padding = '20px';
+        container.innerHTML = '<h2 style="color: #0b0f1a; font-family: Inter, sans-serif; margin-bottom: 20px;">Catalogue TechCare</h2>';
+        
+        // Apply inline styles for PDF rendering to avoid background/dark mode issues
+        clonedTable.style.width = '100%';
+        clonedTable.style.borderCollapse = 'collapse';
+        clonedTable.style.color = '#000';
+        clonedTable.style.fontFamily = 'Inter, sans-serif';
+        clonedTable.style.fontSize = '12px';
+        
+        // Force text color for all nested elements to override dark mode styles
+        clonedTable.querySelectorAll('*').forEach(el => {
+          el.style.color = '#000';
+        });
+
+        clonedTable.querySelectorAll('th, td').forEach(cell => {
+          cell.style.border = '1px solid #ddd';
+          cell.style.padding = '8px';
+          cell.style.textAlign = 'left';
+        });
+        
+        container.appendChild(clonedTable);
+
+        const opt = {
+          margin:       0.5,
+          filename:     'Catalogue_TechCare.pdf',
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2 },
+          jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+        };
+
+        view.showToast('Génération du PDF en cours...', 'warn');
+        html2pdf().set(opt).from(container).save().then(() => {
+          view.showToast('PDF téléchargé avec succès !', 'success');
+        });
+      }
+    };
+
+    function clearImagePreview(prefix) {
+      const input = document.getElementById(prefix + '-image');
+      const preview = document.getElementById(prefix + '-image-preview');
+      if (input) input.value = '';
+      if (preview) preview.style.display = 'none';
+    }
+
+    const pImageInput = document.getElementById('p-image');
+    const pPreviewContainer = document.getElementById('p-image-preview');
+    const pPreviewImg = document.getElementById('p-image-preview-img');
+    const pImageName = document.getElementById('p-image-name');
+    
+    if (pImageInput) {
+      pImageInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) {
+          pPreviewContainer.style.display = 'none';
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          pPreviewImg.src = event.target.result;
+          pImageName.textContent = file.name;
+          pPreviewContainer.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    const eImageInput = document.getElementById('e-image');
+    const ePreviewContainer = document.getElementById('e-image-preview');
+    const ePreviewImg = document.getElementById('e-image-preview-img');
+    const eImageName = document.getElementById('e-image-name');
+    
+    if (eImageInput) {
+      eImageInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) {
+          ePreviewContainer.style.display = 'none';
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          ePreviewImg.src = event.target.result;
+          eImageName.textContent = file.name;
+          ePreviewContainer.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function uploadImage(fileInput) {
+      const file = fileInput.files[0];
+      if (!file) return null;
+
+      const formData = new FormData();
+      formData.append('image', file);
+
+      try {
+        const response = await fetch(UPLOAD_API, {
+          method: 'POST',
+          body: formData
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          return data.image;
+        } else {
+          throw new Error(data.message || 'Erreur lors du téléchargement');
+        }
+      } catch (error) {
+        console.error('Erreur upload:', error);
+        throw error;
+      }
+    }
+
+    document.getElementById('add-product-form')
+      .addEventListener('submit', e => appController.handleAdd(e));
+
+    document.getElementById('edit-product-form')
+      .addEventListener('submit', e => appController.handleUpdate(e));
+
+    function openPage(name) { document.getElementById('overlay-' + name).classList.add('open'); }
+    function closePage(name) { document.getElementById('overlay-' + name).classList.remove('open'); }
+
+    document.querySelectorAll('.page-overlay').forEach(overlay => {
+      overlay.addEventListener('click', e => {
+        if (e.target === overlay) overlay.classList.remove('open');
+      });
+    });
+
+    window.addEventListener('load', () => {
+      appController.init();
+      appController.showTab('dashboard');
+    });
+
+  </script>
+
+</body>
+</html>
