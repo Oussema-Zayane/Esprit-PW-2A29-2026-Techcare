@@ -34,6 +34,8 @@ CREATE TABLE IF NOT EXISTS produit (
   marque VARCHAR(100) COMMENT 'Marque du produit',
   image VARCHAR(500) COMMENT 'URL de l\'image',
   etat ENUM('neuf', 'occasion') DEFAULT 'neuf' COMMENT 'État du produit',
+  views INT DEFAULT 0 COMMENT 'Nombre de vues du produit',
+  ventes INT DEFAULT 0 COMMENT 'Nombre de ventes',
   date_ajout TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Date de création',
   date_modif TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Date de modification',
 
@@ -41,6 +43,8 @@ CREATE TABLE IF NOT EXISTS produit (
   INDEX idx_categorie_id (categorie_id),
   INDEX idx_marque (marque),
   INDEX idx_prix (prix),
+  INDEX idx_ventes (ventes),
+  INDEX idx_views (views),
   INDEX idx_date_ajout (date_ajout),
   
   -- Contrainte de clé étrangère

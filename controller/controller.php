@@ -25,7 +25,19 @@ function sendJSON($code, $success, $message = null, $data = null) {
 try {
     switch ($method) {
         case 'GET':
-            if ($id) {
+            if (isset($_GET['action'])) {
+                switch ($_GET['action']) {
+                    case 'popular':
+                        sendJSON(200, true, null, $model->getPopularProducts(6));
+                        break;
+                    case 'sorted':
+                        $sortBy = $_GET['sort'] ?? 'recent';
+                        sendJSON(200, true, null, $model->getProductsSorted($sortBy));
+                        break;
+                    default:
+                        sendJSON(400, false, 'Action non reconnue.');
+                }
+            } elseif ($id) {
                 $product = $model->getProductById($id);
                 $product ? sendJSON(200, true, null, $product) : sendJSON(404, false, 'Produit introuvable.');
             } else {
@@ -34,10 +46,44 @@ try {
             break;
 
         case 'POST':
-            if (empty($body['nom']) || empty($body['prix']) || empty($body['image'])) {
-                sendJSON(400, false, 'Champs obligatoires manquants (nom, prix, image).');
+            if (isset($_GET['action'])) {
+                switch ($_GET['action']) {
+                    case 'buy':
+                        // Diminuer le stock et incrémenter les ventes
+                        if (!$id) sendJSON(400, false, 'ID du produit requis.');
+                        $quantity = $body['quantity'] ?? 1;
+                        
+                        if ($model->decreaseStock($id, $quantity) && $model->incrementVentes($id, $quantity)) {
+                            $product = $model->getProductById($id);
+                            sendJSON(200, true, 'Achat simulé avec succès.', $product);
+                        } else {
+                            sendJSON(400, false, 'Stock insuffisant ou produit introuvable.');
+                        }
+                        break;
+                    
+                    case 'view':
+                        // Incrémenter les vues
+                        if (!$id) sendJSON(400, false, 'ID du produit requis.');
+                        
+                        if ($model->incrementViews($id)) {
+                            sendJSON(200, true, 'Vue enregistrée.');
+                        } else {
+                            sendJSON(400, false, 'Produit introuvable.');
+                        }
+                        break;
+                    
+                    default:
+                        if (empty($body['nom']) || empty($body['prix']) || empty($body['image'])) {
+                            sendJSON(400, false, 'Champs obligatoires manquants (nom, prix, image).');
+                        }
+                        sendJSON(201, true, 'Produit ajouté avec succès.', $model->addProduct($body));
+                }
+            } else {
+                if (empty($body['nom']) || empty($body['prix']) || empty($body['image'])) {
+                    sendJSON(400, false, 'Champs obligatoires manquants (nom, prix, image).');
+                }
+                sendJSON(201, true, 'Produit ajouté avec succès.', $model->addProduct($body));
             }
-            sendJSON(201, true, 'Produit ajouté avec succès.', $model->addProduct($body));
             break;
 
         case 'PUT':

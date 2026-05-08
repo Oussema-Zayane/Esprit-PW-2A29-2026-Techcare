@@ -101,4 +101,79 @@ class Model {
         $stmt->execute([$id]);
         return $stmt->rowCount() > 0;
     }
+
+    // ── STOCK : Diminuer le stock (achat) ───────────────
+    public function decreaseStock(int $id, int $quantity = 1): bool {
+        $stmt = $this->pdo->prepare(
+            "UPDATE produit 
+             SET stock = GREATEST(0, stock - ?) 
+             WHERE id = ? AND stock > 0"
+        );
+        return $stmt->execute([$quantity, $id]) && $stmt->rowCount() > 0;
+    }
+
+    // ── VENTES : Incrémenter les ventes ─────────────────
+    public function incrementVentes(int $id, int $quantity = 1): bool {
+        $stmt = $this->pdo->prepare(
+            "UPDATE produit 
+             SET ventes = ventes + ? 
+             WHERE id = ?"
+        );
+        return $stmt->execute([$quantity, $id]) && $stmt->rowCount() > 0;
+    }
+
+    // ── VIEWS : Incrémenter les vues ───────────────────
+    public function incrementViews(int $id): bool {
+        $stmt = $this->pdo->prepare(
+            "UPDATE produit 
+             SET views = views + 1 
+             WHERE id = ?"
+        );
+        return $stmt->execute([$id]) && $stmt->rowCount() > 0;
+    }
+
+    // ── POPULAIRES : Récupérer les produits populaires ──
+    public function getPopularProducts(int $limit = 5): array {
+        $stmt = $this->pdo->query(
+            "SELECT p.*, c.id as categorie_id, c.nom as categorie_nom, c.description as categorie_description, c.image as categorie_image
+             FROM produit p
+             LEFT JOIN categorie c ON p.categorie_id = c.id
+             ORDER BY (p.ventes * 2 + p.views) DESC
+             LIMIT {$limit}"
+        );
+        return $stmt->fetchAll();
+    }
+
+    // ── GET PRODUITS TRIÉS : Récupérer avec critères ────
+    public function getProductsSorted(string $sortBy = 'recent'): array {
+        $query = "SELECT p.*, c.id as categorie_id, c.nom as categorie_nom, c.description as categorie_description, c.image as categorie_image
+                  FROM produit p
+                  LEFT JOIN categorie c ON p.categorie_id = c.id";
+        
+        switch ($sortBy) {
+            case 'price-asc':
+                $query .= " ORDER BY p.prix ASC";
+                break;
+            case 'price-desc':
+                $query .= " ORDER BY p.prix DESC";
+                break;
+            case 'name-asc':
+                $query .= " ORDER BY p.nom ASC";
+                break;
+            case 'name-desc':
+                $query .= " ORDER BY p.nom DESC";
+                break;
+            case 'popular':
+                $query .= " ORDER BY (p.ventes * 2 + p.views) DESC";
+                break;
+            case 'stock':
+                $query .= " ORDER BY p.stock DESC";
+                break;
+            default: // 'recent'
+                $query .= " ORDER BY p.date_ajout DESC";
+        }
+
+        $stmt = $this->pdo->query($query);
+        return $stmt->fetchAll();
+    }
 }

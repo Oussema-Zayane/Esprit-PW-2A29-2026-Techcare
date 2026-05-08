@@ -117,6 +117,7 @@
                 <option value="name-asc">A → Z</option>
                 <option value="name-desc">Z → A</option>
                 <option value="stock">📦 Stock</option>
+                <option value="popular">🔥 Populaires</option>
               </select>
             </div>
             <span class="result-badge"><span id="resultCount">0</span> produits</span>
@@ -126,6 +127,18 @@
     </section>
 
     <main class="products-section">
+
+      <!-- Popular Products Section -->
+      <div id="popularSection" class="popular-section" style="display:none;">
+        <div class="section-header">
+          <h2 class="section-title">🔥 Produits populaires</h2>
+          <p class="section-subtitle">Les produits les plus vendus et consultés</p>
+        </div>
+        <div class="products-grid popular-grid" id="popularGrid">
+          <p class="empty-state" style="grid-column:1/-1;text-align:center;">Chargement…</p>
+        </div>
+        <div class="section-divider"></div>
+      </div>
 
       <!-- Products Grid -->
       <div class="products-grid" id="productGrid">
@@ -212,11 +225,35 @@
         const json = await res.json();
         return json.data || [];
       },
+      async getPopular() {
+        const res = await fetch(`${API_URL}?action=popular`);
+        const json = await res.json();
+        return json.data || [];
+      },
+      async getSorted(sortBy) {
+        const res = await fetch(`${API_URL}?action=sorted&sort=${sortBy}`);
+        const json = await res.json();
+        return json.data || [];
+      },
       async add(data) {
         const res = await fetch(API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
+        });
+        return await res.json();
+      },
+      async buy(id, quantity = 1) {
+        const res = await fetch(`${API_URL}?id=${id}&action=buy`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ quantity })
+        });
+        return await res.json();
+      },
+      async incrementView(id) {
+        const res = await fetch(`${API_URL}?id=${id}&action=view`, {
+          method: 'POST'
         });
         return await res.json();
       },
@@ -253,10 +290,13 @@
         grid.classList.remove('hidden');
         noResults.classList.add('hidden');
         
-        grid.innerHTML = products.map((p, idx) => `
+        grid.innerHTML = products.map((p, idx) => {
+          const stockStatus = this.getStockStatus(p.stock);
+          const isOutOfStock = p.stock <= 0;
+          return `
           <div class="product-card" style="animation: cardIn 0.4s ease ${idx * 0.03}s both;" data-product-id="${p.id}">
             <div class="card-img-wrap">
-              ${p.stock <= 0 ? '<div class="stock-overlay">Rupture</div>' : ''}
+              ${isOutOfStock ? '<div class="stock-overlay">Rupture</div>' : stockStatus.badge ? `<div class="stock-badge ${stockStatus.class}">${stockStatus.badge}</div>` : ''}
               <img src="${p.image}" alt="${p.nom}" loading="lazy" referrerpolicy="no-referrer" 
                 onerror="this.onerror=null;this.src='https://placehold.co/300x200/141d2e/00A86B?text=${encodeURIComponent(p.nom)}'">
             </div>
@@ -265,13 +305,25 @@
               <div class="card-name">${p.nom || ''}</div>
               <div class="product-brand">${p.marque || ''}</div>
               <div class="product-description">${p.description || ''}</div>
+              <div class="card-stats">
+                <span class="stat"><i class="fas fa-eye"></i> ${p.views || 0}</span>
+                <span class="stat"><i class="fas fa-shopping-bag"></i> ${p.ventes || 0}</span>
+              </div>
               <div class="card-footer">
                 <div class="card-price">${parseFloat(p.prix).toFixed(0)} DT</div>
-                <button class="btn-cart-mini" data-product-id="${p.id}" data-product-name="${p.nom}" data-product-price="${p.prix}" data-product-image="${p.image}" data-product-stock="${p.stock}"><i class="fas fa-shopping-cart"></i> Ajouter</button>
+                <button class="btn-cart-mini ${isOutOfStock ? 'disabled' : ''}" 
+                  data-product-id="${p.id}" 
+                  data-product-name="${p.nom}" 
+                  data-product-price="${p.prix}" 
+                  data-product-image="${p.image}" 
+                  data-product-stock="${p.stock}"
+                  ${isOutOfStock ? 'disabled' : ''}>
+                  <i class="fas fa-shopping-cart"></i> ${isOutOfStock ? 'Indisponible' : 'Ajouter'}
+                </button>
               </div>
             </div>
           </div>
-        `).join('');
+        `}).join('');
         
         // Ajouter les écouteurs d'événements après le rendu
         grid.querySelectorAll('.btn-cart-mini').forEach(btn => {
@@ -284,6 +336,76 @@
             appController.addToCart(id, name, price, image, stock);
           });
         });
+      },
+
+      renderPopular(products) {
+        const grid = document.getElementById('popularGrid');
+        const section = document.getElementById('popularSection');
+        
+        if (!grid || !section) return;
+        
+        if (!products.length) {
+          section.style.display = 'none';
+          return;
+        }
+        
+        section.style.display = 'block';
+        grid.innerHTML = products.slice(0, 6).map((p, idx) => {
+          const stockStatus = this.getStockStatus(p.stock);
+          const isOutOfStock = p.stock <= 0;
+          return `
+          <div class="product-card" style="animation: cardIn 0.4s ease ${idx * 0.03}s both;" data-product-id="${p.id}">
+            <div class="card-img-wrap">
+              <div class="popular-badge">⭐ Populaire</div>
+              ${isOutOfStock ? '<div class="stock-overlay">Rupture</div>' : stockStatus.badge ? `<div class="stock-badge ${stockStatus.class}">${stockStatus.badge}</div>` : ''}
+              <img src="${p.image}" alt="${p.nom}" loading="lazy" referrerpolicy="no-referrer" 
+                onerror="this.onerror=null;this.src='https://placehold.co/300x200/141d2e/00A86B?text=${encodeURIComponent(p.nom)}'">
+            </div>
+            <div class="card-body">
+              <span class="product-category">${p.categorie_nom || ''}</span>
+              <div class="card-name">${p.nom || ''}</div>
+              <div class="product-brand">${p.marque || ''}</div>
+              <div class="product-description">${p.description || ''}</div>
+              <div class="card-stats">
+                <span class="stat"><i class="fas fa-eye"></i> ${p.views || 0}</span>
+                <span class="stat"><i class="fas fa-shopping-bag"></i> ${p.ventes || 0}</span>
+              </div>
+              <div class="card-footer">
+                <div class="card-price">${parseFloat(p.prix).toFixed(0)} DT</div>
+                <button class="btn-cart-mini ${isOutOfStock ? 'disabled' : ''}" 
+                  data-product-id="${p.id}" 
+                  data-product-name="${p.nom}" 
+                  data-product-price="${p.prix}" 
+                  data-product-image="${p.image}" 
+                  data-product-stock="${p.stock}"
+                  ${isOutOfStock ? 'disabled' : ''}>
+                  <i class="fas fa-shopping-cart"></i> ${isOutOfStock ? 'Indisponible' : 'Ajouter'}
+                </button>
+              </div>
+            </div>
+          </div>
+        `}).join('');
+        
+        // Ajouter les écouteurs d'événements
+        grid.querySelectorAll('.btn-cart-mini').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const id = parseInt(btn.dataset.productId);
+            const name = btn.dataset.productName;
+            const price = parseFloat(btn.dataset.productPrice);
+            const image = btn.dataset.productImage;
+            const stock = parseInt(btn.dataset.productStock);
+            appController.addToCart(id, name, price, image, stock);
+          });
+        });
+      },
+
+      getStockStatus(stock) {
+        if (stock <= 0) {
+          return { badge: '❌ Indisponible', class: 'stock-critical' };
+        } else if (stock <= 3) {
+          return { badge: '⚠️ Stock faible', class: 'stock-warning' };
+        }
+        return { badge: null, class: '' };
       },
 
       showToast(message, type = 'success') {
@@ -308,7 +430,9 @@
         try {
           this.allProducts = await api.getAll();
           this.filteredProducts = [...this.allProducts];
+          const popularProducts = await api.getPopular();
           this.loadCart();
+          view.renderPopular(popularProducts);
           view.renderFront(this.filteredProducts);
           this.setupEventListeners();
         } catch (err) {
@@ -350,6 +474,17 @@
 
         this.saveCart();
         view.showToast(`"${productName}" ajouté au panier`, 'success');
+        
+        // Simuler l'achat et enregistrer les statistiques
+        (async () => {
+          try {
+            await api.buy(productId, 1);
+            await api.incrementView(productId);
+          } catch (err) {
+            console.log('Stats enregistrées (mode déconnecté)');
+          }
+        })();
+        
         openCart();
       },
 
@@ -494,6 +629,13 @@
             break;
           case 'stock':
             products.sort((a, b) => parseInt(b.stock || 0) - parseInt(a.stock || 0));
+            break;
+          case 'popular':
+            products.sort((a, b) => {
+              const scoreA = (a.ventes || 0) * 2 + (a.views || 0);
+              const scoreB = (b.ventes || 0) * 2 + (b.views || 0);
+              return scoreB - scoreA;
+            });
             break;
           case 'recent':
           default:
