@@ -1,0 +1,127 @@
+/* ═══════════════════════════════════════════════════════════
+   TechCare – crud.css (Styles CRUD partagés)
+═══════════════════════════════════════════════════════════ */
+
+/* ── BOUTONS CRUD PETITS ──────────────────────────────── */
+.btn-sm-view {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(0,168,107,0.12);
+    border: 1px solid rgba(0,168,107,0.3);
+    color: var(--green);
+    border-radius: var(--r-sm);
+    padding: 0.4rem 0.9rem;
+    font: 600 0.82rem var(--font);
+    cursor: pointer;
+    transition: var(--t);
+    white-space: nowrap;
+    text-decoration: none;
+}
+.btn-sm-view:hover {
+    background: var(--green);
+    color: #fff;
+    border-color: var(--green);
+}
+
+.btn-sm-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--txt-muted);
+    border-radius: var(--r-sm);
+    padding: 0.4rem 0.9rem;
+    font: 500 0.82rem var(--font);
+    cursor: pointer;
+    transition: var(--t);
+    text-decoration: none;
+}
+.btn-sm-edit:hover {
+    border-color: var(--txt-muted);
+    color: var(--txt);
+}
+
+.btn-sm-delete {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(231,76,60,0.12);
+    border: 1px solid rgba(231,76,60,0.3);
+    color: var(--danger);
+    border-radius: var(--r-sm);
+    padding: 0.4rem 0.9rem;
+    font: 600 0.82rem var(--font);
+    cursor: pointer;
+    transition: var(--t);
+    text-decoration: none;
+}
+.btn-sm-delete:hover {
+    background: var(--danger);
+    color: #fff;
+    border-color: var(--danger);
+}
+
+/* ── ACTIONS TABLE ─────────────────────────────────── */
+.table-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+/* ── ICONS DANS LES BOUTONS ──────────────────────── */
+.btn-sm-view i,
+.btn-sm-edit i,
+.btn-sm-delete i,
+.btn-primary i,
+.btn-secondary i,
+.btn-danger i {
+    font-size: 0.85em;
+}
+
+/* ── BREADCRUMB / ACTIONS ─────────────────────────── */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    gap: 1rem;
+}
+
+.page-header h1 {
+    font-size: 2rem;
+    color: var(--txt);
+    margin: 0;
+}
+
+.page-header-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+/* ── RESPONSIVE ─────────────────────────────────── */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .page-header-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .table-actions {
+        flex-direction: column;
+    }
+
+    .btn-sm-view,
+    .btn-sm-edit,
+    .btn-sm-delete {
+        width: 100%;
+    }
+}

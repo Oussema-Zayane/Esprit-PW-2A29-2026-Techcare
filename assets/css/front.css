@@ -1,0 +1,429 @@
+/* ═══════════════════════════════════════════════════════════
+   TechCare – front.css (Front Office - Pages Publiques)
+   Build on style.css variables and utilities
+═══════════════════════════════════════════════════════════ */
+
+/* ── CONTAINER & LAYOUT ─────────────────────────────────── */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* ── HEADER/NAVBAR ─────────────────────────────────────── */
+.front-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: var(--bg);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 0;
+}
+
+.front-header .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--txt);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.logo img {
+  width: 40px;
+  height: 40px;
+  display: block;
+}
+
+.front-header nav {
+  display: flex;
+  gap: 2rem;
+  flex: 1;
+}
+
+.front-header nav a {
+  color: var(--txt-muted);
+  text-decoration: none;
+  font-weight: 500;
+  transition: var(--t);
+  padding: 0.5rem 0;
+  position: relative;
+}
+
+.front-header nav a:hover,
+.front-header nav a.active {
+  color: var(--green);
+}
+
+.front-header nav a.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--green);
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  white-space: nowrap;
+}
+
+/* ── HERO SECTION ─────────────────────────────────────── */
+.hero-section {
+  padding: 4rem 0 3rem;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(0,168,107,0.05) 0%, transparent 100%);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 3rem;
+}
+
+.hero-section h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  margin-bottom: 0.5rem;
+  color: var(--txt);
+}
+
+.hero-section p {
+  font-size: 1.1rem;
+  color: var(--txt-muted);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ── OFFRES SECTION ──────────────────────────────────── */
+.offres-section {
+  padding: 3rem 0;
+}
+
+.offres-section h2 {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  color: var(--txt);
+}
+
+.offres-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.offre-card {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  transition: var(--t);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.offre-card:hover {
+  border-color: var(--green-dk);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 40px rgba(0,168,107,0.2);
+}
+
+.offre-card.featured {
+  border: 2px solid var(--green);
+  transform: scale(1.03);
+}
+
+.offre-card.featured:hover {
+  box-shadow: 0 15px 50px var(--sh-grn);
+  transform: scale(1.03) translateY(-5px);
+}
+
+.offre-badge {
+  display: inline-block;
+  background: rgba(0,168,107,0.15);
+  color: var(--green);
+  padding: 0.35rem 0.9rem;
+  border-radius: var(--r-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin: -1.5rem auto 0;
+  text-transform: uppercase;
+}
+
+.offre-card.featured .offre-badge {
+  background: rgba(0,168,107,0.3);
+}
+
+.offre-icon {
+  font-size: 3rem;
+  color: var(--green);
+  display: flex;
+  justify-content: center;
+}
+
+.offre-card h3 {
+  font-size: 1.4rem;
+  color: var(--txt);
+}
+
+.offre-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.offre-price .price {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--green);
+}
+
+.offre-price .period {
+  color: var(--txt-muted);
+  font-size: 0.95rem;
+}
+
+.offre-price .saving {
+  display: block;
+  width: 100%;
+  font-size: 0.85rem;
+  color: var(--warning);
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+.offre-features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  flex-grow: 1;
+}
+
+.offre-features li {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--txt-muted);
+  font-size: 0.95rem;
+}
+
+.offre-features i {
+  color: var(--green);
+  flex-shrink: 0;
+}
+
+.offre-card .btn-primary {
+  margin-top: auto;
+  width: 100%;
+  justify-content: center;
+}
+
+/* ── FORM STYLES ────────────────────────────────────── */
+.form-section {
+  max-width: 600px;
+  margin: 3rem auto;
+  padding: 2rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+}
+
+.form-section h2 {
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  color: var(--txt);
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--txt);
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--txt);
+  font-family: var(--font);
+  font-size: 0.95rem;
+  transition: var(--t);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--green);
+  background: rgba(0,168,107,0.05);
+  box-shadow: 0 0 0 3px rgba(0,168,107,0.1);
+}
+
+.form-group input::placeholder {
+  color: var(--txt-dim);
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+/* ── STATUS MESSAGES ────────────────────────────────── */
+.alert {
+  padding: 1rem;
+  border-radius: var(--r-md);
+  margin-bottom: 1.5rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.alert-success {
+  background: rgba(0,168,107,0.1);
+  border: 1px solid rgba(0,168,107,0.3);
+  color: var(--green);
+}
+
+.alert-error {
+  background: rgba(231,76,60,0.1);
+  border: 1px solid rgba(231,76,60,0.3);
+  color: var(--danger);
+}
+
+.alert-info {
+  background: rgba(26,58,122,0.1);
+  border: 1px solid rgba(100,140,255,0.3);
+  color: var(--blue-lt);
+}
+
+.alert i {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+/* ── FOOTER ─────────────────────────────────────────── */
+.front-footer {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 3rem 0 1rem;
+  margin-top: 4rem;
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.footer-section h4 {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  color: var(--txt);
+}
+
+.footer-section p,
+.footer-section a {
+  color: var(--txt-muted);
+  font-size: 0.9rem;
+  line-height: 1.8;
+  text-decoration: none;
+}
+
+.footer-section a:hover {
+  color: var(--green);
+}
+
+.footer-bottom {
+  border-top: 1px solid var(--border);
+  padding-top: 1.5rem;
+  text-align: center;
+  color: var(--txt-dim);
+  font-size: 0.85rem;
+}
+
+/* ── RESPONSIVE ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  .front-header .container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .front-header nav {
+    width: 100%;
+    gap: 1rem;
+  }
+
+  .offres-grid {
+    gap: 1rem;
+  }
+
+  .offre-card.featured {
+    transform: scale(1);
+  }
+
+  .offre-card.featured:hover {
+    transform: translateY(-5px);
+  }
+
+  .hero-section {
+    padding: 2rem 0 1.5rem;
+  }
+
+  .offres-section {
+    padding: 2rem 0;
+  }
+
+  .form-section {
+    margin: 2rem 1rem;
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 1rem;
+  }
+
+  .offres-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-section h1 {
+    font-size: 1.5rem;
+  }
+
+  .offre-price .price {
+    font-size: 2rem;
+  }
+}
